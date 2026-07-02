@@ -3,7 +3,9 @@
 Everything the operator must provide/configure to take the platform live, plus the improvement roadmap.
 Env var names match `server/src/config/env.js`; client keys match `client/src/environments/environment.ts`.
 
-> **Progress (2026-07-03):** all four launch blockers **and the roadmap batch are DONE** — image upload (B5), order emails (B6), custom-cake flow (B7), menu filters (B8), coupons (B9), stock tracking (B10), reviews (B11), SEO-lite (B12), PWA (B13), automated tests (B14, 13 passing), analytics hook (B15). Deferred with reasons: full SSR (B12b) and account linking (B16). What's left is **your credentials/content (Part A)** + importing the repo on Vercel.
+> **Progress (2026-07-03):** all four launch blockers **and the roadmap batch are DONE** — image upload (B5), order emails (B6), custom-cake flow (B7), menu filters (B8), coupons (B9), stock tracking (B10), reviews (B11), SEO-lite (B12), PWA (B13), automated tests (B14, 13 passing), analytics hook (B15). Deferred with reasons: full SSR (B12b) and account linking (B16).
+>
+> **🚀 LIVE (demo mode): <https://sss-omega-ashy.vercel.app>** — Vercel project `sss`, GitHub-connected: every push to `main` auto-deploys. Demo-mode caveats in force until the Part-A keys land: payments are **mock**, `EXPOSE_DEV_OTP=true` (anyone can log in as any phone — the boot guard forces its removal once live payment keys are set), **no Cloudinary** (admin photo upload errors on Vercel until the keys are added), and the Atlas password is still the leaked one — **rotate it**.
 
 > The app boots with **zero** config in mock/dev mode (mock OTP, mock payments, local Mongo fallback).
 > In **production** (`NODE_ENV=production`) the server now refuses to start with insecure defaults (weak `JWT_SECRET`, missing `MONGODB_URI`, localhost `CLIENT_URL`, Stripe keys without a webhook secret) — but rotation of the leaked credential below is still on you.
