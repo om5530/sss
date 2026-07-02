@@ -52,6 +52,11 @@ const env = {
     ttlSeconds: toNumber(process.env.OTP_TTL_SECONDS, 300),
     length: toNumber(process.env.OTP_LENGTH, 6),
     resendCooldownSeconds: toNumber(process.env.OTP_RESEND_COOLDOWN, 30),
+    // Opt-in: return mock OTP codes in API responses even in production, for
+    // demo/test deployments before Firebase SMS is configured. Anyone can then
+    // log in as any phone number — the boot guard blocks it alongside live
+    // payment keys (see assertProdConfig.js).
+    exposeDevOtp: process.env.EXPOSE_DEV_OTP === 'true',
   },
   pricing: {
     taxRate: toNumber(process.env.TAX_RATE, 0.05),

@@ -45,6 +45,7 @@ The API **refuses to serve** in production until the required ones are set
 | `GOOGLE_CLIENT_ID` | Optional | Enables Google sign-in (also set it in `environment.prod.ts` and redeploy). |
 | `FIREBASE_PROJECT_ID` / `FIREBASE_CLIENT_EMAIL` / `FIREBASE_PRIVATE_KEY` | Optional | Real SMS OTP. Paste the key on one line with literal `\n`, quoted. |
 | `RESEND_API_KEY` / `NOTIFY_FROM` / `SHOP_EMAIL` | Optional | Order/enquiry email alerts. |
+| `EXPOSE_DEV_OTP` | Test deploys only | `true` returns mock OTP codes in the login API response (visible on the login page and in the network tab) so the site is usable before Firebase SMS is set up. Anyone can log in as any phone number — **remove before launch**; the boot guard refuses it alongside live payment keys. |
 | `TAX_RATE` / `DELIVERY_FEE` / `CURRENCY` | Optional | Defaults: `0.05` / `40` / `inr`. |
 
 `NODE_ENV=production` is set by Vercel automatically — don't add it.

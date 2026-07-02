@@ -34,9 +34,17 @@ async function createOtp(phone) {
 
   await deliverOtp(phone, code);
 
-  // In mock mode (no SMS provider) surface the code so it can be used in dev/demo.
-  const exposeCode = env.otp.provider === 'mock' && !env.isProd;
-  return { expiresInSeconds: env.otp.ttlSeconds, devCode: exposeCode ? code : undefined };
+  // In mock mode (no SMS provider) surface the code so it can be used in
+  // dev/demo. In production this requires the explicit EXPOSE_DEV_OTP=true
+  // opt-in (test deployments before Firebase SMS is configured).
+  const exposeCode = env.otp.provider === 'mock' && (!env.isProd || env.otp.exposeDevOtp);
+  return {
+    expiresInSeconds: env.otp.ttlSeconds,
+    devCode: exposeCode ? code : undefined,
+    devNote: exposeCode
+      ? 'DEV/TEST ONLY: OTP is returned in this response because Firebase SMS is not configured yet. Remove EXPOSE_DEV_OTP before a real launch.'
+      : undefined,
+  };
 }
 
 async function deliverOtp(phone, code) {

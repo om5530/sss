@@ -25,6 +25,14 @@ function findProdConfigProblems() {
   if (env.razorpay.keyId && env.razorpay.keySecret && !env.razorpay.webhookSecret) {
     problems.push('Razorpay keys are set but RAZORPAY_WEBHOOK_SECRET is missing — a customer who pays and closes the tab before returning would be charged without their order ever confirming');
   }
+  // EXPOSE_DEV_OTP returns login codes in API responses (anyone can sign in
+  // as any phone number). Tolerable on a demo deployment; never alongside
+  // live payment keys, where a forged session can spend real money.
+  const hasLivePaymentKeys =
+    env.razorpay.keyId.startsWith('rzp_live_') || env.stripe.secretKey.startsWith('sk_live_');
+  if (env.otp.exposeDevOtp && hasLivePaymentKeys) {
+    problems.push('EXPOSE_DEV_OTP is enabled together with LIVE payment keys — anyone could log in as any customer and place real orders. Remove EXPOSE_DEV_OTP (set up Firebase SMS instead)');
+  }
   return problems;
 }
 
