@@ -1,0 +1,48 @@
+<div class="adm-page print-area">
+  <div class="adm-head no-print">
+    <div>
+      <span class="eyebrow eyebrow--bare">Scan → menu → table pre-filled</span>
+      <h1>Table QR codes</h1>
+      <p>Print, cut, laminate, stick on tables. Scans open the menu with the table number remembered through checkout.</p>
+    </div>
+    <div class="adm-head__actions">
+      <label class="label" for="qr-count" style="margin: 0">Tables</label>
+      <input id="qr-count" class="input" type="number" min="1" max="60" [(ngModel)]="count" name="count" style="width: 90px" />
+      <button type="button" class="btn btn--ghost btn--sm" (click)="generate()" [disabled]="generating()">
+        {{ generating() ? 'Generating…' : 'Generate' }}
+      </button>
+      <button type="button" class="btn btn--primary btn--sm" (click)="print()" [disabled]="!codes().length">Print</button>
+    </div>
+  </div>
+
+  <div class="qr-grid">
+    @for (code of codes(); track code.table) {
+      <figure class="qr-card">
+        <img [src]="code.dataUrl" [alt]="'QR code for table ' + code.table" width="180" height="180" />
+        <figcaption>
+          <strong>Table {{ code.table }}</strong>
+          <span>Scan to order · Sweet Savory Savor</span>
+        </figcaption>
+      </figure>
+    }
+  </div>
+</div>
+
+<style>
+  .qr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+  .qr-card {
+    margin: 0;
+    padding: 1rem;
+    border: 1.5px dashed var(--line);
+    border-radius: 12px;
+    background: #fff;
+    display: grid;
+    justify-items: center;
+    gap: 0.5rem;
+    text-align: center;
+    break-inside: avoid;
+  }
+  .qr-card img { width: 100%; max-width: 190px; height: auto; }
+  .qr-card figcaption { display: grid; gap: 0.1rem; }
+  .qr-card figcaption span { font-size: 0.72rem; color: var(--muted); }
+</style>

@@ -57,6 +57,7 @@ router.post('/uploads', uploadCtrl.acceptImage, uploadCtrl.uploadProductImage);
 
 router.get('/reports/sales', ctrl.salesReport);
 router.get('/reports/products', ctrl.productReport);
+router.get('/reports/prep', ctrl.prepSheet);
 
 router.get('/audit', ctrl.listAudit);
 

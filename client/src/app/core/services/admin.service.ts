@@ -164,6 +164,15 @@ export class AdminService {
     return this.http.get<SalesReport>(`${this.base}/reports/sales`, { params: toParams(filters) });
   }
 
+  /** Kitchen prep sheet: active orders + today's pre-orders, aggregated per product. */
+  prepSheet() {
+    return this.http.get<{
+      generatedAt: string;
+      items: { _id: string; name: string; quantity: number; orders: number }[];
+      orders: AdminOrder[];
+    }>(`${this.base}/reports/prep`);
+  }
+
   productReport(filters: { from?: string; to?: string } = {}) {
     return this.http.get<ProductReport>(`${this.base}/reports/products`, { params: toParams(filters) });
   }

@@ -1,9 +1,12 @@
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, input, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { catchError, forkJoin, of } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
+import { CartService } from '../../core/services/cart.service';
 import { OrderService } from '../../core/services/order.service';
 import { PaymentFlowService } from '../../core/services/payment-flow.service';
+import { ProductService } from '../../core/services/product.service';
 import { ToastService } from '../../core/services/toast.service';
 import { Order } from '../../core/models/order.model';
 import { StatusTracker } from '../../shared/components/status-tracker/status-tracker';
@@ -23,9 +26,13 @@ export class OrderDetail {
   private payments = inject(PaymentFlowService);
   private auth = inject(AuthService);
   private toast = inject(ToastService);
+  private products = inject(ProductService);
+  private cart = inject(CartService);
+  private router = inject(Router);
   protected readonly order = signal<Order | null>(null);
   protected readonly loading = signal(true);
   protected readonly paying = signal(false);
+  protected readonly reordering = signal(false);
 
   /** Online order still awaiting payment (or a failed attempt) — offer to complete it here. */
   protected readonly canPayNow = computed(() => {
@@ -59,6 +66,53 @@ export class OrderDetail {
         error: () => this.loading.set(false),
       });
     });
+
+    // Live status: refresh every 15 s while the kitchen is still working on it.
+    const timer = setInterval(() => {
+      const o = this.order();
+      if (!o || document.hidden || this.paying()) return;
+      if (!['placed', 'confirmed', 'preparing', 'ready'].includes(o.orderStatus)) return;
+      this.orders.get(this.id()).subscribe({ next: (order) => this.order.set(order) });
+    }, 15_000);
+    inject(DestroyRef).onDestroy(() => clearInterval(timer));
+  }
+
+  /** Refill the cart with this order's items at today's prices. */
+  reorder(): void {
+    const o = this.order();
+    if (!o || this.reordering()) return;
+
+    const wanted = o.items
+      .map((i) => ({ slug: typeof i.product === 'object' ? i.product?.slug : undefined, qty: i.quantity }))
+      .filter((w): w is { slug: string; qty: number } => !!w.slug);
+    if (!wanted.length) {
+      this.toast.error('These items are no longer on the menu.');
+      return;
+    }
+
+    this.reordering.set(true);
+    forkJoin(wanted.map((w) => this.products.getBySlug(w.slug).pipe(catchError(() => of(null))))).subscribe(
+      (results) => {
+        this.reordering.set(false);
+        let added = 0;
+        let skipped = 0;
+        results.forEach((p, i) => {
+          if (p && p.available) {
+            this.cart.add(p, wanted[i].qty);
+            added += 1;
+          } else {
+            skipped += 1;
+          }
+        });
+        if (skipped) this.toast.info(`${skipped} item${skipped > 1 ? 's are' : ' is'} unavailable right now and was skipped.`);
+        if (added) {
+          this.toast.success('Cart refilled — same order, fresh bake.');
+          this.router.navigate(['/cart']);
+        } else if (!skipped) {
+          this.toast.error('Could not refill the cart — please add items from the menu.');
+        }
+      },
+    );
   }
 
   /** Retry an unfinished online payment (popup dismissed at checkout, etc.). */

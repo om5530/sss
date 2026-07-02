@@ -1,0 +1,68 @@
+<div class="adm-page print-area">
+  <div class="adm-head">
+    <div>
+      <span class="eyebrow eyebrow--bare">{{ generatedAt() | date: 'EEEE, MMM d · h:mm a' }}</span>
+      <h1>Prep sheet</h1>
+      <p>Active orders + today's pre-orders, per product.</p>
+    </div>
+    <div class="adm-head__actions no-print">
+      <button type="button" class="btn btn--ghost btn--sm" (click)="fetch()">Refresh</button>
+      <button type="button" class="btn btn--primary btn--sm" (click)="print()">Print</button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="skeleton" style="height: 320px" aria-hidden="true"></div>
+  } @else {
+    <div class="adm-cols" style="grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr)">
+      <!-- Bake list -->
+      <div class="adm-card">
+        <h3>To bake — {{ totalUnits() }} units</h3>
+        <div class="adm-table-wrap" style="border: none; box-shadow: none">
+          <table class="adm-table">
+            <thead>
+              <tr><th>Product</th><th class="num">Qty</th><th class="num">Orders</th></tr>
+            </thead>
+            <tbody>
+              @for (item of items(); track item._id) {
+                <tr>
+                  <td><strong>{{ item.name }}</strong></td>
+                  <td class="num" style="font-size: 1.1rem; font-weight: 800">{{ item.quantity }}</td>
+                  <td class="num">{{ item.orders }}</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="3"><div class="adm-empty">Nothing in the queue — the ovens can rest.</div></td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Order-by-order run sheet -->
+      <div class="adm-card">
+        <h3>Run sheet ({{ orders().length }} orders)</h3>
+        <div class="adm-table-wrap" style="border: none; box-shadow: none">
+          <table class="adm-table">
+            <thead>
+              <tr><th>When</th><th>Order</th><th>For</th><th>Items</th></tr>
+            </thead>
+            <tbody>
+              @for (o of orders(); track o._id) {
+                <tr>
+                  <td class="nowrap">
+                    @if (o.fulfilAt) { <strong>⏰ {{ o.fulfilAt | date: 'h:mm a' }}</strong> } @else { ASAP }
+                  </td>
+                  <td class="nowrap">{{ o.orderNumber }}<br /><span class="adm-badge adm-badge--type">{{ o.orderType }}</span></td>
+                  <td>{{ who(o) }}</td>
+                  <td style="max-width: 340px">{{ itemsLine(o) }}</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="4"><div class="adm-empty">No orders waiting.</div></td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  }
+</div>

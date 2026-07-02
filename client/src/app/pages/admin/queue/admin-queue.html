@@ -51,6 +51,9 @@
                   @if (order.paymentMethod === 'cash' && order.paymentStatus === 'pending') {
                     <span class="adm-badge adm-badge--type" title="Collect cash on hand-over">collect cash</span>
                   }
+                  @if (order.fulfilAt) {
+                    <span class="adm-badge adm-badge--ready" [title]="'Scheduled pre-order'">⏰ {{ scheduledLabel(order.fulfilAt) }}</span>
+                  }
                 </div>
 
                 <p class="adm-qcard__items">{{ itemsSummary(order) }}</p>

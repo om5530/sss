@@ -7,6 +7,13 @@
       Every bake photographed honestly — tap to add, and your cart keeps up as you go.
     </p>
 
+    @if (shop.info()?.openNow === false) {
+      <p class="menu-closed" role="status">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Ovens are off right now — open {{ shop.info()?.opensAt }}–{{ shop.info()?.closesAt }}. Pre-orders welcome at checkout.
+      </p>
+    }
+
     <div class="menu-search" appReveal [revealDelay]="190">
       <svg
         class="menu-search__icon"

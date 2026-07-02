@@ -1,5 +1,10 @@
 // End-to-end API tests against the real Express app + an in-memory MongoDB.
 // Run: npm test   (node --test; each file gets its own process)
+// Pin the shop to always-open BEFORE the env module loads, so ASAP orders
+// pass regardless of what IST wall-clock time CI runs at.
+process.env.SHOP_OPENS = '00:00';
+process.env.SHOP_CLOSES = '24:00';
+
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const { MongoMemoryServer } = require('mongodb-memory-server');
@@ -245,6 +250,29 @@ test('cancel does not resurrect a product the admin hid while stock remained', a
   const after = await Product.findById(hidden._id);
   assert.equal(after.stockCount, 10); // restocked
   assert.equal(after.available, false); // but stays hidden — the admin said so
+});
+
+test('scheduling: lead-time and horizon are enforced; valid pre-orders persist fulfilAt', async () => {
+  const payload = (fulfilAt) => ({
+    items: [{ productId: coffeeProduct._id, quantity: 1 }],
+    orderType: 'takeaway', paymentMethod: 'cash', fulfilAt,
+    takeaway: { customerName: 'Scheduler', phone: '+919999000020' },
+  });
+
+  // Less than 30 minutes of notice → rejected.
+  const tooSoon = await json('POST', '/orders', payload(new Date(Date.now() + 10 * 60 * 1000).toISOString()));
+  assert.equal(tooSoon.status, 400);
+
+  // More than 2 days ahead → rejected.
+  const tooFar = await json('POST', '/orders', payload(new Date(Date.now() + 3 * 86400000).toISOString()));
+  assert.equal(tooFar.status, 400);
+
+  // Tomorrow (always-open window in this test process) → accepted + stored.
+  const when = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  const ok = await json('POST', '/orders', payload(when));
+  assert.equal(ok.status, 201);
+  const order = (await ok.json()).order;
+  assert.equal(new Date(order.fulfilAt).toISOString(), when);
 });
 
 /* ---------------- Order lifecycle ---------------- */

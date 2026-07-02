@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, signal } from '@angular/core';
+import { Component, DestroyRef, effect, inject, input, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { OrderService } from '../../core/services/order.service';
@@ -33,6 +33,15 @@ export class OrderSuccess {
         error: () => this.loading.set(false),
       });
     });
+
+    // Live status: refresh every 15 s while the kitchen is still working on it.
+    const timer = setInterval(() => {
+      const o = this.order();
+      if (!o || document.hidden) return;
+      if (!['placed', 'confirmed', 'preparing', 'ready'].includes(o.orderStatus)) return;
+      this.orders.get(this.id()).subscribe({ next: (order) => this.order.set(order) });
+    }, 15_000);
+    inject(DestroyRef).onDestroy(() => clearInterval(timer));
   }
 
   /** Payment chip copy — cash orders aren't "pending", they're pay-on-hand-over. */

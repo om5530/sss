@@ -4,6 +4,7 @@ const dbReady = require('../middleware/dbReady');
 const stripeService = require('../services/stripe.service');
 const razorpayService = require('../services/razorpay.service');
 const { isConfigured: googleConfigured } = require('../services/google.service');
+const { shopInfo } = require('../services/shop.service');
 
 const authRoutes = require('./auth.routes');
 const productRoutes = require('./product.routes');
@@ -27,6 +28,9 @@ router.get('/health', (req, res) => {
     },
   });
 });
+
+// Opening hours + open-now — no DB needed, safe for banners and pickers.
+router.get('/shop', (req, res) => res.json({ success: true, shop: shopInfo() }));
 
 // Everything below requires a live database connection.
 router.use(dbReady);

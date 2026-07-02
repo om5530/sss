@@ -12,14 +12,14 @@ Nothing here is committed work — it's a menu to pick from, roughly ordered by 
 | Idea | What it is | Impact | Effort |
 |---|---|---|---|
 | **WhatsApp order updates** | "Order confirmed / ready" via WhatsApp (Meta Cloud API or Interakt/Wati). In India this beats email 10-to-1. The notify.service hooks already exist — swap the channel. | ★★★ | M |
-| **Order scheduling / pre-orders** | "Pick up at 6 pm" time slots; order tomorrow's bake today. Bakeries live on pre-orders; pairs beautifully with stock tracking (tomorrow's counts). | ★★★ | M |
-| **QR table ordering** | Printed QR per table → menu opens with `?table=12` pre-filled → dine-in order without staff. The dine-in flow + table field already exist. | ★★★ | S–M |
-| **"Order again"** | One tap on any past order re-fills the cart (order history already stores line items). | ★★ | S |
+| **Order scheduling / pre-orders** ✅ DONE 2026-07-03 | "Pick up at 6 pm" time slots; order tomorrow's bake today. Bakeries live on pre-orders; pairs beautifully with stock tracking (tomorrow's counts). | ★★★ | M |
+| **QR table ordering** ✅ DONE 2026-07-03 | Printed QR per table → menu opens with `?table=12` pre-filled → dine-in order without staff. The dine-in flow + table field already exist. | ★★★ | S–M |
+| **"Order again"** ✅ DONE 2026-07-03 | One tap on any past order re-fills the cart (order history already stores line items). | ★★ | S |
 | **Loyalty / punch card** | Points per ₹ or "9 brownies → 10th free". Coupon engine is a head start; needs a per-customer ledger. | ★★ | M |
 | **Combos & upsells** | Breakfast box bundles; "pairs well with ☕" suggestion in cart based on category affinity. | ★★ | M |
 | **Back-in-stock notify** | "Tell me when it's back" on sold-out items — stock tracking already flips availability, so the trigger exists. | ★★ | S–M |
 | **Gift cards / cake vouchers** | Prepaid codes redeemable at checkout — reuses most of the coupon plumbing. | ★★ | M |
-| **Live order status without refresh** | Poll or SSE on the order page so "preparing → ready" appears live. | ★★ | S–M |
+| **Live order status without refresh** ✅ DONE 2026-07-03 | Poll or SSE on the order page so "preparing → ready" appears live. | ★★ | S–M |
 | **Referral codes** | "Give ₹50, get ₹50" — per-customer generated coupons (engine exists) + attribution. | ★ | M |
 | **Allergen & nutrition info** | Fields on Product + badges on cards; useful for cakes (nuts, gluten, egg already tracked as dietary). | ★ | S |
 | **Hindi / Marathi storefront** | Angular i18n or runtime dictionary; big for Dahisar walk-in demographic. | ★ | L |
@@ -28,10 +28,10 @@ Nothing here is committed work — it's a menu to pick from, roughly ordered by 
 
 | Idea | What it is | Impact | Effort |
 |---|---|---|---|
-| **Staff PWA push alerts** | Web-push "new order!" to the admin PWA + a chime in the live queue. Kills the "missed an order" problem. PWA + queue already exist. | ★★★ | M |
-| **Daily prep sheet** | Morning report aggregating today's pre-orders + yesterday's sell-outs by product ("bake 24 brownies"). One aggregation + one admin page. | ★★★ | S–M |
-| **Printable KOT / receipt** | Print-CSS kitchen ticket + customer bill from the order page. | ★★ | S |
-| **Business hours enforcement** | Reject/queue orders outside 8:00–22:00 + a holiday calendar; today the store never closes. | ★★ | S–M |
+| **Staff PWA push alerts** (queue polling + chime already live; web-push still open) | Web-push "new order!" to the admin PWA + a chime in the live queue. Kills the "missed an order" problem. PWA + queue already exist. | ★★★ | M |
+| **Daily prep sheet** ✅ DONE 2026-07-03 | Morning report aggregating today's pre-orders + yesterday's sell-outs by product ("bake 24 brownies"). One aggregation + one admin page. | ★★★ | S–M |
+| **Printable KOT / receipt** ✅ DONE 2026-07-03 | Print-CSS kitchen ticket + customer bill from the order page. | ★★ | S |
+| **Business hours enforcement** ✅ DONE 2026-07-03 | Reject/queue orders outside 8:00–22:00 + a holiday calendar; today the store never closes. | ★★ | S–M |
 | **Delivery zones & fees** | Pincode-based zones, per-zone fee/minimum instead of the flat ₹40; optionally a Porter/Dunzo/Shadowfax API handoff for riders. | ★★ | M–L |
 | **Staff roles** | `staff` role between customer and admin: queue + orders only, no products/coupons/reports. One enum value + route guards. | ★★ | M |
 | **Partial refunds** | Refund a single item, not just the whole order (Razorpay supports partial amounts). | ★★ | M |
@@ -55,7 +55,7 @@ Nothing here is committed work — it's a menu to pick from, roughly ordered by 
 | Idea | What it is | Impact | Effort |
 |---|---|---|---|
 | **Redis-backed rate limits** (Upstash) | ⚠️ On Vercel, `express-rate-limit`'s memory store is **per-lambda-instance**, so limits are much weaker than designed. Same for the in-process review-stats queue. An Upstash Redis store fixes both properly. First engineering task once real traffic exists. | ★★★ | S–M |
-| **CI on GitHub Actions** | Run the 13 server tests + client build on every push/PR — auto-deploy currently ships untested pushes. | ★★★ | S |
+| **CI on GitHub Actions** ✅ DONE 2026-07-03 | Run the 13 server tests + client build on every push/PR — auto-deploy currently ships untested pushes. | ★★★ | S |
 | **Error monitoring** (Sentry) | Client + server; without it, production bugs are invisible until a customer complains. | ★★★ | S |
 | **Full SSR** *(deferred from roadmap)* | Angular SSR on Vercel for real SEO indexing; do when organic traffic becomes a goal. | ★★ | L |
 | **E2E browser tests** (Playwright) | Checkout, coupon, cash flow, admin queue — the flows unit tests can't cover. | ★★ | M |

@@ -124,6 +124,15 @@ export class AdminQueue {
     );
   }
 
+  /** "6:30 pm" today, or "Sat 6:30 pm" for another day. */
+  scheduledLabel(iso: string): string {
+    const d = new Date(iso);
+    const time = d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
+    return d.toDateString() === new Date().toDateString()
+      ? time
+      : `${d.toLocaleDateString('en-IN', { weekday: 'short' })} ${time}`;
+  }
+
   fulfilment(order: AdminOrder): string {
     if (order.orderType === 'dining') return order.dining?.tableNumber ? `Table ${order.dining.tableNumber}` : 'Dine-in';
     if (order.orderType === 'takeaway') return order.takeaway?.phone || 'Takeaway';

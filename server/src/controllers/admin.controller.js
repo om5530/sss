@@ -615,6 +615,45 @@ const productReport = asyncHandler(async (req, res) => {
   res.json({ success: true, from: start, to: endExclusive, topProducts, byCategory, byType });
 });
 
+/* ============ Prep sheet ============ */
+
+// What the kitchen must bake for the day: every ACTIVE order (placed/confirmed/
+// preparing) plus today's scheduled pre-orders, aggregated per product.
+const prepSheet = asyncHandler(async (req, res) => {
+  const todayStart = istStartOfToday();
+  const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
+
+  const match = {
+    orderStatus: { $in: ['placed', 'confirmed', 'preparing'] },
+    $or: [
+      { fulfilAt: null }, // ASAP orders still in the kitchen
+      { fulfilAt: { $gte: todayStart, $lt: todayEnd } }, // today's pre-orders
+    ],
+  };
+
+  const [items, orders] = await Promise.all([
+    Order.aggregate([
+      { $match: match },
+      { $unwind: '$items' },
+      {
+        $group: {
+          _id: '$items.product',
+          name: { $last: '$items.name' },
+          quantity: { $sum: '$items.quantity' },
+          orders: { $sum: 1 },
+        },
+      },
+      { $sort: { quantity: -1 } },
+    ]),
+    Order.find(match)
+      .sort({ fulfilAt: 1, createdAt: 1 })
+      .select('orderNumber orderType orderStatus fulfilAt items dining takeaway delivery paymentMethod paymentStatus')
+      .populate('user', 'name phone'),
+  ]);
+
+  res.json({ success: true, generatedAt: new Date(), items, orders });
+});
+
 /* ============ Audit log (AS-1.3) ============ */
 
 const listAudit = asyncHandler(async (req, res) => {
@@ -675,6 +714,7 @@ module.exports = {
   listPayments,
   salesReport,
   productReport,
+  prepSheet,
   listAudit,
   validators,
 };

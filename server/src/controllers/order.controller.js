@@ -8,6 +8,36 @@ const Coupon = require('../models/Coupon');
 const { priceCart } = require('../services/pricing.service');
 const { audit } = require('../services/audit.service');
 const { emailForOrder, notifyOrderPlaced, notifyOrderStatus } = require('../services/notify.service');
+const { isOpenAt } = require('../services/shop.service');
+
+const MIN_LEAD_MS = 30 * 60 * 1000; // scheduled orders need at least 30 min notice
+const MAX_AHEAD_MS = 48 * 60 * 60 * 1000; // and at most 2 days
+
+/**
+ * Validates the requested fulfilment time against opening hours.
+ * Returns null (ASAP) or a Date for scheduled pre-orders.
+ */
+function resolveFulfilAt(raw) {
+  if (!raw) {
+    if (!isOpenAt()) {
+      throw ApiError.badRequest('The ovens are off right now — schedule a pre-order for our opening hours instead');
+    }
+    return null;
+  }
+  const when = new Date(raw);
+  const now = Date.now();
+  if (Number.isNaN(when.getTime())) throw ApiError.badRequest('Pick a valid time for your order');
+  if (when.getTime() < now + MIN_LEAD_MS) {
+    throw ApiError.badRequest('Scheduled orders need at least 30 minutes — choose a later time');
+  }
+  if (when.getTime() > now + MAX_AHEAD_MS) {
+    throw ApiError.badRequest('We take pre-orders up to 2 days ahead — for anything bigger, send a custom-cake brief');
+  }
+  if (!isOpenAt(when)) {
+    throw ApiError.badRequest('That time is outside our opening hours — pick a time we’re open');
+  }
+  return when;
+}
 
 /**
  * Atomically claims stock for every tracked product in the order.
@@ -104,6 +134,7 @@ const createOrder = asyncHandler(async (req, res) => {
   }
 
   const fulfilment = buildFulfilment(orderType, req.body);
+  const fulfilAt = resolveFulfilAt(req.body.fulfilAt);
 
   // Re-price on the server; never trust client totals.
   const { items: pricedItems, pricing, coupon } = await priceCart(items, { orderType, couponCode });
@@ -138,6 +169,7 @@ const createOrder = asyncHandler(async (req, res) => {
       user: req.user ? req.user._id : null,
       items: pricedItems,
       orderType,
+      fulfilAt,
       ...fulfilment,
       pricing,
       paymentMethod,
@@ -248,6 +280,7 @@ const validators = {
     body('orderType').isIn(['dining', 'takeaway', 'delivery']).withMessage('Choose a valid order type'),
     body('paymentMethod').optional().isIn(['online', 'cash']).withMessage('Choose a valid payment method'),
     body('couponCode').optional({ values: 'falsy' }).isString().trim().isLength({ max: 24 }).withMessage('That coupon code isn’t valid'),
+    body('fulfilAt').optional({ values: 'falsy' }).isISO8601().withMessage('Pick a valid time for your order'),
   ],
 };
 

@@ -13,9 +13,13 @@
             <span class="adm-badge adm-badge--type" title="Cash order — collect on hand-over">cash</span>
           }
         </h1>
-        <p>{{ o.createdAt | date: 'EEEE, MMM d, y · h:mm a' }} · <span style="text-transform: capitalize">{{ o.orderType }}</span></p>
+        <p>
+          {{ o.createdAt | date: 'EEEE, MMM d, y · h:mm a' }} · <span style="text-transform: capitalize">{{ o.orderType }}</span>
+          @if (o.fulfilAt) { · <strong>⏰ scheduled {{ o.fulfilAt | date: 'EEE, MMM d · h:mm a' }}</strong> }
+        </p>
       </div>
-      <div class="adm-head__actions">
+      <div class="adm-head__actions no-print">
+        <button type="button" class="btn btn--ghost btn--sm" onclick="window.print()">Print</button>
         @if (nextStatus(); as next) {
           <button type="button" class="btn btn--primary btn--sm" [disabled]="busy()" (click)="advance()">
             {{ nextLabel[o.orderStatus] }}

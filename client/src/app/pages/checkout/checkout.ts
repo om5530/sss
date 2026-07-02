@@ -6,6 +6,7 @@ import { CartService } from '../../core/services/cart.service';
 import { AuthService } from '../../core/services/auth.service';
 import { OrderService } from '../../core/services/order.service';
 import { PaymentFlowService } from '../../core/services/payment-flow.service';
+import { ShopService } from '../../core/services/shop.service';
 import { ToastService } from '../../core/services/toast.service';
 import { CartPricing } from '../../core/models/cart.model';
 import { Address } from '../../core/models/user.model';
@@ -21,6 +22,7 @@ import { RevealOnScroll } from '../../shared/directives/reveal.directive';
 export class Checkout {
   protected cart = inject(CartService);
   protected auth = inject(AuthService);
+  protected shop = inject(ShopService);
   private orders = inject(OrderService);
   private payments = inject(PaymentFlowService);
   private router = inject(Router);
@@ -36,6 +38,16 @@ export class Checkout {
   protected readonly appliedCoupon = signal('');
   protected readonly couponError = signal('');
   protected readonly applyingCoupon = signal(false);
+
+  /** Timing: ASAP or a scheduled pre-order (min 45 min out, max 2 days). */
+  protected readonly timing = signal<'asap' | 'scheduled'>('asap');
+  protected scheduledFor = '';
+  /** datetime-local bounds, in the browser's local time. */
+  protected readonly minSchedule = toLocalInputValue(new Date(Date.now() + 45 * 60 * 1000));
+  protected readonly maxSchedule = toLocalInputValue(new Date(Date.now() + 48 * 60 * 60 * 1000));
+
+  /** When the ovens are off, ASAP is impossible — scheduling is the only path. */
+  protected readonly shopClosed = computed(() => this.shop.info()?.openNow === false);
 
   protected readonly types: { key: OrderType; label: string; hint: string }[] = [
     { key: 'dining', label: 'Dine-in', hint: 'Eat in the café' },
@@ -65,6 +77,12 @@ export class Checkout {
   );
 
   constructor() {
+    this.shop.load();
+    // Closed shop → scheduling is the only option; preselect it.
+    effect(() => {
+      if (this.shopClosed() && this.timing() === 'asap') this.timing.set('scheduled');
+    });
+
     const user = this.auth.user();
     if (user) {
       this.form.dining.customerName = user.name ?? '';
@@ -72,6 +90,13 @@ export class Checkout {
       this.form.takeaway.phone = user.phone ?? '';
       const def = (user.addresses ?? []).find((a) => a.isDefault) ?? user.addresses?.[0];
       if (def) this.applyAddress(def);
+    }
+
+    // QR table ordering: a table scanned on /menu?table=N preselects dine-in.
+    const table = sessionStorage.getItem('sss_table');
+    if (table) {
+      this.orderType.set('dining');
+      this.form.dining.tableNumber = table;
     }
 
     // Re-price whenever the order type, cart, or applied coupon changes.
@@ -139,6 +164,9 @@ export class Checkout {
 
   private validate(): string | null {
     const type = this.orderType();
+    if (this.timing() === 'scheduled' && !this.scheduledFor) {
+      return 'Pick a time for your pre-order (or switch back to “As soon as possible”).';
+    }
     if (type === 'delivery' && !this.auth.isAuthenticated()) {
       return 'Please sign in to place a delivery order.';
     }
@@ -178,6 +206,10 @@ export class Checkout {
       orderType: type,
       paymentMethod: method,
       couponCode: this.appliedCoupon() || undefined,
+      fulfilAt:
+        this.timing() === 'scheduled' && this.scheduledFor
+          ? new Date(this.scheduledFor).toISOString()
+          : undefined,
     };
     if (type === 'dining') payload.dining = this.form.dining;
     if (type === 'takeaway') payload.takeaway = this.form.takeaway;
@@ -229,4 +261,10 @@ export class Checkout {
     this.cart.clear();
     this.router.navigate(['/order-success', orderId]);
   }
+}
+
+/** Date → "yyyy-MM-ddTHH:mm" in the browser's local zone (datetime-local format). */
+function toLocalInputValue(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }

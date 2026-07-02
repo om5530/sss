@@ -64,6 +64,53 @@
                 </button>
               }
             </div>
+
+            <!-- Timing: ASAP vs scheduled pre-order -->
+            <div class="co-when">
+              @if (shopClosed()) {
+                <p class="co-when__closed" role="status">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  The ovens are off right now (open {{ shop.info()?.opensAt }}–{{ shop.info()?.closesAt }}) — schedule a pre-order below.
+                </p>
+              }
+              <div class="co-when__row" role="radiogroup" aria-label="When do you want it">
+                <button
+                  type="button"
+                  class="co-when__chip"
+                  [class.is-active]="timing() === 'asap'"
+                  [disabled]="shopClosed()"
+                  role="radio"
+                  [attr.aria-checked]="timing() === 'asap'"
+                  (click)="timing.set('asap')"
+                >
+                  As soon as possible
+                </button>
+                <button
+                  type="button"
+                  class="co-when__chip"
+                  [class.is-active]="timing() === 'scheduled'"
+                  role="radio"
+                  [attr.aria-checked]="timing() === 'scheduled'"
+                  (click)="timing.set('scheduled')"
+                >
+                  Schedule for later
+                </button>
+                @if (timing() === 'scheduled') {
+                  <input
+                    class="input co-when__time"
+                    type="datetime-local"
+                    [(ngModel)]="scheduledFor"
+                    name="scheduledFor"
+                    [min]="minSchedule"
+                    [max]="maxSchedule"
+                    aria-label="Scheduled time"
+                  />
+                }
+              </div>
+              @if (timing() === 'scheduled') {
+                <p class="co-when__hint muted">At least 45 minutes from now, up to 2 days ahead, within opening hours ({{ shop.info()?.opensAt || '8:00' }}–{{ shop.info()?.closesAt || '22:00' }}).</p>
+              }
+            </div>
           </section>
 
           <!-- 02 · Your details -->

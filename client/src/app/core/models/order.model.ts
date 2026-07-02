@@ -7,7 +7,8 @@ export type PaymentMethod = 'online' | 'cash';
 export const ORDER_FLOW: OrderStatus[] = ['placed', 'confirmed', 'preparing', 'ready', 'completed'];
 
 export interface OrderItem {
-  product: string;
+  /** Product id, or a populated ref ({name,image,slug}) on single-order fetches. */
+  product: string | { name?: string; image?: string; slug?: string } | null;
   name: string;
   price: number;
   quantity: number;
@@ -39,6 +40,8 @@ export interface Order {
   takeaway?: { customerName?: string; phone?: string };
   delivery?: { fullAddress?: string; area?: string; city?: string; pincode?: string; landmark?: string };
   pricing: OrderPricing;
+  /** Scheduled pre-order time (ISO); null/absent = ASAP. */
+  fulfilAt?: string | null;
   /** Optional: orders created before cash support have no paymentMethod. */
   paymentMethod?: PaymentMethod;
   paymentStatus: PaymentStatus;
@@ -52,6 +55,8 @@ export interface CreateOrderPayload {
   orderType: OrderType;
   paymentMethod?: PaymentMethod;
   couponCode?: string;
+  /** ISO time for a scheduled pre-order; omit for ASAP. */
+  fulfilAt?: string;
   dining?: { tableNumber?: string; customerName?: string };
   takeaway?: { customerName?: string; phone?: string };
   delivery?: { fullAddress?: string; area?: string; city?: string; pincode?: string; landmark?: string };

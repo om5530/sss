@@ -2,6 +2,7 @@ import { Component, OnDestroy, afterNextRender, computed, inject, signal } from 
 import { ActivatedRoute } from '@angular/router';
 import { ProductService } from '../../core/services/product.service';
 import { MotionService } from '../../core/services/motion.service';
+import { ShopService } from '../../core/services/shop.service';
 import { Dietary, Menu as MenuModel, Product } from '../../core/models/product.model';
 import { ProductCard } from '../../shared/components/product-card/product-card';
 import { RevealOnScroll } from '../../shared/directives/reveal.directive';
@@ -30,6 +31,7 @@ const GROUP_ORDER: { key: string; label: string }[] = [
 export class Menu implements OnDestroy {
   private products = inject(ProductService);
   private motion = inject(MotionService);
+  protected shop = inject(ShopService);
 
   protected readonly loading = signal(true);
   protected readonly error = signal(false);
@@ -93,6 +95,12 @@ export class Menu implements OnDestroy {
   private scrollScheduled = false;
 
   constructor() {
+    this.shop.load();
+
+    // QR table ordering: /menu?table=12 remembers the table for checkout.
+    const table = this.route.snapshot.queryParamMap.get('table');
+    if (table) sessionStorage.setItem('sss_table', table.slice(0, 10));
+
     this.products.getMenu().subscribe({
       next: (menu) => {
         this.menu.set(menu);

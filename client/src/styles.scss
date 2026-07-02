@@ -786,3 +786,23 @@ button { font-family: inherit; cursor: pointer; }
 ::-webkit-scrollbar-track { background: var(--cream-2); }
 ::-webkit-scrollbar-thumb { background: var(--caramel); border-radius: 999px; border: 2px solid var(--cream-2); }
 ::-webkit-scrollbar-thumb:hover { background: var(--cocoa); }
+
+/* ============ Print (KOT / receipts / prep sheet / QR sheets) ============ */
+
+@media print {
+  /* Chrome we never want on paper. */
+  .adm-side,
+  .nav,
+  .footer,
+  .totop,
+  .toast-container,
+  .no-print {
+    display: none !important;
+  }
+  .adm-shell { display: block; }
+  .adm-main { padding: 0 !important; }
+  body { background: #fff; }
+  .adm-card,
+  .adm-table-wrap { box-shadow: none !important; border-color: #ccc !important; }
+  a { text-decoration: none; color: inherit; }
+}

@@ -37,6 +37,8 @@ const orderSchema = new mongoose.Schema(
       validate: { validator: (v) => Array.isArray(v) && v.length > 0, message: 'Order must contain at least one item' },
     },
     orderType: { type: String, enum: ['dining', 'takeaway', 'delivery'], required: true },
+    // Scheduled pre-order time; null = ASAP. Validated against opening hours.
+    fulfilAt: { type: Date, default: null, index: true },
     dining: { tableNumber: String, customerName: String },
     takeaway: { customerName: String, phone: String },
     delivery: { fullAddress: String, area: String, city: String, pincode: String, landmark: String },

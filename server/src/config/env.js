@@ -63,6 +63,12 @@ const env = {
     deliveryFee: toNumber(process.env.DELIVERY_FEE, 40),
     currency: (process.env.CURRENCY || 'inr').toLowerCase(),
   },
+  shop: {
+    // Daily opening window in IST ("HH:MM" 24h). "00:00"–"24:00" = always open;
+    // opens === closes = always closed (useful for holidays/tests).
+    opensAt: process.env.SHOP_OPENS || '08:00',
+    closesAt: process.env.SHOP_CLOSES || '22:00',
+  },
 };
 
 module.exports = env;

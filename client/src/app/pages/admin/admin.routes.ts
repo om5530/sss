@@ -8,6 +8,8 @@ export const ADMIN_ROUTES: Routes = [
     children: [
       { path: '', loadComponent: () => import('./dashboard/admin-dashboard').then((m) => m.AdminDashboard), title: 'Dashboard — SSS Admin' },
       { path: 'queue', loadComponent: () => import('./queue/admin-queue').then((m) => m.AdminQueue), title: 'Live queue — SSS Admin' },
+      { path: 'prep', loadComponent: () => import('./prep/admin-prep').then((m) => m.AdminPrep), title: 'Prep sheet — SSS Admin' },
+      { path: 'qr', loadComponent: () => import('./qr/admin-qr').then((m) => m.AdminQr), title: 'Table QRs — SSS Admin' },
       { path: 'orders', loadComponent: () => import('./orders/admin-orders').then((m) => m.AdminOrders), title: 'Orders — SSS Admin' },
       { path: 'orders/:id', loadComponent: () => import('./order-detail/admin-order-detail').then((m) => m.AdminOrderDetail), title: 'Order — SSS Admin' },
       { path: 'products', loadComponent: () => import('./products/admin-products').then((m) => m.AdminProducts), title: 'Products — SSS Admin' },
