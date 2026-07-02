@@ -13,10 +13,16 @@ const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
 async function resolveCoupon(couponCode, subtotal) {
   const code = String(couponCode).trim().toUpperCase();
   const coupon = await Coupon.findOne({ code });
-  if (!coupon || !coupon.active) throw ApiError.badRequest('That coupon code isn’t valid');
+
+  // One generic message for "no such code" / disabled / not started — anything
+  // more specific confirms which codes exist to an enumerator. Expired /
+  // redeemed / min-subtotal messages stay helpful: they only reach customers
+  // holding a genuinely issued code (and /cart/price is rate-limited).
+  const invalid = () => ApiError.badRequest('That coupon code isn’t valid');
+  if (!coupon || !coupon.active) throw invalid();
 
   const now = new Date();
-  if (coupon.startsAt && now < coupon.startsAt) throw ApiError.badRequest('That coupon isn’t active yet');
+  if (coupon.startsAt && now < coupon.startsAt) throw invalid();
   if (coupon.expiresAt && now > coupon.expiresAt) throw ApiError.badRequest('That coupon has expired');
   if (coupon.usageLimit != null && coupon.usedCount >= coupon.usageLimit) {
     throw ApiError.badRequest('That coupon has been fully redeemed');

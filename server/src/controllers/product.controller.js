@@ -60,16 +60,32 @@ function hasPurchased(userId, productId) {
   return Order.exists({ user: userId, orderStatus: 'completed', 'items.product': productId });
 }
 
-/** Recomputes the denormalised rating stats after any review write. */
-async function refreshRatingStats(productId) {
-  const [stats] = await Review.aggregate([
-    { $match: { product: productId } },
-    { $group: { _id: null, avg: { $avg: '$rating' }, count: { $sum: 1 } } },
-  ]);
-  await Product.updateOne(
-    { _id: productId },
-    { $set: { ratingAvg: stats ? Math.round(stats.avg * 10) / 10 : 0, ratingCount: stats ? stats.count : 0 } },
+/**
+ * Recomputes the denormalised rating stats after any review write.
+ * Serialised per product (in-process) so two concurrent review writes can't
+ * interleave their read-recompute-write cycles and land a stale count.
+ */
+const statsQueue = new Map();
+function refreshRatingStats(productId) {
+  const key = String(productId);
+  const run = async () => {
+    const [stats] = await Review.aggregate([
+      { $match: { product: productId } },
+      { $group: { _id: null, avg: { $avg: '$rating' }, count: { $sum: 1 } } },
+    ]);
+    await Product.updateOne(
+      { _id: productId },
+      { $set: { ratingAvg: stats ? Math.round(stats.avg * 10) / 10 : 0, ratingCount: stats ? stats.count : 0 } },
+    );
+  };
+  const chained = (statsQueue.get(key) || Promise.resolve()).then(run, run);
+  statsQueue.set(
+    key,
+    chained.finally(() => {
+      if (statsQueue.get(key) === chained) statsQueue.delete(key);
+    }),
   );
+  return chained;
 }
 
 // Public list; when signed in it also says whether YOU can review and what you

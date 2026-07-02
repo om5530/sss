@@ -169,6 +169,84 @@ test('orders decrement tracked stock, oversell is rejected, cancel restocks', as
   assert.equal((await Product.findById(coffeeProduct._id)).stockCount, null);
 });
 
+test('coupon slots: reserved atomically at order time, released on cancellation', async () => {
+  await Coupon.create({ code: 'LIMIT1', type: 'flat', value: 10, usageLimit: 1 });
+
+  // First order consumes the only slot.
+  const res1 = await json('POST', '/orders', {
+    items: [{ productId: coffeeProduct._id, quantity: 1 }],
+    orderType: 'takeaway', paymentMethod: 'cash', couponCode: 'LIMIT1',
+    takeaway: { customerName: 'Coupon One', phone: '+919999000010' },
+  });
+  assert.equal(res1.status, 201);
+  const order1 = (await res1.json()).order;
+  assert.equal(order1.pricing.discount, 10);
+  assert.equal((await Coupon.findOne({ code: 'LIMIT1' })).usedCount, 1);
+
+  // Second use is rejected — the limit is enforced at reservation time.
+  const res2 = await json('POST', '/orders', {
+    items: [{ productId: coffeeProduct._id, quantity: 1 }],
+    orderType: 'takeaway', paymentMethod: 'cash', couponCode: 'LIMIT1',
+    takeaway: { customerName: 'Coupon Two', phone: '+919999000011' },
+  });
+  assert.equal(res2.status, 400);
+
+  // Cancelling the first order hands the slot back.
+  const cancel = await json('PATCH', `/admin/orders/${order1._id}/status`, { status: 'cancelled', note: 'test' }, adminToken);
+  assert.equal(cancel.status, 200);
+  assert.equal((await Coupon.findOne({ code: 'LIMIT1' })).usedCount, 0);
+
+  const res3 = await json('POST', '/cart/price', {
+    items: [{ productId: coffeeProduct._id, quantity: 1 }],
+    orderType: 'takeaway', couponCode: 'LIMIT1',
+  });
+  assert.equal(res3.status, 200);
+});
+
+test('cancel never restocks lines that did not claim stock (tracking enabled later)', async () => {
+  // Ordered while untracked…
+  const res = await json('POST', '/orders', {
+    items: [{ productId: coffeeProduct._id, quantity: 2 }],
+    orderType: 'takeaway', paymentMethod: 'cash',
+    takeaway: { customerName: 'Phantom', phone: '+919999000012' },
+  });
+  assert.equal(res.status, 201);
+  const order = (await res.json()).order;
+  assert.equal(order.items[0].stockClaimed, false);
+
+  // …then the admin starts tracking with a real count…
+  await Product.updateOne({ _id: coffeeProduct._id }, { stockCount: 10 });
+
+  // …and a cancellation must NOT invent 2 phantom units.
+  const cancel = await json('PATCH', `/admin/orders/${order._id}/status`, { status: 'cancelled', note: 'test' }, adminToken);
+  assert.equal(cancel.status, 200);
+  assert.equal((await Product.findById(coffeeProduct._id)).stockCount, 10);
+
+  // Reset for later tests.
+  await Product.updateOne({ _id: coffeeProduct._id }, { stockCount: null });
+});
+
+test('cancel does not resurrect a product the admin hid while stock remained', async () => {
+  const hidden = await Product.create({
+    name: 'Hidden Tart', slug: 'hidden-tart', group: 'bakery', category: 'Tarts',
+    price: 80, available: true, stockCount: 10,
+  });
+  const res = await json('POST', '/orders', {
+    items: [{ productId: hidden._id, quantity: 1 }],
+    orderType: 'takeaway', paymentMethod: 'cash',
+    takeaway: { customerName: 'Hider', phone: '+919999000013' },
+  });
+  const order = (await res.json()).order;
+
+  // Admin hides it manually with stock still on hand.
+  await Product.updateOne({ _id: hidden._id }, { available: false });
+
+  await json('PATCH', `/admin/orders/${order._id}/status`, { status: 'cancelled', note: 'test' }, adminToken);
+  const after = await Product.findById(hidden._id);
+  assert.equal(after.stockCount, 10); // restocked
+  assert.equal(after.available, false); // but stays hidden — the admin said so
+});
+
 /* ---------------- Order lifecycle ---------------- */
 
 test('lifecycle: only legal forward moves; cancellation needs a reason', async () => {

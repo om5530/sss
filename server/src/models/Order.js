@@ -9,6 +9,10 @@ const orderItemSchema = new mongoose.Schema(
     price: { type: Number, required: true, min: 0 },
     quantity: { type: Number, required: true, min: 1 },
     lineTotal: { type: Number, required: true, min: 0 },
+    // True when this line actually decremented tracked stock at order time.
+    // Cancellation restocks EXACTLY these lines — a product that was untracked
+    // when ordered but tracked later must not gain phantom units.
+    stockClaimed: { type: Boolean, default: false },
   },
   { _id: false },
 );

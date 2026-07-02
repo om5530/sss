@@ -48,15 +48,23 @@ async function claimStock(lineItems) {
 /** Returns claimed stock (order failed to persist, or was cancelled). */
 async function releaseStock(lineItems) {
   for (const item of lineItems) {
-    await Product.updateOne(
+    // Read the BEFORE state so we only undo what the sell-out rule itself did:
+    // a product an admin hid by hand (stock still > 0) must stay hidden.
+    const prev = await Product.findOneAndUpdate(
       { _id: item.product, stockCount: { $ne: null } },
       { $inc: { stockCount: item.quantity } },
-    ).catch((err) => console.error('[stock] release failed:', err.message));
-    // Back in stock → tracked products become orderable again.
-    await Product.updateOne(
-      { _id: item.product, stockCount: { $gt: 0 }, archived: { $ne: true } },
-      { $set: { available: true } },
-    ).catch(() => {});
+    )
+      .select('stockCount archived')
+      .catch((err) => {
+        console.error('[stock] release failed:', err.message);
+        return null;
+      });
+    if (prev && prev.stockCount <= 0 && !prev.archived) {
+      await Product.updateOne(
+        { _id: item.product, stockCount: { $gt: 0 } },
+        { $set: { available: true } },
+      ).catch(() => {});
+    }
   }
 }
 
@@ -102,6 +110,26 @@ const createOrder = asyncHandler(async (req, res) => {
 
   // Claim stock BEFORE persisting the order; roll back if anything fails.
   const claimed = await claimStock(pricedItems);
+  // Record which lines actually decremented stock — cancellation restocks
+  // exactly these, even if tracking is turned on/off for a product later.
+  const claimedSet = new Set(claimed);
+  for (const item of pricedItems) item.stockClaimed = claimedSet.has(item);
+
+  // Atomically reserve a coupon slot (guards the usageLimit against races).
+  // Cancellation returns the slot; refunds keep it (the promo was consumed).
+  if (coupon) {
+    const reserved = await Coupon.updateOne(
+      {
+        _id: coupon._id,
+        $or: [{ usageLimit: null }, { $expr: { $lt: ['$usedCount', '$usageLimit'] } }],
+      },
+      { $inc: { usedCount: 1 } },
+    );
+    if (reserved.modifiedCount === 0) {
+      await releaseStock(claimed);
+      throw ApiError.badRequest('That coupon has been fully redeemed');
+    }
+  }
 
   let order;
   try {
@@ -119,13 +147,10 @@ const createOrder = asyncHandler(async (req, res) => {
     });
   } catch (err) {
     await releaseStock(claimed);
+    if (coupon) {
+      await Coupon.updateOne({ _id: coupon._id, usedCount: { $gt: 0 } }, { $inc: { usedCount: -1 } }).catch(() => {});
+    }
     throw err;
-  }
-
-  // Count the redemption once the order actually exists. (Small window where a
-  // heavily-raced usageLimit could over-redeem by a few — acceptable for promos.)
-  if (coupon) {
-    void Coupon.updateOne({ _id: coupon._id }, { $inc: { usedCount: 1 } }).catch(() => {});
   }
 
   emailForOrder(order).then((email) => notifyOrderPlaced(order, email)).catch(() => {});
@@ -185,8 +210,18 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   order.statusHistory.push({ status, at: new Date(), note });
   await order.save();
 
-  // A cancelled order hands its claimed stock back to the day's count.
-  if (status === 'cancelled') await releaseStock(order.items);
+  // A cancelled order hands back what it claimed: exactly the stock lines it
+  // decremented, and its coupon slot (an order can only be cancelled once —
+  // 'cancelled' is terminal — so this never double-releases).
+  if (status === 'cancelled') {
+    await releaseStock(order.items.filter((i) => i.stockClaimed));
+    if (order.pricing?.couponCode) {
+      await Coupon.updateOne(
+        { code: order.pricing.couponCode, usedCount: { $gt: 0 } },
+        { $inc: { usedCount: -1 } },
+      ).catch(() => {});
+    }
+  }
 
   audit(req, {
     action: status === 'cancelled' ? 'order.cancel' : 'order.status',

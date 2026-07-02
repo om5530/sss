@@ -3,7 +3,7 @@
 Everything the operator must provide/configure to take the platform live, plus the improvement roadmap.
 Env var names match `server/src/config/env.js`; client keys match `client/src/environments/environment.ts`.
 
-> **Progress (2026-07-02):** all four launch blockers are **DONE** — B1 (Razorpay online payments), B2 (cash/pay-at-counter), B3 (contact form), B4 (production hardening). To take real online payments, supply the Razorpay keys (A1 #5); everything else works cash-only today.
+> **Progress (2026-07-03):** all four launch blockers **and the roadmap batch are DONE** — image upload (B5), order emails (B6), custom-cake flow (B7), menu filters (B8), coupons (B9), stock tracking (B10), reviews (B11), SEO-lite (B12), PWA (B13), automated tests (B14, 13 passing), analytics hook (B15). Deferred with reasons: full SSR (B12b) and account linking (B16). What's left is **your credentials/content (Part A)** + importing the repo on Vercel.
 
 > The app boots with **zero** config in mock/dev mode (mock OTP, mock payments, local Mongo fallback).
 > In **production** (`NODE_ENV=production`) the server now refuses to start with insecure defaults (weak `JWT_SECRET`, missing `MONGODB_URI`, localhost `CLIENT_URL`, Stripe keys without a webhook secret) — but rotation of the leaked credential below is still on you.
@@ -90,15 +90,15 @@ Server service account → `server/.env` `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT
 
 ---
 
-## A3. Optional — only if the feature is wanted (each also needs code; see roadmap)
+## A3. Optional keys — the features are BUILT; adding a key switches them on
 
-| Item | For | How to get it |
-|------|-----|---------------|
-| **Email service** (Resend recommended) | Order confirmation emails (B6) + emailing contact enquiries to the shop (they already land in the admin **Enquiries** page; the hook point is marked in `contact.controller.js`) | resend.com → sign up → Domains → add domain + DNS records → API Keys → create key. Alt: Gmail app password + SMTP. |
-| **SMS provider** (MSG91 for India / Twilio) | Backend OTP without Firebase, order-status SMS | msg91.com → sign up → complete **DLT registration** (mandatory in India for transactional SMS) → authkey + template IDs. `deliverOtp()` in `otp.service.js` is a mock stub — real sending needs code either way. |
-| **Cloudinary** | Product image upload (B5) | cloudinary.com → free account → Dashboard → cloud name, API key, API secret. |
-| **Google Analytics 4** | Traffic insight (none exists today) | analytics.google.com → create property → Web stream → copy `G-XXXX` ID. |
-| **Google Maps embed** | Map on the contact page (none exists today) | Google Maps → search the shop → Share → Embed a map → copy iframe URL. Free, no API key. |
+| Item | Activates | How to get it |
+|------|-----------|---------------|
+| **Resend** → `RESEND_API_KEY`, `NOTIFY_FROM`, `SHOP_EMAIL` | All order/enquiry/cake emails (B6). Without a key they log to the server console. | resend.com → sign up → Domains → add domain + DNS records → API Keys → create key. `NOTIFY_FROM` must be a verified sender; `SHOP_EMAIL` is where shop alerts go. |
+| **Cloudinary** → `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | CDN storage for uploaded photos (B5). **Required on Vercel** — the serverless filesystem is read-only, so the local-disk fallback only works in dev/VPS. | cloudinary.com → free account → Dashboard → cloud name, API key, API secret. |
+| **GA4** → `gaMeasurementId` in `client/src/environments/environment*.ts` | Traffic analytics with SPA page views (B15). Blank = no tracking script at all. | analytics.google.com → create property → Web stream → copy `G-XXXX` ID. |
+| **Google Maps embed** | Map card on the contact page — already written, commented next to the REAL CLIENT DATA block. | Nothing to get — uncomment at launch (keyless embed). |
+| **SMS provider** (MSG91 / Twilio) | Backend OTP without Firebase, order-status SMS. *Still needs code* — `deliverOtp()` in `otp.service.js` is a mock stub. | msg91.com → sign up → **DLT registration** (mandatory in India) → authkey + template IDs. |
 
 ---
 
@@ -111,24 +111,24 @@ Server service account → `server/.env` `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT
 3. [x] ~~**Wire the contact form**~~ ✅ **DONE (2026-07-02)** — `POST /api/contact` (validated, rate-limited 5/15min/IP) stores enquiries; new admin **Enquiries** page with new/read/closed triage. Email notification to the shop still needs the optional email service (A3) — enquiries land in the admin panel either way.
 4. [x] ~~**Production hardening**~~ ✅ **DONE (2026-07-02)** — production refuses to boot on weak/dev `JWT_SECRET`, missing `MONGODB_URI`, localhost `CLIENT_URL`, or Stripe keys without a webhook secret; `environment.prod.ts` + `fileReplacements` added; rate limits on OTP verify / order create / payment endpoints / contact; `trust proxy` set in prod.
 
-### 🟡 High value next
+### 🟡 High value next — ✅ ALL DONE (2026-07-03)
 
-5. **Product image upload** (Cloudinary + admin product form) — replaces rot-prone stock hotlinks; the admin form already has a URL field noting "direct upload is on the roadmap". Pairs with real product photos (A2).
-6. **Order notifications** — email (and/or WhatsApp/SMS) on placed / confirmed / ready / cancelled. Customers currently must poll the orders page; `statusHistory` is already tracked so the hooks are easy.
-7. **Custom cake order flow** — the contact page invites "custom cake briefs" but there's no structured flow: brief form (occasion, size, reference photo, date needed) + admin review + advance payment. Big differentiator for a bakery.
-8. **Storefront filters** — veg/egg-less, price, category chips. The backend `/products` endpoint already supports filtering; the menu UI only does client-side name search.
-9. **Coupons / promo codes** — no discount concept exists in `pricing.service.js`; first-order and festival promos are standard for this segment.
-10. **Inventory / stock tracking** — only a manual `available` toggle exists; daily bake counts with auto sold-out prevents overselling.
+5. [x] **Product image upload** — "Upload photo" button in the admin product form (≤5 MB, JPEG/PNG/WebP). Stores to **Cloudinary when keys are set** (required on Vercel — the function filesystem is read-only), local `server/uploads` otherwise (dev).
+6. [x] **Order notifications** — email via **Resend** (key in A3; logs to console without it): order placed (customer + shop), payment confirmed, ready/completed/cancelled, refunds, new enquiries, new cake requests. All user input HTML-escaped.
+7. [x] **Custom cake order flow** — public `/custom-cakes` brief (occasion, servings, flavour, date, reference-photo upload) + admin **Cake requests** page with quote-and-status triage (new → quoted → accepted/declined → closed) + shop email alert.
+8. [x] **Storefront filters** — dietary chips (Everything / Veg / Contains egg / Non-veg) on the menu, combined with live search.
+9. [x] **Coupons** — percent/flat codes with min-subtotal, max-discount, expiry and usage limits; admin **Coupons** page; coupon box in checkout; discount rows everywhere incl. emails. Slots are reserved atomically at order time and returned on cancellation (refunds keep the redemption). Note: an abandoned unpaid order holds its slot until staff cancel it.
+10. [x] **Stock tracking** — optional per-product daily count (blank = untracked): atomic claim on order, oversell → friendly 409, auto-hide at 0, cancel restocks exactly what was claimed, "Only X left" chips on cards.
 
-### 🟢 Growth & polish
+### 🟢 Growth & polish — ✅ DONE except two deliberate deferrals
 
-11. **Reviews & ratings** — no social proof anywhere today.
-12. **SEO** — SSR/hydration + meta/OG service + sitemap + LocalBusiness/Product schema. A pure SPA hurts Google ranking and WhatsApp link previews (crucial for a local bakery).
-13. **PWA** — installable app, offline menu, web push (pairs with B6).
-14. **Automated tests** — zero specs exist; `mongodb-memory-server` is already a devDependency. Priority targets: pricing, auth, order lifecycle, refunds.
-15. **Analytics** — GA4 or Plausible; no tracking today.
-16. **Account linking / recovery** — phone and Google identities are separate accounts; losing a phone number = losing order history.
-17. **Small fixes** — footer year hardcoded to `2026` (`footer.ts`); map embed on the contact page; `STRIPE_PUBLISHABLE_KEY` is loaded server-side but never served to the client.
+11. [x] **Reviews & ratings** — verified-purchase only (completed order containing the item), one per customer per product (editable), stars on cards + product page, denormalised `ratingAvg/ratingCount`.
+12. [x] **SEO-lite** — per-route meta descriptions + OpenGraph/canonical (product pages use the real photo), Bakery JSON-LD, `robots.txt`, `sitemap.xml`. ⏸️ **Full SSR/hydration deferred**: it changes the Vercel build (Angular SSR adapter) and is best done as its own project once traffic justifies it — the meta/OG layer already fixes link previews.
+13. [x] **PWA** — installable, offline app shell, cached menu (`freshness`, 1h), placeholder brand icons in `client/public/icons/` (swap for real logo renders when you have them).
+14. [x] **Automated tests** — `npm test` in `server/`: 13 integration+unit tests over pricing, coupons (incl. reservation/release), stock (incl. phantom-restock and hidden-product guards), lifecycle, cash-settle guards, reviews gate, contact/cake validation, Razorpay signatures.
+15. [x] **Analytics** — GA4 wired behind `gaMeasurementId` in the environment files (blank = fully disabled); SPA page views tracked on navigation.
+16. ⏸️ **Account linking / recovery — DEFERRED**: merging phone+Google identities needs product decisions (what proves ownership? what happens to two order histories?) — bring it back post-launch with real user feedback.
+17. [x] **Small fixes** — footer year now dynamic; map embed ready (commented with the REAL CLIENT DATA block on the contact page); `STRIPE_PUBLISHABLE_KEY` note is moot now that Razorpay is the live rail.
 
 ---
 

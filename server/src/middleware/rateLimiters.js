@@ -55,4 +55,11 @@ module.exports = {
     max: 10,
     message: 'Too many reviews — please slow down.',
   }),
+  // Generous for real checkout (re-prices on every cart/type/coupon change)
+  // while still shutting down coupon-code brute forcing.
+  pricingLimiter: limiter({
+    windowMs: 15 * 60 * 1000,
+    max: 120,
+    message: 'Too many requests — please slow down.',
+  }),
 };

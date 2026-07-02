@@ -43,6 +43,11 @@ async function sendEmail({ to, subject, html }) {
 
 /* ---------------- Templates (simple, inline, email-client-safe) ---------------- */
 
+// Everything user-typed gets escaped before it reaches an email body — names,
+// messages, cake briefs and even item names are attacker-controlled HTML sinks.
+const esc = (v) =>
+  String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
 const wrap = (title, bodyHtml) => `
   <div style="font-family: Arial, Helvetica, sans-serif; max-width: 560px; margin: 0 auto; color: #3a2a20;">
     <h2 style="color: #7a4a21; margin-bottom: 4px;">${BRAND}</h2>
@@ -56,10 +61,10 @@ const itemsTable = (order) => `
     ${order.items
       .map(
         (i) =>
-          `<tr><td style="padding: 4px 0;">${i.quantity}× ${i.name}</td><td style="text-align: right;">₹${i.lineTotal.toFixed(2)}</td></tr>`,
+          `<tr><td style="padding: 4px 0;">${i.quantity}× ${esc(i.name)}</td><td style="text-align: right;">₹${i.lineTotal.toFixed(2)}</td></tr>`,
       )
       .join('')}
-    ${order.pricing.discount ? `<tr><td style="padding: 4px 0;">Discount${order.pricing.couponCode ? ` (${order.pricing.couponCode})` : ''}</td><td style="text-align: right;">−₹${order.pricing.discount.toFixed(2)}</td></tr>` : ''}
+    ${order.pricing.discount ? `<tr><td style="padding: 4px 0;">Discount${order.pricing.couponCode ? ` (${esc(order.pricing.couponCode)})` : ''}</td><td style="text-align: right;">−₹${order.pricing.discount.toFixed(2)}</td></tr>` : ''}
     <tr><td style="padding: 8px 0; font-weight: bold; border-top: 1px solid #e8ddd2;">Total</td><td style="text-align: right; font-weight: bold; border-top: 1px solid #e8ddd2;">₹${order.pricing.total.toFixed(2)}</td></tr>
   </table>`;
 
@@ -109,7 +114,7 @@ function notifyEnquiry(message) {
   void sendEmail({
     to: env.notify.shopEmail,
     subject: `New enquiry from ${message.name}`,
-    html: wrap('New enquiry', `<p><strong>${message.name}</strong> &lt;${message.email}&gt;</p><p style="white-space: pre-line;">${message.message}</p>`),
+    html: wrap('New enquiry', `<p><strong>${esc(message.name)}</strong> &lt;${esc(message.email)}&gt;</p><p style="white-space: pre-line;">${esc(message.message)}</p>`),
   });
 }
 
@@ -120,11 +125,11 @@ function notifyCakeRequest(request) {
     subject: `Custom cake request — ${request.occasion} on ${request.dateNeeded ? new Date(request.dateNeeded).toDateString() : 'TBD'}`,
     html: wrap(
       'Custom cake request',
-      `<p><strong>${request.name}</strong> · ${request.phone}${request.email ? ` · ${request.email}` : ''}</p>
-       <p>${request.occasion} · serves ~${request.servings} · ${request.flavour}</p>
-       ${request.messageOnCake ? `<p>On the cake: “${request.messageOnCake}”</p>` : ''}
-       <p style="white-space: pre-line;">${request.details || ''}</p>
-       ${request.referenceImage ? `<p>Reference: ${request.referenceImage}</p>` : ''}`,
+      `<p><strong>${esc(request.name)}</strong> · ${esc(request.phone)}${request.email ? ` · ${esc(request.email)}` : ''}</p>
+       <p>${esc(request.occasion)} · serves ~${esc(request.servings)} · ${esc(request.flavour)}</p>
+       ${request.messageOnCake ? `<p>On the cake: “${esc(request.messageOnCake)}”</p>` : ''}
+       <p style="white-space: pre-line;">${esc(request.details || '')}</p>
+       ${request.referenceImage ? `<p>Reference: ${esc(request.referenceImage)}</p>` : ''}`,
     ),
   });
 }
