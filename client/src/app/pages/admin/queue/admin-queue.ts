@@ -118,10 +118,11 @@ export class AdminQueue {
   }
 
   isLate(order: AdminOrder): boolean {
-    return (
-      (order.orderStatus === 'placed' || order.orderStatus === 'confirmed') &&
-      elapsedMinutes(order.createdAt) >= LATE_MINUTES
-    );
+    if (order.orderStatus !== 'placed' && order.orderStatus !== 'confirmed') return false;
+    // Scheduled pre-orders only run late once their promised time arrives —
+    // creation age means nothing for tomorrow's pickup.
+    if (order.fulfilAt) return Date.now() >= new Date(order.fulfilAt).getTime();
+    return elapsedMinutes(order.createdAt) >= LATE_MINUTES;
   }
 
   /** "6:30 pm" today, or "Sat 6:30 pm" for another day. */

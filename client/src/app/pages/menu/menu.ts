@@ -98,8 +98,11 @@ export class Menu implements OnDestroy {
     this.shop.load();
 
     // QR table ordering: /menu?table=12 remembers the table for checkout.
+    // A normal menu visit clears it — a QR scanned last week must not force
+    // dine-in on someone browsing from home today.
     const table = this.route.snapshot.queryParamMap.get('table');
     if (table) sessionStorage.setItem('sss_table', table.slice(0, 10));
+    else sessionStorage.removeItem('sss_table');
 
     this.products.getMenu().subscribe({
       next: (menu) => {

@@ -41,10 +41,10 @@ export class Checkout {
 
   /** Timing: ASAP or a scheduled pre-order (min 45 min out, max 2 days). */
   protected readonly timing = signal<'asap' | 'scheduled'>('asap');
+  /** Entered and validated as IST wall-clock — the bakery's time, not the browser's. */
   protected scheduledFor = '';
-  /** datetime-local bounds, in the browser's local time. */
-  protected readonly minSchedule = toLocalInputValue(new Date(Date.now() + 45 * 60 * 1000));
-  protected readonly maxSchedule = toLocalInputValue(new Date(Date.now() + 48 * 60 * 60 * 1000));
+  protected readonly minSchedule = toIstInputValue(new Date(Date.now() + 45 * 60 * 1000));
+  protected readonly maxSchedule = toIstInputValue(new Date(Date.now() + 48 * 60 * 60 * 1000));
 
   /** When the ovens are off, ASAP is impossible — scheduling is the only path. */
   protected readonly shopClosed = computed(() => this.shop.info()?.openNow === false);
@@ -208,7 +208,7 @@ export class Checkout {
       couponCode: this.appliedCoupon() || undefined,
       fulfilAt:
         this.timing() === 'scheduled' && this.scheduledFor
-          ? new Date(this.scheduledFor).toISOString()
+          ? istInputToIso(this.scheduledFor)
           : undefined,
     };
     if (type === 'dining') payload.dining = this.form.dining;
@@ -259,12 +259,26 @@ export class Checkout {
   private finish(orderId: string) {
     this.placing.set(false);
     this.cart.clear();
+    // The table QR served its purpose — don't carry it into future checkouts.
+    sessionStorage.removeItem('sss_table');
     this.router.navigate(['/order-success', orderId]);
   }
 }
 
-/** Date → "yyyy-MM-ddTHH:mm" in the browser's local zone (datetime-local format). */
-function toLocalInputValue(d: Date): string {
+/** IST offset — the picker works in the bakery's clock, not the browser's. */
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+
+/** Date → "yyyy-MM-ddTHH:mm" expressed as IST wall-clock (datetime-local format). */
+function toIstInputValue(d: Date): string {
+  const ist = new Date(d.getTime() + IST_OFFSET_MS);
   const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${ist.getUTCFullYear()}-${pad(ist.getUTCMonth() + 1)}-${pad(ist.getUTCDate())}T${pad(ist.getUTCHours())}:${pad(ist.getUTCMinutes())}`;
+}
+
+/** "yyyy-MM-ddTHH:mm" IST wall-clock → ISO instant. */
+function istInputToIso(value: string): string {
+  const [date, time] = value.split('T');
+  const [y, mo, d] = date.split('-').map(Number);
+  const [h, mi] = time.split(':').map(Number);
+  return new Date(Date.UTC(y, mo - 1, d, h, mi) - IST_OFFSET_MS).toISOString();
 }

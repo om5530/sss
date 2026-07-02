@@ -27,6 +27,9 @@ function windowMinutes() {
 function isOpenAt(date = new Date()) {
   const { open, close } = windowMinutes();
   const mins = istMinutes(date);
+  // Overnight window (e.g. 20:00–01:00) wraps past midnight. opens === closes
+  // stays "always closed" because the strict < never matches.
+  if (close < open) return mins >= open || mins < close;
   return mins >= open && mins < close;
 }
 
