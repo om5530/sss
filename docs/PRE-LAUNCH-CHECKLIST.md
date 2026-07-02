@@ -126,7 +126,7 @@ Server service account → `server/.env` `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT
 
 11. [x] **Reviews & ratings** — verified-purchase only (completed order containing the item), one per customer per product (editable), stars on cards + product page, denormalised `ratingAvg/ratingCount`.
 12. [x] **SEO-lite** — per-route meta descriptions + OpenGraph/canonical (product pages use the real photo), Bakery JSON-LD, `robots.txt`, `sitemap.xml`. ⏸️ **Full SSR/hydration deferred**: it changes the Vercel build (Angular SSR adapter) and is best done as its own project once traffic justifies it — the meta/OG layer already fixes link previews.
-13. [x] **PWA** — installable, offline app shell, cached menu (`freshness`, 1h), placeholder brand icons in `client/public/icons/` (swap for real logo renders when you have them).
+13. [x] **PWA** — installable, offline app shell, cached menu (`freshness`, 1h), brand icons in `client/public/icons/` rendered from the real logo (192/512 + dedicated maskable 512 + apple-touch 180 on cream), `favicon.ico` rebuilt to match.
 14. [x] **Automated tests** — `npm test` in `server/`: 13 integration+unit tests over pricing, coupons (incl. reservation/release), stock (incl. phantom-restock and hidden-product guards), lifecycle, cash-settle guards, reviews gate, contact/cake validation, Razorpay signatures.
 15. [x] **Analytics** — GA4 wired behind `gaMeasurementId` in the environment files (blank = fully disabled); SPA page views tracked on navigation.
 16. ⏸️ **Account linking / recovery — DEFERRED**: merging phone+Google identities needs product decisions (what proves ownership? what happens to two order histories?) — bring it back post-launch with real user feedback.

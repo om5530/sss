@@ -1,12 +1,30 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Sweet Savory Savor">
-  <!-- berry badge -->
-  <circle cx="50" cy="50" r="47" fill="#c2456e"/>
-  <circle cx="50" cy="50" r="41" fill="none" stroke="#fbf5ec" stroke-opacity="0.3" stroke-width="2"/>
-  <!-- S monogram swirl -->
-  <path d="M63 37 C63 29.5 53 27 46.5 31.5 C39 36.5 41.5 45.5 51 49.5 C60.5 53.5 62.5 62.5 54.5 67.5 C48 71.5 38.5 69.5 36.5 61.5"
-        fill="none" stroke="#fbf5ec" stroke-width="9" stroke-linecap="round"/>
-  <!-- sprinkles -->
-  <circle cx="31" cy="34" r="2.6" fill="#d8a24a"/>
-  <circle cx="70" cy="43" r="2.4" fill="#f4e9d8"/>
-  <circle cx="66" cy="67" r="2.6" fill="#f4e9d8"/>
+  <!-- Midnight Patisserie seal: scalloped chocolate-cookie badge, gold-piped S, berry garnish -->
+  <defs>
+    <radialGradient id="sss-esp" cx="36%" cy="28%" r="85%">
+      <stop offset="0%" stop-color="#42291a"/>
+      <stop offset="55%" stop-color="#26150c"/>
+      <stop offset="100%" stop-color="#140b06"/>
+    </radialGradient>
+    <linearGradient id="sss-rim" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f6d194"/>
+      <stop offset="45%" stop-color="#dfa757"/>
+      <stop offset="100%" stop-color="#b47f42"/>
+    </linearGradient>
+    <linearGradient id="sss-pipe" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f4c987"/>
+      <stop offset="100%" stop-color="#c98f4e"/>
+    </linearGradient>
+  </defs>
+  <!-- scalloped seal -->
+  <path d="M 50.00 6.00 A 11 11 0 0 1 69.09 10.36 A 11 11 0 0 1 84.40 22.57 A 11 11 0 0 1 92.90 40.21 A 11 11 0 0 1 92.90 59.79 A 11 11 0 0 1 84.40 77.43 A 11 11 0 0 1 69.09 89.64 A 11 11 0 0 1 50.00 94.00 A 11 11 0 0 1 30.91 89.64 A 11 11 0 0 1 15.60 77.43 A 11 11 0 0 1 7.10 59.79 A 11 11 0 0 1 7.10 40.21 A 11 11 0 0 1 15.60 22.57 A 11 11 0 0 1 30.91 10.36 A 11 11 0 0 1 50.00 6.00 Z"
+        fill="url(#sss-esp)" stroke="url(#sss-rim)" stroke-width="2"/>
+  <circle cx="50" cy="50" r="37.5" fill="none" stroke="url(#sss-rim)" stroke-opacity="0.4" stroke-width="1"/>
+  <!-- piped-gold S monogram -->
+  <path d="M62 35.5 C59.4 30 49.9 28.4 44.1 32.8 C38.3 37.2 40 44.7 48 48.1 C56.7 51.8 60.9 57 58.3 62.9 C55.4 69.6 44.3 70.1 39.6 63.3"
+        fill="none" stroke="url(#sss-pipe)" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="62" cy="35.5" r="5.2" fill="url(#sss-pipe)"/>
+  <circle cx="39.6" cy="63.3" r="5.2" fill="url(#sss-pipe)"/>
+  <!-- berry garnish -->
+  <circle cx="39.6" cy="63.3" r="2.7" fill="#d94f78"/>
 </svg>

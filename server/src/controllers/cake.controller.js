@@ -11,8 +11,12 @@ const submitRequest = asyncHandler(async (req, res) => {
   const { name, phone, email, occasion, servings, flavour, messageOnCake, dateNeeded, details, referenceImage } = req.body;
 
   const when = new Date(dateNeeded);
-  const minDate = new Date(Date.now() + 24 * 60 * 60 * 1000); // at least a day's notice
-  if (Number.isNaN(when.getTime()) || when < minDate) {
+  // At least a day's notice — compared at UTC calendar-day granularity, because
+  // the form submits a date-only string ("yyyy-mm-dd" parses as UTC midnight)
+  // and the picker's own minimum must be accepted, not rejected by hours.
+  const cutoff = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  cutoff.setUTCHours(0, 0, 0, 0);
+  if (Number.isNaN(when.getTime()) || when < cutoff) {
     throw ApiError.badRequest('Custom cakes need at least a day’s notice — pick a later date');
   }
 

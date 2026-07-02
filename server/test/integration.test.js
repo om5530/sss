@@ -362,4 +362,12 @@ test('contact and cake submissions validate their input', async () => {
     dateNeeded: new Date(Date.now() + 3 * 86400000).toISOString(),
   });
   assert.equal(okCake.status, 201);
+
+  // The form's own minimum — the date-only string for tomorrow (UTC) — must be
+  // accepted: date-only parses as UTC midnight and used to lose to the +24h instant.
+  const minCake = await json('POST', '/cake-requests', {
+    name: 'C', phone: '+911234567890', occasion: 'Birthday', servings: 10, flavour: 'Chocolate truffle',
+    dateNeeded: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+  });
+  assert.equal(minCake.status, 201);
 });
