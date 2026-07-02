@@ -1,0 +1,76 @@
+<div class="adm-page">
+  <div class="adm-head">
+    <div>
+      <span class="eyebrow eyebrow--bare">
+        {{ total() }} enquiries @if (newCount()) { · {{ newCount() }} new }
+      </span>
+      <h1>Enquiries</h1>
+    </div>
+  </div>
+
+  <div class="adm-filters">
+    <select class="select" [(ngModel)]="status" (ngModelChange)="page = 1; fetch()" aria-label="Filter by enquiry status">
+      <option value="">All statuses</option>
+      <option value="new">New</option>
+      <option value="read">Read</option>
+      <option value="closed">Closed</option>
+    </select>
+  </div>
+
+  @if (loading()) {
+    <div class="skeleton" style="height: 320px" aria-hidden="true"></div>
+  } @else {
+    <div class="adm-table-wrap">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>Received</th>
+            <th>From</th>
+            <th>Message</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (m of messages(); track m._id) {
+            <tr>
+              <td class="nowrap">{{ m.createdAt | date: 'MMM d, y · h:mm a' }}</td>
+              <td>
+                <strong>{{ m.name }}</strong>
+                <div><a href="mailto:{{ m.email }}" style="text-decoration: underline; font-size: 0.82rem">{{ m.email }}</a></div>
+              </td>
+              <td style="max-width: 420px; white-space: pre-line">{{ m.message }}</td>
+              <td><span [class]="badge(m)">{{ m.status }}</span></td>
+              <td class="nowrap" style="text-align: right">
+                @if (m.status === 'new') {
+                  <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === m._id" (click)="setStatus(m, 'read')">
+                    Mark read
+                  </button>
+                }
+                @if (m.status !== 'closed') {
+                  <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === m._id" (click)="setStatus(m, 'closed')">
+                    Close
+                  </button>
+                } @else {
+                  <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === m._id" (click)="setStatus(m, 'new')">
+                    Reopen
+                  </button>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="5"><div class="adm-empty">No enquiries yet — messages from the contact page land here.</div></td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (pages() > 1) {
+      <div class="adm-pagination">
+        <button type="button" class="btn btn--ghost btn--sm" [disabled]="page <= 1" (click)="goToPage(page - 1)">← Prev</button>
+        <span>Page {{ page }} of {{ pages() }}</span>
+        <button type="button" class="btn btn--ghost btn--sm" [disabled]="page >= pages()" (click)="goToPage(page + 1)">Next →</button>
+      </div>
+    }
+  }
+</div>

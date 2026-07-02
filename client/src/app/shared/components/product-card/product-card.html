@@ -1,0 +1,37 @@
+<article class="pcard" [class.pcard--out]="!product().available">
+  <a class="pcard__media" [routerLink]="['/product', product().slug]">
+    <img [src]="imageUrl()" [alt]="product().name" loading="lazy" (error)="onImageError($event)" />
+    @if (product().featured) { <span class="pcard__tag">★ Popular</span> }
+    @if (!product().available) { <span class="pcard__sold">Sold out</span> }
+    @if (lowStock()) { <span class="pcard__low">Only {{ product().stockCount }} left</span> }
+  </a>
+
+  <div class="pcard__body">
+    <div class="pcard__head">
+      <span class="diet" [class]="'diet--' + product().dietary" [title]="product().dietary"></span>
+      <a [routerLink]="['/product', product().slug]" class="pcard__name">{{ product().name }}</a>
+    </div>
+    @if (product().ratingCount) {
+      <span class="pcard__stars" [attr.aria-label]="product().ratingAvg + ' out of 5 stars, ' + product().ratingCount + ' reviews'">
+        <span aria-hidden="true">★</span> {{ product().ratingAvg }} <small>({{ product().ratingCount }})</small>
+      </span>
+    }
+    <p class="pcard__desc">{{ product().description }}</p>
+
+    <div class="pcard__foot">
+      <span class="pcard__price">₹{{ product().price }}</span>
+
+      @if (!product().available) {
+        <button class="btn btn--ghost" disabled>Unavailable</button>
+      } @else if (quantity() === 0) {
+        <button class="btn btn--primary pcard__add" (click)="add($event)">Add</button>
+      } @else {
+        <div class="stepper">
+          <button (click)="decrement($event)" aria-label="Decrease">−</button>
+          <span>{{ quantity() }}</span>
+          <button (click)="increment($event)" aria-label="Increase">+</button>
+        </div>
+      }
+    </div>
+  </div>
+</article>

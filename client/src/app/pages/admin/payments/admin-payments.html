@@ -1,0 +1,80 @@
+<div class="adm-page">
+  <div class="adm-head">
+    <div>
+      <span class="eyebrow eyebrow--bare">{{ total() }} payment records</span>
+      <h1>Payments</h1>
+    </div>
+  </div>
+
+  <div class="adm-filters">
+    <select class="select" [(ngModel)]="status" (ngModelChange)="page = 1; fetch()" aria-label="Filter by payment status">
+      <option value="">All statuses</option>
+      <option value="succeeded">Succeeded</option>
+      <option value="requires_payment">Requires payment</option>
+      <option value="processing">Processing</option>
+      <option value="failed">Failed</option>
+      <option value="refunded">Refunded</option>
+    </select>
+  </div>
+
+  @if (loading()) {
+    <div class="skeleton" style="height: 320px" aria-hidden="true"></div>
+  } @else {
+    <div class="adm-table-wrap">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>Created</th>
+            <th>Order</th>
+            <th>Customer</th>
+            <th class="num">Amount</th>
+            <th>Method</th>
+            <th>Status</th>
+            <th>Reference</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of payments(); track p._id) {
+            <tr>
+              <td class="nowrap">{{ p.createdAt | date: 'MMM d, y · h:mm a' }}</td>
+              <td class="nowrap">
+                @if (p.order) {
+                  <a [routerLink]="['/admin/orders', p.order._id]" style="text-decoration: underline">
+                    <strong>{{ p.order.orderNumber }}</strong>
+                  </a>
+                } @else {
+                  —
+                }
+              </td>
+              <td>{{ p.user?.name || p.user?.phone || 'Guest' }}</td>
+              <td class="num">₹{{ p.amount | number: '1.2-2' }}</td>
+              <td>{{ p.method || '—' }}</td>
+              <td>
+                <span [class]="badge(p)">{{ statusLabel(p) }}</span>
+                @if (p.mock) {
+                  <span class="adm-badge adm-badge--mock" style="margin-left: 0.3rem" title="Simulated payment — no payment-provider keys configured">mock</span>
+                }
+                @if (needsAttention(p)) {
+                  <span class="adm-badge adm-badge--failed" style="margin-left: 0.3rem" title="The order shows paid but the webhook has not confirmed this payment">check</span>
+                }
+              </td>
+              <td style="font-size: 0.78rem; max-width: 220px; overflow: hidden; text-overflow: ellipsis">
+                {{ p.razorpayPaymentId || p.razorpayOrderId || p.stripePaymentIntentId || '—' }}
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="7"><div class="adm-empty">No payment records yet.</div></td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (pages() > 1) {
+      <div class="adm-pagination">
+        <button type="button" class="btn btn--ghost btn--sm" [disabled]="page <= 1" (click)="goToPage(page - 1)">← Prev</button>
+        <span>Page {{ page }} of {{ pages() }}</span>
+        <button type="button" class="btn btn--ghost btn--sm" [disabled]="page >= pages()" (click)="goToPage(page + 1)">Next →</button>
+      </div>
+    }
+  }
+</div>

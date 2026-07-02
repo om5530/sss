@@ -1,0 +1,106 @@
+<div class="adm-page">
+  <div class="adm-head">
+    <div>
+      <span class="eyebrow eyebrow--bare">Kitchen view · updates every few seconds</span>
+      <h1>Live queue</h1>
+    </div>
+    <div class="adm-head__actions">
+      <button type="button" class="btn btn--ghost btn--sm" (click)="toggleMute()">
+        {{ muted() ? '🔕 Sound off' : '🔔 Sound on' }}
+      </button>
+    </div>
+  </div>
+
+  @if (offline()) {
+    <div class="adm-alert adm-alert--danger" role="status">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M12 8v5m0 3.5v.5M4.7 19h14.6a1.6 1.6 0 0 0 1.4-2.4L13.4 4.5a1.6 1.6 0 0 0-2.8 0L3.3 16.6A1.6 1.6 0 0 0 4.7 19Z" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      Connection lost — reconnecting. The queue will catch up automatically.
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="adm-queue" aria-hidden="true">
+      @for (s of [1, 2, 3, 4]; track s) {
+        <div class="skeleton" style="height: 220px"></div>
+      }
+    </div>
+  } @else {
+    <div class="adm-queue">
+      @for (col of columns(); track col.stage) {
+        <section>
+          <header class="adm-qcol__head">
+            <span>{{ col.stage }}</span>
+            <span class="adm-qcol__count">{{ col.orders.length }}</span>
+          </header>
+          <div class="adm-qcol__list">
+            @for (order of col.orders; track order._id) {
+              <article class="adm-qcard" [class.adm-qcard--new]="newIds().has(order._id)">
+                <div class="adm-qcard__top">
+                  <span class="adm-qcard__num">{{ order.orderNumber }}</span>
+                  <span class="adm-qcard__age" [class.adm-qcard__age--late]="isLate(order)">
+                    {{ elapsed(order.createdAt) }}
+                  </span>
+                </div>
+
+                <div class="adm-qcard__meta">
+                  <span class="adm-badge adm-badge--type">{{ order.orderType }}</span>
+                  <span class="adm-badge">{{ orderCustomer(order) }}</span>
+                  <span class="adm-badge adm-badge--{{ order.paymentStatus }}">{{ order.paymentStatus }}</span>
+                  @if (order.paymentMethod === 'cash' && order.paymentStatus === 'pending') {
+                    <span class="adm-badge adm-badge--type" title="Collect cash on hand-over">collect cash</span>
+                  }
+                </div>
+
+                <p class="adm-qcard__items">{{ itemsSummary(order) }}</p>
+
+                <div class="adm-qcard__foot">
+                  <span class="adm-qcard__total">₹{{ order.pricing.total.toFixed(2) }}</span>
+                  <span class="muted" style="font-size: 0.8rem">{{ fulfilment(order) }}</span>
+                </div>
+
+                <div class="adm-qcard__actions">
+                  <button
+                    type="button"
+                    class="btn btn--primary"
+                    [disabled]="busyId() === order._id"
+                    (click)="advance(order)"
+                  >
+                    {{ nextLabel[order.orderStatus] }}
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn--ghost"
+                    style="flex: 0 0 auto"
+                    [disabled]="busyId() === order._id"
+                    (click)="cancelTarget.set(order)"
+                    aria-label="Cancel order"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </article>
+            } @empty {
+              <div class="adm-empty" style="padding: 1.4rem 0.5rem">—</div>
+            }
+          </div>
+        </section>
+      }
+    </div>
+  }
+</div>
+
+@if (cancelTarget(); as target) {
+  <adm-confirm-modal
+    title="Cancel {{ target.orderNumber }}?"
+    message="The customer will see this order as cancelled{{ target.paymentStatus === 'paid' ? ' — it is already paid, so remember to issue the refund from the order page' : '' }}."
+    confirmLabel="Cancel order"
+    tone="danger"
+    [requireReason]="true"
+    reasonLabel="Why is it being cancelled?"
+    [busy]="busyId() === target._id"
+    (confirmed)="cancel($event)"
+    (cancelled)="cancelTarget.set(null)"
+  />
+}

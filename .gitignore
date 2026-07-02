@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+*.local
+
+# Builds
+dist/
+/client/dist/
+/client/.angular/
+
+# Deploy
+.vercel/
+
+# Locally-stored uploads (product photos, cake references)
+/server/uploads/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json

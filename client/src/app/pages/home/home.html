@@ -1,0 +1,380 @@
+<!-- ============ 1 · HERO ============ -->
+<section class="hero grain">
+  <video
+    #heroVideo
+    class="hero__video"
+    src="/baking-flour.mp4"
+    poster="/baking-flour-poster.jpg"
+    muted
+    loop
+    playsinline
+    preload="auto"
+    aria-hidden="true"
+    tabindex="-1"
+  ></video>
+  <div class="hero__scrim"></div>
+  <!-- Ambient WebGL motes (lazy, desktop, motion-friendly only) -->
+  <div #heroCanvas class="hero__scene" aria-hidden="true"></div>
+
+  <div class="container hero__inner">
+    <div class="hero__copy">
+      <span class="hero__eyebrow" data-hero-fade>
+        <span class="hero__eyebrow-dot"></span>
+        Artisan bakery &amp; café · ovens lit at 5 a.m.
+      </span>
+
+      <h1 class="hero__title">
+        <span class="line-mask"><span class="line-inner">Baked at dawn.</span></span>
+        <span class="line-mask"><span class="line-inner"><em>Savored</em> all day.</span></span>
+      </h1>
+
+      <p class="hero__lead" data-hero-fade>
+        Gooey brownies, hand-laminated croissants, wood-fired pizza and barista
+        coffee — ordered in a tap, tracked to your door, still warm.
+      </p>
+
+      <div class="hero__cta" data-hero-fade>
+        <a routerLink="/menu" class="btn btn--gold btn--lg" appMagnetic>
+          Order now
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <a routerLink="/menu" class="btn btn--ghost-dark btn--lg" appMagnetic>Explore the menu</a>
+      </div>
+
+      <dl class="hero__stats" data-hero-fade>
+        <div><dt><span [appCounter]="30">30</span>+</dt><dd>daily bakes</dd></div>
+        <div><dt><span [appCounter]="4.9" [counterDecimals]="1">4.9</span>★</dt><dd>guest rating</dd></div>
+        <div><dt><span [appCounter]="25">25</span> min</dt><dd>avg. delivery</dd></div>
+      </dl>
+    </div>
+
+    <!-- Floating photo cards -->
+    <div class="hero__cards" aria-hidden="true">
+      @for (card of heroCards; track card.label) {
+        <figure class="hero__card glass-dark">
+          <img [src]="card.image" [alt]="card.label" loading="eager" width="220" height="150" />
+          <figcaption>
+            <strong>{{ card.label }}</strong>
+            <span>{{ card.tag }}</span>
+          </figcaption>
+        </figure>
+      }
+    </div>
+  </div>
+
+  <div class="hero__scroll" data-hero-fade aria-hidden="true">
+    <span>Scroll</span>
+    <span class="hero__scroll-line"></span>
+  </div>
+</section>
+
+<!-- ============ 2 · RIBBON ============ -->
+<div class="ribbon" aria-hidden="true">
+  <div class="marquee">
+    <div class="marquee__track">
+      @for (i of [0, 1]; track i) {
+        <span class="ribbon__set">
+          fresh daily <i>✦</i> small batch <i>✦</i> real butter <i>✦</i> wood-fired <i>✦</i>
+          barista coffee <i>✦</i> eggless options <i>✦</i> delivered warm <i>✦</i>
+        </span>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- ============ 3 · EDITORIAL INTRO ============ -->
+<section class="section intro">
+  <div class="container">
+    <p class="intro__statement" appReveal="blur">
+      The
+      <span class="intro__word"><img [src]="inlineWords[0].image" alt="" loading="lazy" /><em>{{ inlineWords[0].word }}</em></span>
+      smell of butter at dawn, a
+      <span class="intro__word"><img [src]="inlineWords[1].image" alt="" loading="lazy" /><em>{{ inlineWords[1].word }}</em></span>
+      brownie at four, a
+      <span class="intro__word"><img [src]="inlineWords[2].image" alt="" loading="lazy" /><em>{{ inlineWords[2].word }}</em></span>
+      pizza night — we bake the moments between your moments.
+    </p>
+    <div class="intro__meta" appReveal>
+      <span class="eyebrow">Since the first sourdough</span>
+      <a routerLink="/about" class="intro__link">Our story <span aria-hidden="true">→</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4 · CATEGORY SHOWCASE ============ -->
+<section class="section showcase">
+  <div class="container">
+    <div class="section__head section__head--row" appReveal>
+      <div>
+        <span class="eyebrow">Cravings, catalogued</span>
+        <h2>Ten ways to say <em class="serif-italic">treat yourself</em></h2>
+      </div>
+      <a routerLink="/menu" class="btn btn--ghost">Full menu →</a>
+    </div>
+
+    <div class="showcase__grid">
+      <ul class="showcase__list" appReveal="group">
+        @for (cat of showcase; track cat.name; let i = $index) {
+          <li>
+            <a
+              class="showcase__item"
+              [class.is-active]="activeCat() === i"
+              [routerLink]="['/menu']"
+              [fragment]="cat.name"
+              (mouseenter)="setActiveCat(i)"
+              (focus)="setActiveCat(i)"
+            >
+              <span class="showcase__index">{{ i + 1 < 10 ? '0' + (i + 1) : i + 1 }}</span>
+              <span class="showcase__name">{{ cat.name }}</span>
+              <span class="showcase__note">{{ cat.note }}</span>
+              <span class="showcase__arrow" aria-hidden="true">→</span>
+            </a>
+          </li>
+        }
+      </ul>
+
+      <div class="showcase__panel" appReveal="zoom" aria-hidden="true">
+        @for (cat of showcase; track cat.name; let i = $index) {
+          <img
+            [src]="cat.image"
+            [alt]="cat.name"
+            class="showcase__img"
+            [class.is-active]="activeCat() === i"
+            [attr.loading]="i === 0 ? 'eager' : 'lazy'"
+          />
+        }
+        <span class="showcase__panel-label">{{ showcase[activeCat()].name }}</span>
+      </div>
+    </div>
+
+    <!-- Mobile: swipeable category cards -->
+    <div class="showcase__scroller" appReveal>
+      @for (cat of showcase; track cat.name) {
+        <a class="showcase__chip" [routerLink]="['/menu']" [fragment]="cat.name">
+          <img [src]="cat.image" [alt]="cat.name" loading="lazy" />
+          <span>{{ cat.name }}</span>
+        </a>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5 · FEATURED ============ -->
+<section class="section featured">
+  <div class="container">
+    <div class="section__head section__head--row" appReveal>
+      <div>
+        <span class="eyebrow">Guest favourites</span>
+        <h2>Most-loved this week</h2>
+      </div>
+      <a routerLink="/menu" class="btn btn--ghost">See everything →</a>
+    </div>
+
+    @if (loading()) {
+      <div class="featured__grid">
+        @for (s of [1, 2, 3]; track s) { <div class="skeleton featured__skeleton"></div> }
+      </div>
+    } @else if (featured().length) {
+      <div class="featured__grid" appReveal="group">
+        @for (product of featured(); track product._id) {
+          <div [appTilt]="4"><app-product-card [product]="product" /></div>
+        }
+      </div>
+    } @else {
+      <div class="empty card">
+        <p>No products yet. Seed the database with <code>npm run seed</code> in the server.</p>
+        <a routerLink="/menu" class="btn btn--primary">Go to menu</a>
+      </div>
+    }
+  </div>
+</section>
+
+<!-- ============ 6+7 · PROCESS & NUMBERS (dark act) ============ -->
+<div class="dark-act grain">
+  <section class="section process on-dark">
+    <div class="container">
+      <div class="section__head section__head--center" appReveal>
+        <span class="eyebrow eyebrow--bare">From tap to table</span>
+        <h2>How the magic reaches you</h2>
+        <p>Four steps, no cold surprises — your order goes from our ovens to your hands, tracked the whole way.</p>
+      </div>
+
+      <ol class="process__grid" appReveal="group">
+        @for (step of steps; track step.n) {
+          <li class="process__step glass-dark">
+            <span class="process__n">{{ step.n }}</span>
+            <h3>{{ step.title }}</h3>
+            <p>{{ step.copy }}</p>
+          </li>
+        }
+      </ol>
+    </div>
+  </section>
+
+  <section class="stats-band on-dark">
+    <div class="container stats-band__grid" appReveal="group">
+      <div class="stat">
+        <span class="stat__value"><span [appCounter]="30">30</span>+</span>
+        <span class="stat__label">artisan bakes, every day</span>
+      </div>
+      <div class="stat">
+        <span class="stat__value"><span [appCounter]="10">10</span></span>
+        <span class="stat__label">craving-proof categories</span>
+      </div>
+      <div class="stat">
+        <span class="stat__value"><span [appCounter]="4.9" [counterDecimals]="1">4.9</span>★</span>
+        <span class="stat__label">average guest rating</span>
+      </div>
+      <div class="stat">
+        <span class="stat__value"><span [appCounter]="25">25</span><em>min</em></span>
+        <span class="stat__label">average delivery time</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ 8 · WHY US ============ -->
+<section class="section why">
+  <div class="container">
+    <div class="section__head section__head--center" appReveal>
+      <span class="eyebrow eyebrow--bare">Why sweet savory savor</span>
+      <h2>Baked different, on purpose</h2>
+      <p>Anyone can sell dessert. We obsess over the parts you can taste but never see.</p>
+    </div>
+
+    <div class="why__grid" appReveal="group">
+      @for (benefit of benefits; track benefit.title) {
+        <article class="why__card">
+          <span class="why__icon" aria-hidden="true">
+            @switch (benefit.icon) {
+              @case ('oven') {
+                <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9h18" /><circle cx="6.5" cy="6.5" r="0.2" stroke-width="2.2"/><circle cx="10" cy="6.5" r="0.2" stroke-width="2.2"/><path d="M8 13.5c0 1.2 1.3 1.3 1.3 2.4M12 13.5c0 1.2 1.3 1.3 1.3 2.4M16 13.5c0 1.2 1.3 1.3 1.3 2.4" stroke-linecap="round"/></svg>
+              }
+              @case ('leaf') {
+                <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 19C5 9 11 4 20 4c0 9-5 15-15 15Z" stroke-linejoin="round"/><path d="M5 19c3-5 6-8 10-10" stroke-linecap="round"/></svg>
+              }
+              @case ('veg') {
+                <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="12" cy="12" r="3.4" fill="currentColor" stroke="none"/></svg>
+              }
+              @case ('radar') {
+                <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/><path d="M12 3.5V7M20.5 12H17" stroke-linecap="round"/></svg>
+              }
+              @case ('shield') {
+                <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3 5 6v5c0 4.5 2.8 8 7 10 4.2-2 7-5.5 7-10V6l-7-3Z" stroke-linejoin="round"/><path d="m9 12 2.2 2.2L15.5 10" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              }
+              @case ('clock') {
+                <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              }
+            }
+          </span>
+          <h3>{{ benefit.title }}</h3>
+          <p>{{ benefit.copy }}</p>
+        </article>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ============ 9 · TESTIMONIALS ============ -->
+<section class="section testimonials">
+  <div class="container">
+    <div class="section__head section__head--center" appReveal>
+      <span class="eyebrow eyebrow--bare">Word of mouth, literally</span>
+      <h2>What our regulars say</h2>
+    </div>
+
+    <div class="testimonials__grid" appReveal="group">
+      @for (t of testimonials; track t.name) {
+        <figure class="tcard" [appTilt]="5">
+          <span class="tcard__mark" aria-hidden="true">“</span>
+          <blockquote>{{ t.quote }}</blockquote>
+          <figcaption>
+            <img [src]="t.avatar" [alt]="t.name" width="48" height="48" loading="lazy" />
+            <span>
+              <strong>{{ t.name }}</strong>
+              <small>{{ t.role }}</small>
+            </span>
+            <span class="tcard__stars" aria-label="5 out of 5 stars">★★★★★</span>
+          </figcaption>
+        </figure>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ============ 10 · GALLERY (dark act) ============ -->
+<section class="gallery grain">
+  <div class="container gallery__head" appReveal>
+    <span class="eyebrow">Fresh out of the ovens</span>
+    <h2 class="on-dark-title">Today, in pictures</h2>
+  </div>
+
+  <div class="gallery__rows" aria-hidden="true">
+    <div class="marquee gallery__row">
+      <div class="marquee__track">
+        @for (i of [0, 1]; track i) {
+          <div class="gallery__set">
+            @for (img of galleryTop; track img) { <img [src]="img" alt="" loading="lazy" /> }
+          </div>
+        }
+      </div>
+    </div>
+    <div class="marquee gallery__row gallery__row--reverse">
+      <div class="marquee__track">
+        @for (i of [0, 1]; track i) {
+          <div class="gallery__set">
+            @for (img of galleryBottom; track img) { <img [src]="img" alt="" loading="lazy" /> }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 11 · FAQ ============ -->
+<section class="section faq">
+  <div class="container faq__grid">
+    <div class="faq__head" appReveal>
+      <span class="eyebrow">Good questions</span>
+      <h2>Everything you’d ask at the counter</h2>
+      <p class="muted">Still curious? <a routerLink="/contact" class="faq__contact">Talk to us</a> — a human answers.</p>
+    </div>
+
+    <div class="faq__list" appReveal="group">
+      @for (faq of faqs; track faq.q; let i = $index) {
+        <div class="faq__item" [class.is-open]="openFaq() === i">
+          <button
+            class="faq__q"
+            (click)="toggleFaq(i)"
+            [attr.aria-expanded]="openFaq() === i"
+            [attr.aria-controls]="'faq-panel-' + i"
+          >
+            {{ faq.q }}
+            <span class="faq__toggle" aria-hidden="true"></span>
+          </button>
+          <div class="faq__a" [id]="'faq-panel-' + i" role="region">
+            <p>{{ faq.a }}</p>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ============ 12 · FINAL CTA ============ -->
+<section class="cta-final grain">
+  <img class="cta-final__float cta-final__float--1" [src]="heroCards[1].image" alt="" loading="lazy" [appParallax]="0.3" />
+  <img class="cta-final__float cta-final__float--2" [src]="heroCards[0].image" alt="" loading="lazy" [appParallax]="-0.24" />
+
+  <div class="container cta-final__inner">
+    <span class="eyebrow" appReveal>The ovens are on</span>
+    <h2 class="cta-final__title" appReveal="blur">
+      Hungry <em class="serif-italic">yet?</em>
+    </h2>
+    <p appReveal>Your next favourite bake is about 25 minutes away.</p>
+    <div class="cta-final__actions" appReveal>
+      <a routerLink="/menu" class="btn btn--gold btn--lg" appMagnetic>Start your order</a>
+      <a routerLink="/contact" class="btn btn--ghost-dark btn--lg" appMagnetic>Plan a custom cake</a>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,352 @@
+/* ==================================================================
+   CART — "Midnight Patisserie"
+   Compact dark page-hero → cream body: line-item cards on the left,
+   sticky receipt-style summary on the right. Warm photographic empty
+   state. Interactions stay instant; only entrances are choreographed.
+   ================================================================== */
+
+/* ---------------- Page hero ---------------- */
+
+.page-hero {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(80% 100% at 85% 0%, rgba(223, 167, 87, 0.12), transparent 55%),
+    linear-gradient(180deg, var(--night-2), var(--night));
+  padding: clamp(56px, 9vw, 110px) 0 clamp(40px, 6vw, 72px);
+}
+.page-hero .container { position: relative; z-index: 2; }
+
+.page-hero h1 {
+  display: flex;
+  align-items: baseline;
+  gap: 0.8rem;
+  font-size: clamp(2.2rem, 5vw, 3.6rem);
+  margin: 0.9rem 0 0.55rem;
+}
+
+.page-hero__count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 2.2em;
+  height: 2.2em;
+  padding: 0 0.55em;
+  font-family: var(--font-body);
+  font-size: 0.3em;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--gold-bright);
+  background: rgba(242, 197, 128, 0.08);
+  border: 1.5px solid rgba(242, 197, 128, 0.4);
+  border-radius: 999px;
+  transform: translateY(-0.4em);
+  box-shadow: 0 0 24px rgba(223, 167, 87, 0.18);
+}
+
+.page-hero__lead {
+  margin: 0;
+  color: var(--d-muted);
+  font-size: clamp(0.95rem, 1.3vw, 1.05rem);
+  max-width: 52ch;
+}
+
+/* ---------------- Body ---------------- */
+
+.cart-body {
+  background: var(--cream);
+  padding: clamp(36px, 5vw, 64px) 0 clamp(72px, 9vw, 110px);
+}
+
+.cart-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: clamp(1.4rem, 3vw, 2.4rem);
+  align-items: start;
+}
+
+/* ---------------- Line items ---------------- */
+
+.cart-items__list { display: flex; flex-direction: column; gap: 0.9rem; }
+
+.line {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr) auto auto auto;
+  grid-template-areas: 'media info stepper total remove';
+  align-items: center;
+  gap: clamp(0.9rem, 2vw, 1.4rem);
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.9rem clamp(0.9rem, 2vw, 1.3rem) 0.9rem 0.9rem;
+  box-shadow: var(--shadow-sm);
+  transition:
+    transform 0.45s var(--ease-out),
+    box-shadow 0.45s var(--ease-out),
+    border-color 0.3s ease;
+}
+.line:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow);
+  border-color: rgba(223, 167, 87, 0.5);
+}
+
+.line__media {
+  grid-area: media;
+  display: block;
+  width: 112px;
+  height: 112px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--sand);
+}
+.line__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.02);
+  transition: transform 0.8s var(--ease-out), filter 0.4s ease;
+}
+.line:hover .line__media img { transform: scale(1.08); filter: saturate(1.06); }
+
+.line__info { grid-area: info; display: grid; gap: 0.3rem; min-width: 0; }
+.line__name {
+  font-family: var(--font-display);
+  font-weight: 620;
+  font-size: clamp(1.05rem, 1.6vw, 1.22rem);
+  line-height: 1.22;
+  color: var(--choco);
+  width: fit-content;
+  transition: color 0.25s ease;
+}
+.line__name:hover { color: var(--berry); }
+.line__unit { font-size: 0.85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* Dark stepper — same DNA as the product card's */
+.stepper {
+  grid-area: stepper;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: var(--night-3);
+  border-radius: 999px;
+  padding: 0.28rem;
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+.stepper button {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--gold-bright);
+  font-size: 1.15rem;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  transition: background 0.25s ease, color 0.25s ease, transform 0.2s ease;
+}
+.stepper button:hover { background: var(--gold); color: var(--night); }
+.stepper button:active { transform: scale(0.9); }
+.stepper span {
+  min-width: 24px;
+  text-align: center;
+  font-weight: 800;
+  color: var(--d-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.line__total {
+  grid-area: total;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.18rem;
+  color: var(--cocoa);
+  min-width: 78px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.line__remove {
+  grid-area: remove;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  padding: 0;
+  transition: color 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+}
+.line__remove:hover {
+  color: var(--danger);
+  border-color: rgba(192, 57, 43, 0.35);
+  background: rgba(192, 57, 43, 0.06);
+}
+
+.cart-clear { margin-top: 1.1rem; }
+
+/* ---------------- Summary (sticky receipt) ---------------- */
+
+.summary {
+  position: sticky;
+  top: 96px;
+  border-radius: var(--radius-lg);
+  padding: clamp(1.5rem, 2.6vw, 2rem);
+  overflow: hidden;
+}
+/* gold keyline, like the edge of a patisserie box */
+.summary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--gold-bright), var(--gold) 55%, transparent);
+}
+
+.summary h3 { font-size: 1.35rem; margin: 0 0 1.15rem; }
+
+.summary__rows { margin: 0 0 1rem; display: grid; gap: 0.65rem; }
+.summary__rows > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.95rem;
+}
+.summary__rows dt { margin: 0; color: var(--muted); }
+.summary__rows dd {
+  margin: 0;
+  font-weight: 700;
+  color: var(--ink);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.summary__total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding-top: 1rem;
+  margin-bottom: 1rem;
+  border-top: 1px dashed var(--line);
+}
+.summary__total span {
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  color: var(--cocoa);
+}
+.summary__total strong {
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 2.6vw, 2.1rem);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--choco);
+  font-variant-numeric: tabular-nums;
+}
+
+.summary__note { font-size: 0.8rem; line-height: 1.55; margin: 0 0 1.05rem; }
+.summary__note--live {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--caramel-dark);
+  font-weight: 600;
+  margin-bottom: 0.55rem;
+}
+.summary__pulse {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 10px rgba(223, 167, 87, 0.8);
+  animation: summary-pulse 1.2s ease-in-out infinite;
+}
+@keyframes summary-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.summary__browse { margin-top: 0.7rem; }
+
+/* ---------------- Empty state ---------------- */
+
+.cart-empty {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: clamp(0.6rem, 2vw, 1.6rem) 0 clamp(1.6rem, 3vw, 2.6rem);
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 0.9rem;
+}
+.cart-empty__media {
+  position: relative;
+  margin: 0 0 1.2rem;
+  width: min(360px, 74vw);
+  aspect-ratio: 5 / 4;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  transform: rotate(-2deg);
+  transition: transform 0.6s var(--ease-out), box-shadow 0.6s var(--ease-out);
+}
+.cart-empty__media:hover { transform: rotate(0deg) translateY(-4px); }
+.cart-empty__media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(255, 253, 249, 0.35);
+  pointer-events: none;
+}
+.cart-empty__media img { width: 100%; height: 100%; object-fit: cover; }
+
+.cart-empty h2 { font-size: clamp(2rem, 4.6vw, 2.9rem); margin: 0.15rem 0 0; }
+.cart-empty p { max-width: 46ch; margin: 0 0 0.9rem; font-size: 1rem; line-height: 1.7; }
+
+/* ---------------- Responsive ---------------- */
+
+@media (max-width: 1020px) {
+  .cart-grid { grid-template-columns: minmax(0, 1fr) 330px; }
+}
+
+@media (max-width: 900px) {
+  .cart-grid { grid-template-columns: 1fr; }
+  /* single column: the summary's grid row equals its own height,
+     so `sticky` becomes inert — no override needed, keyline stays. */
+}
+
+@media (max-width: 760px) {
+  .line {
+    grid-template-columns: 104px minmax(0, 1fr) auto;
+    grid-template-areas:
+      'media info remove'
+      'media stepper total';
+    row-gap: 0.7rem;
+    padding: 0.8rem;
+  }
+  .line__media { width: 104px; height: 104px; }
+  .stepper { justify-self: start; }
+  .stepper button { width: 38px; height: 38px; }
+  .line__total { justify-self: end; align-self: center; min-width: 0; }
+  .line__remove { align-self: start; justify-self: end; }
+}
+
+@media (max-width: 560px) {
+  .line { grid-template-columns: 96px minmax(0, 1fr) auto; column-gap: 0.8rem; }
+  .line__media { width: 96px; height: 96px; }
+  .line__name { font-size: 1.02rem; }
+  .summary { padding: 1.35rem 1.2rem 1.5rem; }
+}
+
+@media (max-width: 380px) {
+  .line { grid-template-columns: 96px minmax(0, 1fr) auto; column-gap: 0.65rem; }
+  .stepper button { width: 34px; height: 34px; }
+  .line__total { font-size: 1.08rem; }
+}

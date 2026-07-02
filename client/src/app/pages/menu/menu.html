@@ -1,0 +1,167 @@
+<!-- ============ 1 · Page hero — dark, grainy, with live search ============ -->
+<header class="menu-hero grain on-dark">
+  <div class="container menu-hero__inner">
+    <span class="eyebrow" appReveal>Our kitchen, your kiosk</span>
+    <h1 appReveal [revealDelay]="70">The <em class="serif-italic">Menu</em></h1>
+    <p class="menu-hero__lead" appReveal [revealDelay]="130">
+      Every bake photographed honestly — tap to add, and your cart keeps up as you go.
+    </p>
+
+    <div class="menu-search" appReveal [revealDelay]="190">
+      <svg
+        class="menu-search__icon"
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        aria-hidden="true"
+      >
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-3-3" stroke-linecap="round" />
+      </svg>
+      <input
+        class="menu-search__input"
+        type="search"
+        placeholder="Search brownies, pizza, coffee…"
+        [value]="search()"
+        (input)="onSearch($any($event.target).value)"
+        aria-label="Search the menu"
+      />
+      @if (search()) {
+        <button type="button" class="menu-search__clear" (click)="onSearch('')" aria-label="Clear search">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <path d="M6 6l12 12M18 6 6 18" stroke-linecap="round" />
+          </svg>
+        </button>
+      }
+    </div>
+
+    <div class="menu-diet" role="radiogroup" aria-label="Dietary filter" appReveal [revealDelay]="240">
+      @for (chip of dietaryChips; track chip.key) {
+        <button
+          type="button"
+          class="menu-diet__chip"
+          [class.is-active]="dietary() === chip.key"
+          [class.menu-diet__chip--veg]="chip.key === 'veg'"
+          [class.menu-diet__chip--nonveg]="chip.key === 'non-veg'"
+          role="radio"
+          [attr.aria-checked]="dietary() === chip.key"
+          (click)="dietary.set(chip.key)"
+        >
+          {{ chip.label }}
+        </button>
+      }
+    </div>
+
+    <p class="menu-search__hint" role="status">
+      @if (search() && !loading() && hasResults()) {
+        {{ resultCount() }} {{ resultCount() === 1 ? 'dish matches' : 'dishes match' }} “{{ search() }}”
+      }
+    </p>
+  </div>
+</header>
+
+<!-- ============ 2 · Sticky category rail ============ -->
+@if (!loading() && hasResults()) {
+  <nav class="catnav" aria-label="Menu categories">
+    <div class="container catnav__inner">
+      @for (cat of navCategories(); track cat) {
+        <button
+          type="button"
+          class="catnav__link"
+          [class.is-active]="activeCat() === cat"
+          (click)="scrollTo(cat)"
+        >
+          {{ cat }}
+        </button>
+      }
+    </div>
+  </nav>
+}
+
+<!-- ============ 3 · Category acts on cream ============ -->
+<div class="menu-body">
+  <div class="container">
+    @if (loading()) {
+      <div class="menu-skel" aria-hidden="true">
+        <div class="skeleton menu-skel__bar"></div>
+        <div class="grid">
+          @for (s of [1, 2, 3, 4, 5, 6]; track s) {
+            <div class="skeleton menu-skel__card"></div>
+          }
+        </div>
+      </div>
+    } @else if (error()) {
+      <div class="notice card">
+        <span class="notice__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7">
+            <circle cx="12" cy="12" r="8.5" />
+            <path d="M12 8v5" stroke-linecap="round" />
+            <circle cx="12" cy="16.4" r="0.4" fill="currentColor" stroke="none" />
+          </svg>
+        </span>
+        <h3>Couldn’t load the menu</h3>
+        <p class="muted">
+          Make sure the API is running on <code>:4000</code> and the database is seeded
+          (<code>npm run seed</code> in the server).
+        </p>
+      </div>
+    } @else if (!hasResults()) {
+      <div class="notice card">
+        <span class="notice__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3-3M8 11h6" stroke-linecap="round" />
+          </svg>
+        </span>
+        <h3>{{ search() ? 'No matches for “' + search() + '”' : 'Nothing fits that filter' }}</h3>
+        <p class="muted">
+          Nothing in the ovens for that combination. Try “brownie”, “pizza” or “croissant” — or
+          browse the whole spread.
+        </p>
+        <button class="btn btn--primary" (click)="onSearch(''); dietary.set('')">Show everything</button>
+      </div>
+    } @else {
+      @for (group of blocks(); track group.group; let gi = $index) {
+        <section class="group">
+          <div class="group__head" appReveal>
+            <span class="group__index" aria-hidden="true">{{ gi + 1 < 10 ? '0' + (gi + 1) : gi + 1 }}</span>
+            <h2 class="group__title">{{ group.label }}</h2>
+            <span class="group__rule" aria-hidden="true"></span>
+          </div>
+
+          @for (block of group.categories; track block.category) {
+            <section class="cat-block" [id]="'cat-' + block.category">
+              <div class="cat-block__head" appReveal>
+                <h3 class="cat-block__name">{{ block.category }}</h3>
+                <span class="cat-block__count">
+                  {{ block.products.length }} {{ block.products.length === 1 ? 'item' : 'items' }}
+                </span>
+              </div>
+              <div class="grid" appReveal="group">
+                @for (product of block.products; track product._id) {
+                  <app-product-card [product]="product" />
+                }
+              </div>
+            </section>
+          }
+        </section>
+      }
+    }
+  </div>
+</div>
+
+<!-- ============ 4 · Back to top ============ -->
+<button
+  type="button"
+  class="totop"
+  [class.is-visible]="showTop()"
+  (click)="scrollTop()"
+  aria-label="Back to top"
+>
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+    <path d="M12 19V5m-6 6 6-6 6 6" stroke-linecap="round" stroke-linejoin="round" />
+  </svg>
+</button>

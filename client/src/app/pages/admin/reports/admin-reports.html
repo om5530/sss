@@ -1,0 +1,160 @@
+<div class="adm-page">
+  <div class="adm-head">
+    <div>
+      <span class="eyebrow eyebrow--bare">Paid orders only · store time (IST)</span>
+      <h1>Reports</h1>
+    </div>
+  </div>
+
+  <div class="adm-filters">
+    <button type="button" class="btn btn--sm" [class.btn--primary]="preset() === 'today'" [class.btn--ghost]="preset() !== 'today'" (click)="applyPreset('today')">Today</button>
+    <button type="button" class="btn btn--sm" [class.btn--primary]="preset() === '7d'" [class.btn--ghost]="preset() !== '7d'" (click)="applyPreset('7d')">7 days</button>
+    <button type="button" class="btn btn--sm" [class.btn--primary]="preset() === '30d'" [class.btn--ghost]="preset() !== '30d'" (click)="applyPreset('30d')">30 days</button>
+    <button type="button" class="btn btn--sm" [class.btn--primary]="preset() === 'month'" [class.btn--ghost]="preset() !== 'month'" (click)="applyPreset('month')">This month</button>
+    <input class="input" type="date" [(ngModel)]="from" (ngModelChange)="onCustomRange()" aria-label="From date" />
+    <input class="input" type="date" [(ngModel)]="to" (ngModelChange)="onCustomRange()" aria-label="To date" />
+    <select class="select" [(ngModel)]="granularity" (ngModelChange)="fetch()" aria-label="Group by">
+      <option value="day">Daily</option>
+      <option value="week">Weekly</option>
+      <option value="month">Monthly</option>
+    </select>
+  </div>
+
+  @if (loading()) {
+    <div class="skeleton" style="height: 420px" aria-hidden="true"></div>
+  } @else if (sales(); as s) {
+    <!-- Headline numbers -->
+    <div class="adm-grid">
+      <div class="adm-stat">
+        <div class="adm-stat__label">Revenue</div>
+        <div class="adm-stat__value">₹{{ s.totals.revenue | number: '1.0-0' }}</div>
+      </div>
+      <div class="adm-stat">
+        <div class="adm-stat__label">Paid orders</div>
+        <div class="adm-stat__value">{{ s.totals.orders }}</div>
+      </div>
+      <div class="adm-stat">
+        <div class="adm-stat__label">Avg order value</div>
+        <div class="adm-stat__value">₹{{ s.totals.avgOrderValue | number: '1.0-0' }}</div>
+      </div>
+      <div class="adm-stat">
+        <div class="adm-stat__label">Not counted</div>
+        <div class="adm-stat__value" style="font-size: 1.3rem">
+          {{ s.totals.cancelled }} cancelled · {{ s.totals.refundedCount }} refunded
+        </div>
+        <div class="adm-stat__sub">₹{{ s.totals.refundedAmount | number: '1.0-0' }} refunded</div>
+      </div>
+    </div>
+
+    <!-- Revenue trend -->
+    <div class="adm-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.8rem; flex-wrap: wrap">
+        <h3 style="margin: 0">Revenue by {{ s.granularity }}</h3>
+        <button type="button" class="btn btn--ghost btn--sm" (click)="exportSales()">Export CSV</button>
+      </div>
+      @if (bars().length) {
+        <div class="adm-chart" role="img" attr.aria-label="Revenue by {{ s.granularity }} — full values in the table below">
+          @for (bar of bars(); track bar.period) {
+            <div class="adm-chart__col">
+              <span class="adm-chart__tip">{{ bar.period }} · ₹{{ bar.revenue | number: '1.0-0' }} · {{ bar.orders }} orders</span>
+              <div class="adm-chart__bar" [style.height.%]="bar.pct"></div>
+            </div>
+          }
+        </div>
+        <div class="adm-chart-x" aria-hidden="true">
+          @for (bar of bars(); track bar.period) {
+            <span>{{ bar.xLabel }}</span>
+          }
+        </div>
+
+        <!-- Table view of the same data -->
+        <div class="adm-table-wrap" style="margin-top: 1rem; border: none; box-shadow: none">
+          <table class="adm-table">
+            <thead>
+              <tr><th>Period</th><th class="num">Orders</th><th class="num">Revenue</th><th class="num">Avg order</th></tr>
+            </thead>
+            <tbody>
+              @for (row of s.rows; track row.period) {
+                <tr>
+                  <td>{{ row.period }}</td>
+                  <td class="num">{{ row.orders }}</td>
+                  <td class="num">₹{{ row.revenue | number: '1.2-2' }}</td>
+                  <td class="num">₹{{ row.avgOrderValue | number: '1.2-2' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="adm-empty">No paid orders in this range.</div>
+      }
+    </div>
+
+    @if (products(); as p) {
+      <div class="adm-cols" style="margin-top: 1rem">
+        <!-- Category breakdown -->
+        <div class="adm-card">
+          <h3>Revenue by category</h3>
+          @for (c of p.byCategory; track c.category) {
+            <div class="adm-hbar">
+              <span class="adm-hbar__label">{{ c.category }}</span>
+              <span class="adm-hbar__track"><span class="adm-hbar__fill" [style.width.%]="(c.revenue / maxCategory()) * 100"></span></span>
+              <span class="adm-hbar__value">₹{{ c.revenue | number: '1.0-0' }}</span>
+            </div>
+          } @empty {
+            <div class="adm-empty">Nothing sold in this range.</div>
+          }
+        </div>
+
+        <!-- Order type -->
+        <div class="adm-card">
+          <h3>Revenue by order type</h3>
+          @for (t of p.byType; track t.type) {
+            <div class="adm-hbar">
+              <span class="adm-hbar__label" style="text-transform: capitalize">{{ t.type }}</span>
+              <span class="adm-hbar__track"><span class="adm-hbar__fill" [style.width.%]="(t.revenue / maxType()) * 100"></span></span>
+              <span class="adm-hbar__value">₹{{ t.revenue | number: '1.0-0' }} · {{ t.orders }}</span>
+            </div>
+          } @empty {
+            <div class="adm-empty">Nothing sold in this range.</div>
+          }
+        </div>
+      </div>
+
+      <!-- Best sellers -->
+      <div class="adm-card" style="margin-top: 1rem; padding: 0">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem 0.4rem">
+          <h3 style="margin: 0">Best sellers</h3>
+          <button type="button" class="btn btn--ghost btn--sm" (click)="exportProducts()">Export CSV</button>
+        </div>
+        <div class="adm-table-wrap" style="border: none; box-shadow: none">
+          <table class="adm-table">
+            <thead>
+              <tr><th>#</th><th>Product</th><th>Category</th><th class="num">Sold</th><th class="num">Revenue</th></tr>
+            </thead>
+            <tbody>
+              @for (row of p.topProducts; track row._id; let i = $index) {
+                <tr>
+                  <td class="num" style="width: 40px">{{ i + 1 }}</td>
+                  <td>
+                    <strong>{{ row.name }}</strong>
+                    @if (row.archived) {
+                      <span class="adm-badge adm-badge--mock" style="margin-left: 0.35rem">archived</span>
+                    }
+                  </td>
+                  <td>{{ row.category }}</td>
+                  <td class="num">{{ row.quantity }}</td>
+                  <td class="num">₹{{ row.revenue | number: '1.2-2' }}</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="5"><div class="adm-empty">Nothing sold in this range.</div></td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+  } @else {
+    <div class="adm-empty">Couldn't load reports — check that the API is running.</div>
+  }
+</div>

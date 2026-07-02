@@ -1,0 +1,88 @@
+<header class="nav" [class.nav--scrolled]="scrolled()" [class.nav--open]="menuOpen()">
+  <div class="container nav__inner">
+    <a routerLink="/" class="brand" (click)="closeMenu()" aria-label="Sweet Savory Savor — home">
+      <img class="brand__mark" src="logo-mark.svg" alt="" width="34" height="34" />
+      <span class="brand__name">sweet&nbsp;savory&nbsp;savor</span>
+    </a>
+
+    <nav class="nav__links" aria-label="Primary">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
+      <a routerLink="/menu" routerLinkActive="active">Menu</a>
+      <a routerLink="/custom-cakes" routerLinkActive="active">Custom cakes</a>
+      <a routerLink="/about" routerLinkActive="active">About</a>
+      <a routerLink="/contact" routerLinkActive="active">Contact</a>
+      @if (auth.isAuthenticated()) {
+        <a routerLink="/orders" routerLinkActive="active">My Orders</a>
+      }
+      @if (auth.user()?.role === 'admin') {
+        <a routerLink="/admin" routerLinkActive="active">Admin</a>
+      }
+    </nav>
+
+    <div class="nav__actions">
+      @if (auth.isAuthenticated()) {
+        <a routerLink="/profile" class="nav__profile" routerLinkActive="active" aria-label="Profile" (click)="closeMenu()">
+          @if (auth.user()?.avatar) {
+            <img [src]="auth.user()!.avatar" alt="" class="nav__avatar" />
+          } @else if (auth.user()?.name) {
+            <span class="nav__avatar nav__avatar--initial">{{ auth.user()!.name![0] }}</span>
+          } @else {
+            <span class="nav__avatar nav__avatar--initial">
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8">
+                <circle cx="12" cy="8" r="3.6" /><path d="M4.5 20a7.5 7.5 0 0 1 15 0" stroke-linecap="round" />
+              </svg>
+            </span>
+          }
+        </a>
+      } @else {
+        <a routerLink="/login" class="nav__signin" (click)="closeMenu()">Sign in</a>
+      }
+
+      <a routerLink="/cart" class="nav__cart" aria-label="Cart" (click)="closeMenu()">
+        <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7">
+          <circle cx="9" cy="20" r="1.4" /><circle cx="18" cy="20" r="1.4" />
+          <path d="M2 3h2l2.2 11.2a1.5 1.5 0 0 0 1.5 1.2h8.7a1.5 1.5 0 0 0 1.5-1.2L21 7H5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        @if (cart.count() > 0) {
+          <span class="nav__badge" [class.nav__badge--bump]="bump()">{{ cart.count() }}</span>
+        }
+      </a>
+
+      <a routerLink="/menu" class="btn btn--gold btn--sm nav__order" (click)="closeMenu()">Order now</a>
+
+      <button
+        class="nav__burger"
+        (click)="toggleMenu()"
+        [attr.aria-expanded]="menuOpen()"
+        aria-label="Toggle menu"
+        aria-controls="mobile-menu"
+      >
+        <span></span><span></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Full-screen mobile menu -->
+  <div class="nav__sheet" id="mobile-menu" [class.is-open]="menuOpen()" (click)="closeMenu()">
+    <nav class="nav__sheet-links" aria-label="Mobile">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
+      <a routerLink="/menu" routerLinkActive="active">Menu</a>
+      <a routerLink="/custom-cakes" routerLinkActive="active">Custom cakes</a>
+      <a routerLink="/about" routerLinkActive="active">About</a>
+      <a routerLink="/contact" routerLinkActive="active">Contact</a>
+      @if (auth.isAuthenticated()) {
+        <a routerLink="/orders" routerLinkActive="active">My Orders</a>
+        <a routerLink="/profile" routerLinkActive="active">Profile</a>
+      } @else {
+        <a routerLink="/login">Sign in</a>
+      }
+      @if (auth.user()?.role === 'admin') {
+        <a routerLink="/admin" routerLinkActive="active">Admin</a>
+      }
+    </nav>
+    <div class="nav__sheet-foot">
+      <a routerLink="/menu" class="btn btn--gold btn--lg btn--block">Order now</a>
+      <p>Fresh from the oven · Dahisar East · Open daily 8:00–22:00</p>
+    </div>
+  </div>
+</header>

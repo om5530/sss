@@ -1,0 +1,340 @@
+/* ==================================================================
+   LOGIN — "Midnight Patisserie"
+   Cinematic split screen: dark photographic act (grain + glass chips)
+   on the left, cream sign-in card on the right. Stacks on mobile with
+   the photo as a short top band.
+   ================================================================== */
+
+.auth {
+  display: grid;
+  grid-template-columns: minmax(0, 1.06fr) minmax(0, 1fr);
+  min-height: calc(100svh - 76px);
+  background: var(--cream);
+}
+
+/* ---------------- LEFT · visual act ---------------- */
+
+.auth__visual {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  background: var(--night);
+}
+
+.auth__photo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.58) saturate(1.08) contrast(1.02);
+}
+
+.auth__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(80% 60% at 18% 10%, rgba(223, 167, 87, 0.16), transparent 60%),
+    linear-gradient(180deg, rgba(18, 10, 6, 0.66) 0%, rgba(18, 10, 6, 0.18) 42%, rgba(18, 10, 6, 0.88) 100%),
+    linear-gradient(90deg, rgba(18, 10, 6, 0.3), transparent 45%, rgba(18, 10, 6, 0.42));
+}
+
+.auth__visual-inner {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.6rem, 3vw, 2.6rem);
+  padding: clamp(28px, 4vw, 56px);
+}
+
+/* --- Brand wordmark --- */
+.auth__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: fit-content;
+}
+.auth__brand img {
+  filter: drop-shadow(0 2px 8px rgba(223, 167, 87, 0.4));
+  transition: transform 0.5s var(--ease-out);
+}
+.auth__brand:hover img { transform: rotate(-10deg) scale(1.08); }
+.auth__brand span {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.26rem;
+  letter-spacing: -0.01em;
+  color: var(--d-text);
+  white-space: nowrap;
+  transition: color 0.25s ease;
+}
+.auth__brand:hover span { color: var(--gold-bright); }
+
+/* --- Fraunces pitch --- */
+.auth__pitch { margin: auto 0; display: grid; gap: 1.05rem; }
+.auth__line {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 620;
+  font-size: clamp(2.4rem, 3.7vw, 3.8rem);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  color: var(--d-text);
+  max-width: 12ch;
+}
+.auth__line em {
+  font-style: italic;
+  font-weight: 480;
+  background: linear-gradient(100deg, var(--gold-bright), var(--gold) 60%, var(--caramel));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.auth__sub {
+  margin: 0;
+  color: var(--d-muted);
+  font-size: 0.98rem;
+  line-height: 1.7;
+  max-width: 36ch;
+}
+
+/* --- Glass photo chips --- */
+.auth__chips { display: flex; flex-wrap: wrap; gap: 0.8rem; }
+.auth__chip {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.5rem 1.1rem 0.5rem 0.55rem;
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  transition: transform 0.5s var(--ease-out), border-color 0.35s ease;
+}
+.auth__chip:hover { transform: translateY(-3px); border-color: rgba(242, 197, 128, 0.42); }
+.auth__chip img {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid rgba(242, 197, 128, 0.38);
+}
+.auth__chip figcaption { display: grid; gap: 0.08rem; }
+.auth__chip strong {
+  font-family: var(--font-display);
+  font-weight: 620;
+  font-size: 0.96rem;
+  color: var(--d-text);
+  white-space: nowrap;
+}
+.auth__chip span { font-size: 0.72rem; letter-spacing: 0.04em; color: var(--d-faint); white-space: nowrap; }
+
+/* ---------------- RIGHT · cream panel ---------------- */
+
+.auth__panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(40px, 6vh, 72px) clamp(20px, 4vw, 56px);
+  background:
+    radial-gradient(55% 42% at 50% 0%, rgba(223, 167, 87, 0.14), transparent 68%),
+    linear-gradient(180deg, var(--cream), var(--cream-2));
+}
+
+.auth__card {
+  width: 100%;
+  max-width: 460px;
+  border-radius: var(--radius-lg);
+  padding: clamp(2rem, 3.4vw, 2.9rem) clamp(1.5rem, 2.8vw, 2.6rem);
+  box-shadow: var(--shadow);
+}
+
+.auth__head { text-align: center; margin-bottom: 1.7rem; }
+.auth__head h1 { font-size: clamp(1.85rem, 2.6vw, 2.25rem); margin: 0.55rem 0 0.25rem; }
+.auth__head p { margin: 0; font-size: 0.95rem; }
+
+/* --- Step transition (phone ⇄ code) --- */
+.auth__form { animation: auth-step-l 0.5s var(--ease-out) both; }
+.auth__form--code { animation-name: auth-step-r; }
+@keyframes auth-step-l {
+  from { opacity: 0; transform: translateX(-16px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes auth-step-r {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .auth__form, .auth__form--code { animation: none; }
+}
+
+/* --- Phone field with inline icon --- */
+.auth__input-wrap { position: relative; }
+.auth__input-icon {
+  position: absolute;
+  left: 0.95rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--caramel-dark);
+  opacity: 0.7;
+  pointer-events: none;
+  transition: color 0.25s ease, opacity 0.25s ease;
+}
+.auth__input-wrap .input { padding-left: 2.7rem; }
+.auth__input-wrap:focus-within .auth__input-icon { color: var(--gold); opacity: 1; }
+
+.auth__form .btn[type='submit'] { margin-top: 0.4rem; }
+
+/* --- OTP step --- */
+.auth__sent { font-size: 0.92rem; line-height: 1.65; margin: 0 0 1.05rem; color: var(--ink); }
+.auth__sent strong { font-variant-numeric: tabular-nums; color: var(--choco); }
+.linklike {
+  background: none;
+  border: none;
+  color: var(--berry);
+  font-weight: 700;
+  font-size: 0.88rem;
+  padding: 0;
+  transition: color 0.25s ease;
+}
+.linklike:hover { color: var(--berry-deep); text-decoration: underline; }
+
+.otp-input {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 620;
+  letter-spacing: 0.45em;
+  text-indent: 0.22em;
+  text-align: center;
+  padding-top: 0.65rem;
+  padding-bottom: 0.65rem;
+  color: var(--choco);
+  caret-color: var(--caramel-dark);
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(180deg, var(--white), rgba(243, 233, 218, 0.55));
+}
+.otp-input::placeholder { color: var(--sand); }
+
+/* --- Dev-mode OTP · discreet glass chip --- */
+.devcode {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto 1.15rem;
+  padding: 0.42rem 1rem 0.42rem 0.48rem;
+  border-radius: 999px;
+  background: linear-gradient(120deg, rgba(242, 197, 128, 0.18), rgba(255, 253, 249, 0.72));
+  border: 1px solid rgba(223, 167, 87, 0.42);
+  backdrop-filter: blur(10px) saturate(1.2);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
+  box-shadow: var(--shadow-sm);
+  font-size: 0.82rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.devcode span {
+  background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+  color: var(--night);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.28rem 0.6rem;
+  border-radius: 999px;
+}
+.devcode strong {
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--choco);
+  font-variant-numeric: tabular-nums;
+}
+
+.auth__resend { margin-top: 0.65rem; }
+
+/* --- Divider + Google --- */
+.auth__divider {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin: 1.5rem 0 1.2rem;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+.auth__divider::before,
+.auth__divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--line));
+}
+.auth__divider::after { background: linear-gradient(90deg, var(--line), transparent); }
+
+/* Google SDK renders into this container — keep element + sizing intact. */
+.auth__google { display: grid; place-items: center; min-height: 44px; }
+.auth__google-disabled { gap: 0.5rem; }
+.auth__hint { text-align: center; font-size: 0.78rem; margin: 0.8rem 0 0; }
+
+/* --- Quiet footnote --- */
+.auth__foot {
+  margin: 1.4rem 0 0;
+  font-size: 0.84rem;
+  color: var(--muted);
+  text-align: center;
+}
+.auth__foot a { color: var(--cocoa); font-weight: 700; transition: color 0.25s ease; }
+.auth__foot a:hover { color: var(--berry); }
+
+/* ---------------- Responsive ---------------- */
+
+@media (max-width: 1020px) {
+  .auth { grid-template-columns: minmax(0, 0.92fr) minmax(0, 1fr); }
+  .auth__line { font-size: clamp(2.1rem, 4vw, 2.8rem); }
+  .auth__chip { padding-right: 0.9rem; }
+}
+
+/* Stack: photo becomes a short cinematic top band. */
+@media (max-width: 900px) {
+  .auth { grid-template-columns: 1fr; }
+  .auth__visual { min-height: clamp(230px, 36vw, 320px); }
+  .auth__visual-inner {
+    justify-content: space-between;
+    gap: 1.2rem;
+    padding: clamp(20px, 4vw, 32px) clamp(20px, 5vw, 40px);
+  }
+  .auth__pitch { margin: auto 0 0; gap: 0.55rem; }
+  .auth__sub, .auth__chips { display: none; }
+  .auth__line { font-size: clamp(1.9rem, 6.4vw, 2.6rem); max-width: none; }
+  .auth__panel { padding: 44px 20px 64px; }
+}
+
+@media (max-width: 860px) {
+  .auth { min-height: calc(100svh - 64px); }
+}
+
+@media (max-width: 560px) {
+  .auth__visual { min-height: clamp(200px, 46vw, 250px); }
+  .auth__brand span { font-size: 1.1rem; }
+  .auth__card { padding: 1.7rem 1.3rem; }
+  .otp-input { font-size: 1.5rem; letter-spacing: 0.36em; text-indent: 0.18em; }
+}
+
+@media (max-width: 380px) {
+  .auth__visual { min-height: 190px; }
+  .auth__line { font-size: 1.7rem; }
+  .auth__card { padding: 1.5rem 1.05rem; border-radius: var(--radius); }
+  .auth__head h1 { font-size: 1.6rem; }
+  .otp-input { font-size: 1.35rem; letter-spacing: 0.3em; text-indent: 0.15em; }
+  .devcode { white-space: normal; text-align: center; justify-content: center; }
+}

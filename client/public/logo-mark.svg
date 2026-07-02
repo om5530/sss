@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Sweet Savory Savor">
+  <!-- berry badge -->
+  <circle cx="50" cy="50" r="47" fill="#c2456e"/>
+  <circle cx="50" cy="50" r="41" fill="none" stroke="#fbf5ec" stroke-opacity="0.3" stroke-width="2"/>
+  <!-- S monogram swirl -->
+  <path d="M63 37 C63 29.5 53 27 46.5 31.5 C39 36.5 41.5 45.5 51 49.5 C60.5 53.5 62.5 62.5 54.5 67.5 C48 71.5 38.5 69.5 36.5 61.5"
+        fill="none" stroke="#fbf5ec" stroke-width="9" stroke-linecap="round"/>
+  <!-- sprinkles -->
+  <circle cx="31" cy="34" r="2.6" fill="#d8a24a"/>
+  <circle cx="70" cy="43" r="2.4" fill="#f4e9d8"/>
+  <circle cx="66" cy="67" r="2.6" fill="#f4e9d8"/>
+</svg>

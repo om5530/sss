@@ -1,0 +1,23 @@
+{
+  "name": "bakery-cafe-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bakery & Café Online Ordering Platform — MEAN stack (MongoDB, Express, Angular, Node.js)",
+  "scripts": {
+    "install:all": "npm install --prefix server && npm install --prefix client",
+    "seed": "npm run seed --prefix server",
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm start --prefix client",
+    "start:server": "npm start --prefix server",
+    "build:client": "npm run build --prefix client"
+  },
+  "keywords": [
+    "mean",
+    "angular",
+    "express",
+    "mongodb",
+    "bakery",
+    "ecommerce"
+  ],
+  "license": "MIT"
+}

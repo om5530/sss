@@ -1,0 +1,87 @@
+<!-- ============ Page hero (compact dark band) ============ -->
+<header class="page-hero grain">
+  <div class="container page-hero__inner on-dark">
+    <span class="eyebrow">Order history</span>
+    <h1>My orders</h1>
+    <p>Every bake you’ve summoned — tracked from our ovens to your hands.</p>
+  </div>
+</header>
+
+<!-- ============ Orders (cream act) ============ -->
+<section class="orders">
+  <div class="container">
+    <div class="orders__col">
+      @if (loading()) {
+        <p class="sr-only" role="status">Loading your orders…</p>
+        <div class="orders__skeletons" aria-hidden="true">
+          @for (s of [1, 2, 3]; track s) {
+            <div class="skeleton orders__skeleton"></div>
+          }
+        </div>
+      } @else if (!orders().length) {
+        <div class="card orders-empty" appReveal="zoom">
+          <span class="orders-empty__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path d="M6 3h12v18l-2-1.4L14 21l-2-1.4L10 21l-2-1.4L6 21V3Z" stroke-linejoin="round" />
+              <path d="M9 8h6M9 11.5h6M9 15h3.5" stroke-linecap="round" />
+            </svg>
+          </span>
+          <h3>Nothing in the books yet</h3>
+          <p>
+            Your order history is a blank page — and our ovens would love to change that.
+            The moment you place an order, it settles in right here.
+          </p>
+          <a routerLink="/menu" class="btn btn--accent">Start an order</a>
+        </div>
+      } @else {
+        <p class="eyebrow orders__count" appReveal>
+          {{ orders().length }} {{ orders().length === 1 ? 'order' : 'orders' }} on record
+        </p>
+
+        <div class="orders-list" appReveal="group">
+          @for (order of orders(); track order._id) {
+            <a [routerLink]="['/orders', order._id]" class="card order-card">
+              <div class="order-card__main">
+                <div class="order-card__top">
+                  <strong class="order-card__number">{{ order.orderNumber }}</strong>
+                  <span class="status-pill status-pill--{{ statusTone(order.orderStatus) }}">
+                    <span class="status-pill__dot" aria-hidden="true"></span>
+                    {{ order.orderStatus }}
+                  </span>
+                </div>
+
+                <span class="order-card__meta">
+                  {{ order.createdAt | date: 'medium' }} · {{ order.orderType }}
+                </span>
+
+                <div class="order-card__thumbs" aria-hidden="true">
+                  @for (thumb of thumbs(order); track $index) {
+                    <img [src]="thumb.image" alt="" width="44" height="44" loading="lazy" />
+                  }
+                  @if (extraCount(order) > 0) {
+                    <span class="order-card__more">+{{ extraCount(order) }}</span>
+                  }
+                </div>
+
+                <p class="order-card__summary">{{ itemsSummary(order) }}</p>
+              </div>
+
+              <div class="order-card__side">
+                <span class="order-card__total">₹{{ order.pricing.total.toFixed(2) }}</span>
+                <span class="order-card__pay" [class.is-paid]="order.paymentStatus === 'paid'">
+                  {{ order.paymentStatus }}
+                </span>
+                <span class="btn btn--ghost btn--sm order-card__view">
+                  View
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                    <path d="M5 12h14m-6-6 6 6-6 6" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </span>
+              </div>
+            </a>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</section>

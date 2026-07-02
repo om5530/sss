@@ -1,0 +1,177 @@
+/* ==================================================================
+   STATUS TRACKER — premium progress rail ("Midnight Patisserie")
+   Gold gradient fills the rail up to the current step. Nodes:
+   done = gold-filled check · active = pulsing gold ring · upcoming = hollow.
+   ================================================================== */
+
+.tracker {
+  list-style: none;
+  display: flex;
+  padding: 0;
+  margin: 0;
+}
+
+.tracker__step {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+  position: relative;
+  text-align: center;
+}
+
+/* --- Connecting rail: quiet base line + gold gradient fill --- */
+.tracker__step::before,
+.tracker__step::after {
+  content: '';
+  position: absolute;
+  top: 19px;
+  left: -50%;
+  width: 100%;
+  height: 2px;
+  z-index: 0;
+}
+.tracker__step::before { background: var(--line); }
+.tracker__step::after {
+  background: linear-gradient(90deg, var(--caramel), var(--gold));
+  box-shadow: 0 0 12px rgba(223, 167, 87, 0.35);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.7s var(--ease-luxe);
+}
+.tracker__step:first-child::before,
+.tracker__step:first-child::after { display: none; }
+.tracker__step.is-done::after { transform: scaleX(1); }
+
+/* --- Nodes --- */
+.tracker__node {
+  position: relative;
+  z-index: 1;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--white);
+  border: 1.6px solid var(--line);
+  color: var(--muted);
+  transition:
+    background 0.45s ease,
+    border-color 0.45s ease,
+    color 0.45s ease,
+    box-shadow 0.45s ease,
+    transform 0.45s var(--ease-out);
+}
+
+/* done — gold-filled check */
+.tracker__step.is-done .tracker__node {
+  background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+  border-color: transparent;
+  color: var(--night);
+  box-shadow: 0 6px 18px rgba(223, 167, 87, 0.35);
+}
+.tracker__check { display: block; }
+
+/* active — pulsing gold ring around a lit core */
+.tracker__step.is-current .tracker__node {
+  background: var(--white);
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 0 5px rgba(223, 167, 87, 0.18);
+  transform: scale(1.06);
+  animation: tracker-pulse 2.2s ease-in-out infinite;
+}
+.tracker__core {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+  box-shadow: 0 0 10px rgba(223, 167, 87, 0.75);
+}
+
+/* completed order — the last node settles into a glowing gold check */
+.tracker--complete .tracker__step.is-current .tracker__node {
+  animation: none;
+  background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+  border-color: transparent;
+  color: var(--night);
+  box-shadow: var(--glow-gold);
+}
+
+@keyframes tracker-pulse {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(223, 167, 87, 0.22); }
+  50% { box-shadow: 0 0 0 10px rgba(223, 167, 87, 0.07); }
+}
+
+/* --- Labels: Manrope small caps --- */
+.tracker__label {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  transition: color 0.3s ease;
+  max-width: 100%;
+  padding: 0 2px;
+}
+.tracker__step.is-done .tracker__label { color: var(--cocoa); }
+.tracker__step.is-current .tracker__label { color: var(--caramel-dark); }
+
+/* --- Cancelled --- */
+.tracker--cancelled {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(192, 57, 43, 0.07);
+  border: 1px solid rgba(192, 57, 43, 0.28);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.3rem;
+}
+.tracker__x {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--danger);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 8px 20px rgba(192, 57, 43, 0.28);
+}
+.tracker--cancelled strong {
+  font-family: var(--font-display);
+  font-size: 1.06rem;
+  font-weight: 620;
+  color: var(--choco);
+}
+.tracker--cancelled p {
+  margin: 0.15rem 0 0;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+/* --- Reduced motion: no pulse, still legible --- */
+@media (prefers-reduced-motion: reduce) {
+  .tracker__step.is-current .tracker__node {
+    animation: none;
+    box-shadow: 0 0 0 5px rgba(223, 167, 87, 0.18);
+  }
+  .tracker__step::after { transition: none; }
+}
+
+/* --- Responsive --- */
+@media (max-width: 560px) {
+  .tracker__step { gap: 0.55rem; }
+  .tracker__node { width: 32px; height: 32px; }
+  .tracker__step::before,
+  .tracker__step::after { top: 15px; }
+  .tracker__check { width: 13px; height: 13px; }
+  .tracker__core { width: 10px; height: 10px; }
+  .tracker__label { font-size: 0.58rem; letter-spacing: 0.09em; }
+}
+
+@media (max-width: 400px) {
+  .tracker__label { font-size: 0.54rem; letter-spacing: 0.05em; }
+}

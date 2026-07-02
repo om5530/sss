@@ -1,0 +1,105 @@
+<div class="adm-page">
+  <div class="adm-head">
+    <div>
+      <span class="eyebrow eyebrow--bare">{{ coupons().length }} codes</span>
+      <h1>Coupons</h1>
+    </div>
+    <div class="adm-head__actions">
+      <button type="button" class="btn btn--primary btn--sm" (click)="showForm.set(!showForm())">
+        {{ showForm() ? 'Close' : '+ New coupon' }}
+      </button>
+    </div>
+  </div>
+
+  @if (showForm()) {
+    <form class="adm-card" (ngSubmit)="create()" style="margin-bottom: 1.2rem">
+      <div class="adm-cols" style="grid-template-columns: repeat(3, 1fr); gap: 0 1rem">
+        <div class="field">
+          <label class="label" for="c-code">Code</label>
+          <input id="c-code" class="input" [(ngModel)]="code" name="code" required placeholder="WELCOME10" style="text-transform: uppercase" />
+        </div>
+        <div class="field">
+          <label class="label" for="c-type">Type</label>
+          <select id="c-type" class="select" [(ngModel)]="type" name="type">
+            <option value="percent">Percent off</option>
+            <option value="flat">Flat ₹ off</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="label" for="c-value">{{ type === 'percent' ? 'Percent' : 'Amount (₹)' }}</label>
+          <input id="c-value" class="input" type="number" min="0.5" [max]="type === 'percent' ? 100 : null" step="0.5" [(ngModel)]="value" name="value" required />
+        </div>
+      </div>
+      <div class="adm-cols" style="grid-template-columns: repeat(4, 1fr); gap: 0 1rem">
+        <div class="field">
+          <label class="label" for="c-min">Min subtotal (₹)</label>
+          <input id="c-min" class="input" type="number" min="0" [(ngModel)]="minSubtotal" name="minSubtotal" placeholder="0" />
+        </div>
+        <div class="field">
+          <label class="label" for="c-max">Max discount (₹)</label>
+          <input id="c-max" class="input" type="number" min="1" [(ngModel)]="maxDiscount" name="maxDiscount" placeholder="No cap" [disabled]="type === 'flat'" />
+        </div>
+        <div class="field">
+          <label class="label" for="c-exp">Expires</label>
+          <input id="c-exp" class="input" type="date" [(ngModel)]="expiresAt" name="expiresAt" />
+        </div>
+        <div class="field">
+          <label class="label" for="c-limit">Usage limit</label>
+          <input id="c-limit" class="input" type="number" min="1" [(ngModel)]="usageLimit" name="usageLimit" placeholder="Unlimited" />
+        </div>
+      </div>
+      <div class="adm-modal__actions">
+        <button type="submit" class="btn btn--primary btn--sm" [disabled]="saving()">
+          {{ saving() ? 'Creating…' : 'Create coupon' }}
+        </button>
+      </div>
+    </form>
+  }
+
+  @if (loading()) {
+    <div class="skeleton" style="height: 280px" aria-hidden="true"></div>
+  } @else {
+    <div class="adm-table-wrap">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Discount</th>
+            <th class="num">Min subtotal</th>
+            <th class="num">Used</th>
+            <th>Expires</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of coupons(); track c._id) {
+            <tr>
+              <td><strong style="letter-spacing: 0.05em">{{ c.code }}</strong></td>
+              <td>{{ discountLabel(c) }}</td>
+              <td class="num">{{ c.minSubtotal ? '₹' + (c.minSubtotal | number: '1.0-2') : '—' }}</td>
+              <td class="num">{{ c.usedCount }}{{ c.usageLimit ? ' / ' + c.usageLimit : '' }}</td>
+              <td class="nowrap">{{ c.expiresAt ? (c.expiresAt | date: 'MMM d, y') : 'Never' }}</td>
+              <td>
+                @if (expired(c)) {
+                  <span class="adm-badge adm-badge--failed">expired</span>
+                } @else if (c.active) {
+                  <span class="adm-badge adm-badge--paid">active</span>
+                } @else {
+                  <span class="adm-badge adm-badge--mock">off</span>
+                }
+              </td>
+              <td style="text-align: right">
+                <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === c._id" (click)="toggle(c)">
+                  {{ c.active ? 'Disable' : 'Enable' }}
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="7"><div class="adm-empty">No coupons yet — create one for your first promo.</div></td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

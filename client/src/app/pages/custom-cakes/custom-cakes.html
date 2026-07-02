@@ -1,0 +1,96 @@
+<header class="page-hero grain">
+  <div class="container">
+    <span class="eyebrow">Made for your moment</span>
+    <h1>Custom <em class="serif-italic">cakes</em></h1>
+    <p>Tell us the occasion — we’ll bake the centrepiece. Briefs get a call back with a quote, usually the same day.</p>
+  </div>
+</header>
+
+<div class="container cakes">
+  @if (sent()) {
+    <div class="card cakes__done" appReveal>
+      <span class="cakes__done-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>
+      </span>
+      <h2>Brief received!</h2>
+      <p class="muted">Our bakers are reading it now — expect a call on the number you left, usually within the day, with a quote and any questions.</p>
+      <div class="cakes__done-cta">
+        <a routerLink="/menu" class="btn btn--primary">Browse the menu meanwhile</a>
+      </div>
+    </div>
+  } @else {
+    <form class="card cakes__form" (ngSubmit)="submit()" appReveal>
+      <div class="row">
+        <div class="field">
+          <label class="label" for="ck-name">Your name</label>
+          <input id="ck-name" class="input" [(ngModel)]="form.name" name="name" required autocomplete="name" />
+        </div>
+        <div class="field">
+          <label class="label" for="ck-phone">Phone</label>
+          <input id="ck-phone" class="input" [(ngModel)]="form.phone" name="phone" required autocomplete="tel" placeholder="+91 98765 43210" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label" for="ck-email">Email <span class="muted">(optional)</span></label>
+        <input id="ck-email" class="input" type="email" [(ngModel)]="form.email" name="email" autocomplete="email" />
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label class="label" for="ck-occasion">Occasion</label>
+          <select id="ck-occasion" class="select" [(ngModel)]="form.occasion" name="occasion" required>
+            <option value="" disabled>Choose…</option>
+            @for (o of occasions; track o) { <option [value]="o">{{ o }}</option> }
+          </select>
+        </div>
+        <div class="field">
+          <label class="label" for="ck-servings">Serves about</label>
+          <input id="ck-servings" class="input" type="number" min="1" max="500" [(ngModel)]="form.servings" name="servings" required placeholder="e.g. 12" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label class="label" for="ck-flavour">Flavour</label>
+          <select id="ck-flavour" class="select" [(ngModel)]="form.flavour" name="flavour" required>
+            <option value="" disabled>Choose…</option>
+            @for (f of flavours; track f) { <option [value]="f">{{ f }}</option> }
+          </select>
+        </div>
+        <div class="field">
+          <label class="label" for="ck-date">Needed by</label>
+          <input id="ck-date" class="input" type="date" [min]="minDate" [(ngModel)]="form.dateNeeded" name="dateNeeded" required />
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label" for="ck-message">Message on the cake <span class="muted">(optional)</span></label>
+        <input id="ck-message" class="input" maxlength="120" [(ngModel)]="form.messageOnCake" name="messageOnCake" placeholder="Happy 30th, Priya!" />
+      </div>
+
+      <div class="field">
+        <label class="label" for="ck-details">Tell us everything <span class="muted">(theme, colours, allergies…)</span></label>
+        <textarea id="ck-details" class="textarea" rows="4" maxlength="2000" [(ngModel)]="form.details" name="details"></textarea>
+      </div>
+
+      <div class="field">
+        <span class="label">Reference photo <span class="muted">(optional)</span></span>
+        <div class="cakes__upload">
+          <label class="btn btn--ghost btn--sm" style="cursor: pointer">
+            {{ uploading() ? 'Uploading…' : form.referenceImage ? 'Replace photo' : 'Add a photo' }}
+            <input type="file" accept="image/jpeg,image/png,image/webp" style="display: none" (change)="onReferenceChosen($event)" [disabled]="uploading()" />
+          </label>
+          @if (form.referenceImage) {
+            <img [src]="form.referenceImage" alt="Reference cake" class="cakes__ref" width="72" height="72" />
+          }
+        </div>
+      </div>
+
+      <button class="btn btn--accent btn--block btn--lg" type="submit" [disabled]="sending()">
+        {{ sending() ? 'Sending your brief…' : 'Send the brief' }}
+      </button>
+      <p class="cakes__note muted">Custom cakes need at least a day’s notice — bigger builds appreciate more.</p>
+    </form>
+  }
+</div>

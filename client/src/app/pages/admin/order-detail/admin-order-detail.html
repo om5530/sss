@@ -1,0 +1,206 @@
+<div class="adm-page">
+  @if (loading()) {
+    <div class="skeleton" style="height: 380px" aria-hidden="true"></div>
+  } @else if (order(); as o) {
+    <div class="adm-head">
+      <div>
+        <a routerLink="/admin/orders" class="eyebrow eyebrow--bare" style="cursor: pointer">← All orders</a>
+        <h1 style="display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap">
+          {{ o.orderNumber }}
+          <span [class]="badgeClass(o.orderStatus)">{{ o.orderStatus }}</span>
+          <span [class]="badgeClass(o.paymentStatus)">{{ o.paymentStatus }}</span>
+          @if (o.paymentMethod === 'cash') {
+            <span class="adm-badge adm-badge--type" title="Cash order — collect on hand-over">cash</span>
+          }
+        </h1>
+        <p>{{ o.createdAt | date: 'EEEE, MMM d, y · h:mm a' }} · <span style="text-transform: capitalize">{{ o.orderType }}</span></p>
+      </div>
+      <div class="adm-head__actions">
+        @if (nextStatus(); as next) {
+          <button type="button" class="btn btn--primary btn--sm" [disabled]="busy()" (click)="advance()">
+            {{ nextLabel[o.orderStatus] }}
+          </button>
+        }
+        @if (o.orderStatus !== 'completed' && o.orderStatus !== 'cancelled') {
+          <button type="button" class="btn btn--ghost btn--sm" [disabled]="busy()" (click)="modal.set('cancel')">
+            Cancel order
+          </button>
+        }
+        @if (cashDue()) {
+          <button type="button" class="btn btn--primary btn--sm" [disabled]="busy()" (click)="modal.set('cash')">
+            Mark cash received
+          </button>
+        }
+        @if (o.paymentStatus === 'paid') {
+          <button type="button" class="btn btn--accent btn--sm" [disabled]="busy()" (click)="modal.set('refund')">
+            Issue refund
+          </button>
+        }
+      </div>
+    </div>
+
+    @if (refundPending()) {
+      <div class="adm-alert" role="status">
+        This order was cancelled but has already been paid — the refund is still pending. Use <strong>Issue refund</strong> to resolve it.
+      </div>
+    }
+    @if (cashMissed()) {
+      <div class="adm-alert" role="status">
+        This order is completed but its cash was never recorded — today's revenue is missing ₹{{ o.pricing.total | number: '1.2-2' }}. Use <strong>Mark cash received</strong> if the customer paid.
+      </div>
+    }
+
+    <div class="adm-cols" style="grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr)">
+      <div>
+        <!-- Items & pricing -->
+        <div class="adm-card" style="padding: 0">
+          <h3 style="padding: 1rem 1.25rem 0">Items</h3>
+          <div class="adm-table-wrap" style="border: none; box-shadow: none">
+            <table class="adm-table">
+              <thead>
+                <tr><th>Item</th><th class="num">Unit</th><th class="num">Qty</th><th class="num">Line total</th></tr>
+              </thead>
+              <tbody>
+                @for (item of o.items; track $index) {
+                  <tr>
+                    <td>{{ item.name }}</td>
+                    <td class="num">₹{{ item.price | number: '1.2-2' }}</td>
+                    <td class="num">{{ item.quantity }}</td>
+                    <td class="num">₹{{ item.lineTotal | number: '1.2-2' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <dl class="adm-kv" style="padding: 0.6rem 1.25rem 1.1rem; grid-template-columns: 1fr auto; max-width: 320px; margin-left: auto">
+            <dt>Subtotal</dt><dd class="num">₹{{ o.pricing.subtotal | number: '1.2-2' }}</dd>
+            @if (o.pricing.discount) {
+              <dt>Discount{{ o.pricing.couponCode ? ' (' + o.pricing.couponCode + ')' : '' }}</dt>
+              <dd class="num">−₹{{ o.pricing.discount | number: '1.2-2' }}</dd>
+            }
+            <dt>Tax</dt><dd class="num">₹{{ o.pricing.tax | number: '1.2-2' }}</dd>
+            @if (o.pricing.deliveryFee) {
+              <dt>Delivery fee</dt><dd class="num">₹{{ o.pricing.deliveryFee | number: '1.2-2' }}</dd>
+            }
+            <dt style="font-weight: 800; color: var(--ink)">Total</dt>
+            <dd class="num" style="font-weight: 800">₹{{ o.pricing.total | number: '1.2-2' }}</dd>
+          </dl>
+        </div>
+
+        <!-- Timeline -->
+        <div class="adm-card">
+          <h3>Status history</h3>
+          <ul class="adm-timeline">
+            @for (event of o.statusHistory.slice().reverse(); track $index) {
+              <li>
+                <div class="adm-timeline__status">{{ event.status }}</div>
+                <div class="adm-timeline__time">{{ event.at | date: 'MMM d · h:mm:ss a' }}</div>
+                @if (event.note) {
+                  <div class="adm-timeline__note">“{{ event.note }}”</div>
+                }
+              </li>
+            }
+          </ul>
+        </div>
+      </div>
+
+      <div>
+        <!-- Customer & fulfilment -->
+        <div class="adm-card">
+          <h3>Customer</h3>
+          <dl class="adm-kv">
+            <dt>Name</dt>
+            <dd>
+              @if (o.user) {
+                <a [routerLink]="['/admin/customers', o.user._id]" style="text-decoration: underline">{{ orderCustomer(o) }}</a>
+              } @else {
+                {{ orderCustomer(o) }} <span class="adm-badge adm-badge--mock">guest</span>
+              }
+            </dd>
+            @if (o.user?.phone) { <dt>Phone</dt><dd>{{ o.user!.phone }}</dd> }
+            @if (o.user?.email) { <dt>Email</dt><dd>{{ o.user!.email }}</dd> }
+          </dl>
+        </div>
+
+        <div class="adm-card">
+          <h3 style="text-transform: capitalize">{{ o.orderType }} details</h3>
+          <dl class="adm-kv">
+            @if (o.orderType === 'dining') {
+              <dt>Table</dt><dd>{{ o.dining?.tableNumber || '—' }}</dd>
+              <dt>Name</dt><dd>{{ o.dining?.customerName || '—' }}</dd>
+            } @else if (o.orderType === 'takeaway') {
+              <dt>Name</dt><dd>{{ o.takeaway?.customerName || '—' }}</dd>
+              <dt>Phone</dt><dd>{{ o.takeaway?.phone || '—' }}</dd>
+            } @else {
+              <dt>Address</dt><dd>{{ o.delivery?.fullAddress || '—' }}</dd>
+              <dt>Area</dt><dd>{{ o.delivery?.area || '—' }}</dd>
+              <dt>City</dt><dd>{{ o.delivery?.city }} {{ o.delivery?.pincode }}</dd>
+              @if (o.delivery?.landmark) { <dt>Landmark</dt><dd>{{ o.delivery?.landmark }}</dd> }
+            }
+          </dl>
+        </div>
+
+        <!-- Payment -->
+        <div class="adm-card">
+          <h3>Payment</h3>
+          @if (payment(); as p) {
+            <dl class="adm-kv">
+              <dt>Status</dt>
+              <dd>
+                <span [class]="badgeClass(o.paymentStatus)">{{ o.paymentStatus }}</span>
+                @if (p.mock) { <span class="adm-badge adm-badge--mock" style="margin-left: 0.3rem">mock</span> }
+              </dd>
+              <dt>Amount</dt><dd>₹{{ p.amount | number: '1.2-2' }} {{ p.currency.toUpperCase() }}</dd>
+              <dt>Provider</dt><dd>{{ p.provider }}</dd>
+              @if (p.method) { <dt>Method</dt><dd>{{ p.method }}</dd> }
+              @if (p.razorpayPaymentId || p.razorpayOrderId) {
+                <dt>Reference</dt><dd style="font-size: 0.8rem">{{ p.razorpayPaymentId || p.razorpayOrderId }}</dd>
+              } @else if (p.stripePaymentIntentId) {
+                <dt>Intent</dt><dd style="font-size: 0.8rem">{{ p.stripePaymentIntentId }}</dd>
+              }
+              <dt>Created</dt><dd>{{ p.createdAt | date: 'MMM d · h:mm a' }}</dd>
+            </dl>
+          } @else if (o.paymentMethod === 'cash') {
+            <div class="adm-empty" style="padding: 1rem 0">
+              Cash order — collect <strong>₹{{ o.pricing.total | number: '1.2-2' }}</strong> on hand-over, then use <strong>Mark cash received</strong>.
+            </div>
+          } @else {
+            <div class="adm-empty" style="padding: 1rem 0">No payment record yet.</div>
+          }
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="adm-empty">Order not found. <a routerLink="/admin/orders" style="text-decoration: underline">Back to orders</a></div>
+  }
+</div>
+
+@if (modal(); as kind) {
+  @if (order(); as o) {
+    <adm-confirm-modal
+      [title]="
+        kind === 'cancel'
+          ? 'Cancel ' + o.orderNumber + '?'
+          : kind === 'cash'
+            ? 'Cash received for ' + o.orderNumber + '?'
+            : 'Refund ₹' + o.pricing.total.toFixed(2) + '?'
+      "
+      [message]="
+        kind === 'cancel'
+          ? 'The customer will see this order as cancelled.' + (o.paymentStatus === 'paid' ? ' It is already paid — you will be reminded to refund it.' : '')
+          : kind === 'cash'
+            ? 'Confirm you collected ₹' + o.pricing.total.toFixed(2) + ' in cash/UPI. The order is marked paid and counts toward today\'s revenue.'
+            : payment()?.provider === 'cash'
+              ? 'Hand the full ₹' + o.pricing.total.toFixed(2) + ' back to the customer in cash — this only records it. This cannot be undone.'
+              : 'The full amount goes back to the customer via ' + (payment()?.mock ? 'the mock provider' : payment()?.provider === 'razorpay' ? 'Razorpay' : 'Stripe') + '. This cannot be undone.'
+      "
+      [confirmLabel]="kind === 'cancel' ? 'Cancel order' : kind === 'cash' ? 'Yes, cash received' : 'Refund now'"
+      [tone]="kind === 'cash' ? 'primary' : 'danger'"
+      [requireReason]="kind !== 'cash'"
+      [reasonLabel]="kind === 'cancel' ? 'Why is it being cancelled?' : 'Why is it being refunded?'"
+      [busy]="busy()"
+      (confirmed)="confirmModal($event)"
+      (cancelled)="modal.set(null)"
+    />
+  }
+}

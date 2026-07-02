@@ -1,0 +1,176 @@
+<div class="pd">
+  <div class="container">
+    @if (loading()) {
+      <!-- Skeleton mirrors the final two-column layout -->
+      <div class="pd__grid" aria-hidden="true">
+        <div class="skeleton pd-skel__media"></div>
+        <div class="pd-skel__info">
+          <div class="skeleton pd-skel__line pd-skel__line--crumb"></div>
+          <div class="skeleton pd-skel__line pd-skel__line--pill"></div>
+          <div class="skeleton pd-skel__line pd-skel__line--title"></div>
+          <div class="skeleton pd-skel__line pd-skel__line--price"></div>
+          <div class="skeleton pd-skel__line pd-skel__line--text"></div>
+          <div class="skeleton pd-skel__line pd-skel__line--text"></div>
+          <div class="skeleton pd-skel__line pd-skel__line--text pd-skel__line--short"></div>
+          <div class="skeleton pd-skel__buy"></div>
+        </div>
+      </div>
+    } @else if (product(); as p) {
+      <div class="pd__grid">
+        <!-- LEFT · photography -->
+        <div class="pd__media-col" appReveal="zoom">
+          <figure class="pd__media" [appTilt]="3">
+            <img [src]="imageFor(p)" [alt]="p.name" (error)="onImageError($event, p)" />
+            @if (p.featured) { <span class="pd__tag">★ Popular</span> }
+            @if (!p.available) { <span class="pd__soldout">Sold out</span> }
+          </figure>
+        </div>
+
+        <!-- RIGHT · sticky info -->
+        <div class="pd__info" appReveal="group">
+          <nav class="pd__crumb" aria-label="Breadcrumb">
+            <a routerLink="/menu" class="pd__crumb-link">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M19 12H5m6 6-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Menu
+            </a>
+            <span class="pd__crumb-sep" aria-hidden="true">/</span>
+            <span class="pd__crumb-here" aria-current="page">{{ p.name }}</span>
+          </nav>
+
+          <div class="pd__meta">
+            <span class="diet" [class]="'diet--' + p.dietary" [title]="p.dietary"></span>
+            <span class="pd__diet-label">{{ p.dietary }}</span>
+            <a class="pill pd__cat" routerLink="/menu" [fragment]="p.category">{{ p.category }}</a>
+          </div>
+
+          <h1 class="pd__name">{{ p.name }}</h1>
+          @if (p.ratingCount) {
+            <div class="pd__stars" [attr.aria-label]="p.ratingAvg + ' out of 5 stars from ' + p.ratingCount + ' reviews'">
+              <span aria-hidden="true">
+                @for (s of [1, 2, 3, 4, 5]; track s) {
+                  <span [class.pd__star--on]="s <= roundedRating(p)" class="pd__star">★</span>
+                }
+              </span>
+              <span class="pd__stars-num">{{ p.ratingAvg }} · {{ p.ratingCount }} {{ p.ratingCount === 1 ? 'review' : 'reviews' }}</span>
+            </div>
+          }
+          <div class="pd__price">₹{{ p.price }}</div>
+
+          <p class="pd__desc">{{ p.description }}</p>
+
+          @if (p.tags && p.tags.length) {
+            <ul class="pd__tags">
+              @for (tag of p.tags; track tag) { <li>{{ tag }}</li> }
+            </ul>
+          }
+
+          @if (p.available) {
+            <div class="pd__buy">
+              <div class="stepper">
+                <button (click)="changeQty(-1)" aria-label="Decrease">−</button>
+                <span>{{ quantity() }}</span>
+                <button (click)="changeQty(1)" aria-label="Increase">+</button>
+              </div>
+              <button class="btn btn--accent btn--lg pd__add" (click)="addToCart()">
+                Add to cart · ₹{{ p.price * quantity() }}
+              </button>
+            </div>
+            <p class="pd__note">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Baked fresh today · delivered warm in about 25 minutes
+            </p>
+          } @else {
+            <div class="pd__sold">
+              <p><strong>Currently unavailable.</strong> This bake sold out for the day — the ovens will catch up by tomorrow morning.</p>
+              <a routerLink="/menu" class="btn btn--ghost">Browse today&rsquo;s bakes</a>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- ============ Reviews ============ -->
+      <section class="pd-reviews" appReveal>
+        <header class="pd-reviews__head">
+          <span class="eyebrow">From the regulars</span>
+          <h2>Reviews</h2>
+        </header>
+
+        @if (canReview()) {
+          <form class="card pd-review-form" (ngSubmit)="submitReview()">
+            <p class="pd-review-form__lead">You’ve had this one — how was it?</p>
+            <div class="pd-review-form__stars" role="radiogroup" aria-label="Your rating">
+              @for (s of [1, 2, 3, 4, 5]; track s) {
+                <button
+                  type="button"
+                  class="pd-review-form__star"
+                  [class.is-on]="s <= reviewRating"
+                  role="radio"
+                  [attr.aria-checked]="reviewRating === s"
+                  [attr.aria-label]="s + ' star' + (s > 1 ? 's' : '')"
+                  (click)="reviewRating = s"
+                >★</button>
+              }
+            </div>
+            <textarea
+              class="textarea"
+              rows="3"
+              [(ngModel)]="reviewText"
+              name="reviewText"
+              maxlength="1000"
+              placeholder="Optional — what made it good (or not)?"
+            ></textarea>
+            <button class="btn btn--primary" type="submit" [disabled]="!reviewRating || submittingReview()">
+              {{ submittingReview() ? 'Saving…' : 'Post review' }}
+            </button>
+          </form>
+        } @else if (!auth.isAuthenticated() && reviews().length === 0) {
+          <p class="muted pd-reviews__hint">Reviews come from verified orders — grab this bake first, then tell everyone about it.</p>
+        }
+
+        @if (reviews().length) {
+          <ul class="pd-reviews__list">
+            @for (review of reviews(); track review._id) {
+              <li class="card pd-review">
+                <div class="pd-review__top">
+                  <strong>{{ review.authorName || 'A customer' }}</strong>
+                  <span class="pd-review__stars" [attr.aria-label]="review.rating + ' out of 5'">
+                    @for (s of [1, 2, 3, 4, 5]; track s) {
+                      <span class="pd__star" [class.pd__star--on]="s <= review.rating">★</span>
+                    }
+                  </span>
+                </div>
+                @if (review.text) { <p class="pd-review__text">{{ review.text }}</p> }
+                <time class="pd-review__when">{{ review.createdAt | date: 'MMM d, y' }}</time>
+              </li>
+            }
+          </ul>
+        } @else if (canReview()) {
+          <p class="muted pd-reviews__hint">No reviews yet — yours would be the first.</p>
+        }
+      </section>
+
+      <!-- Gold-band CTA back to the counter -->
+      <aside class="pd-cta" appReveal>
+        <div class="pd-cta__copy">
+          <span class="pd-cta__eyebrow">In good company</span>
+          <h2>Every bake tastes <em class="serif-italic">better</em> with a friend</h2>
+          <p>Croissants love coffee, brownies love a second brownie. The counter is still full — go pick a companion.</p>
+        </div>
+        <a routerLink="/menu" class="btn btn--primary btn--lg pd-cta__btn" appMagnetic>
+          Explore the full menu
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </aside>
+    } @else {
+      <!-- Not found -->
+      <div class="pd__missing card" appReveal>
+        <span class="pd__missing-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><path d="M12 3.5V5.5M20.5 12H18.5" stroke-linecap="round"/></svg>
+        </span>
+        <h3>That bake has left the counter</h3>
+        <p>It may have sold out, or quietly retired from the menu. The ovens never rest, though — something warm is always waiting.</p>
+        <a routerLink="/menu" class="btn btn--primary">Back to the menu</a>
+      </div>
+    }
+  </div>
+</div>

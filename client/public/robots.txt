@@ -1,0 +1,12 @@
+# Sweet Savory Savor
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /checkout
+Disallow: /cart
+Disallow: /orders
+Disallow: /profile
+Disallow: /login
+
+# Update the host below at launch.
+Sitemap: /sitemap.xml

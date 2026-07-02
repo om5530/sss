@@ -1,0 +1,129 @@
+<div class="adm-page" style="max-width: 880px">
+  <div class="adm-head">
+    <div>
+      <a routerLink="/admin/products" class="eyebrow eyebrow--bare" style="cursor: pointer">← Products</a>
+      <h1>{{ isEdit() ? 'Edit product' : 'New product' }}</h1>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="skeleton" style="height: 420px" aria-hidden="true"></div>
+  } @else {
+    <form class="adm-card" (ngSubmit)="save()">
+      <div class="adm-cols" style="grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 1.6rem">
+        <div>
+          <div class="field">
+            <label class="label" for="p-name">Name</label>
+            <input id="p-name" class="input" [(ngModel)]="name" name="name" required placeholder="e.g. Pistachio Croissant" />
+            @if (fieldErrors()['name']) { <p class="error-text">{{ fieldErrors()['name'] }}</p> }
+          </div>
+
+          <div class="adm-cols" style="grid-template-columns: 1fr 1fr; gap: 0 1rem">
+            <div class="field">
+              <label class="label" for="p-group">Group</label>
+              <select id="p-group" class="select" [(ngModel)]="group" name="group">
+                <option value="bakery">Bakery</option>
+                <option value="savoury">Savoury</option>
+              </select>
+              @if (fieldErrors()['group']) { <p class="error-text">{{ fieldErrors()['group'] }}</p> }
+            </div>
+            <div class="field">
+              <label class="label" for="p-category">Category</label>
+              <input id="p-category" class="input" [(ngModel)]="category" name="category" list="category-options" required placeholder="e.g. Pastries" />
+              <datalist id="category-options">
+                @for (c of categories(); track c) {
+                  <option [value]="c"></option>
+                }
+              </datalist>
+              @if (fieldErrors()['category']) { <p class="error-text">{{ fieldErrors()['category'] }}</p> }
+            </div>
+          </div>
+
+          <div class="adm-cols" style="grid-template-columns: 1fr 1fr; gap: 0 1rem">
+            <div class="field">
+              <label class="label" for="p-price">Price (₹)</label>
+              <input id="p-price" class="input" type="number" min="0" step="0.5" [(ngModel)]="price" name="price" required />
+              @if (fieldErrors()['price']) { <p class="error-text">{{ fieldErrors()['price'] }}</p> }
+            </div>
+            <div class="field">
+              <label class="label" for="p-dietary">Dietary</label>
+              <select id="p-dietary" class="select" [(ngModel)]="dietary" name="dietary">
+                <option value="veg">Veg</option>
+                <option value="egg">Contains egg</option>
+                <option value="non-veg">Non-veg</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label" for="p-desc">Description</label>
+            <textarea id="p-desc" class="textarea" rows="3" [(ngModel)]="description" name="description" placeholder="Shown on the product page and menu card."></textarea>
+          </div>
+
+          <div class="field">
+            <label class="label" for="p-tags">Tags <span class="muted" style="font-weight: 400">(comma-separated)</span></label>
+            <input id="p-tags" class="input" [(ngModel)]="tags" name="tags" placeholder="bestseller, new" />
+          </div>
+        </div>
+
+        <div>
+          <div class="field">
+            <label class="label" for="p-image">Photo</label>
+            <div style="display: flex; gap: 0.6rem; align-items: center; margin-bottom: 0.5rem">
+              <label class="btn btn--primary btn--sm" style="cursor: pointer">
+                {{ uploading() ? 'Uploading…' : 'Upload photo' }}
+                <input type="file" accept="image/jpeg,image/png,image/webp" style="display: none" (change)="onFileChosen($event)" [disabled]="uploading()" />
+              </label>
+              <span class="muted" style="font-size: 0.78rem">JPEG / PNG / WebP, up to 5 MB</span>
+            </div>
+            <input id="p-image" class="input" [(ngModel)]="image" name="image" placeholder="…or paste a direct photo URL" />
+            <p class="muted" style="font-size: 0.78rem; margin: 0.35rem 0 0">
+              Real photography of the actual bake reads best.
+            </p>
+          </div>
+          @if (image) {
+            <img
+              [src]="image"
+              alt="Product photo preview"
+              style="width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: var(--radius); border: 1px solid var(--line)"
+            />
+          } @else {
+            <div
+              class="adm-empty"
+              style="aspect-ratio: 4/3; display: grid; place-items: center; border: 1.5px dashed var(--line); border-radius: var(--radius)"
+            >
+              Photo preview
+            </div>
+          }
+
+          <div class="field" style="margin-top: 1.1rem">
+            <label class="label" for="p-stock">Today's stock <span class="muted" style="font-weight: 400">(blank = don't track)</span></label>
+            <input id="p-stock" class="input" type="number" min="0" step="1" [(ngModel)]="stockCount" name="stockCount" placeholder="e.g. 24" />
+            <p class="muted" style="font-size: 0.78rem; margin: 0.35rem 0 0">
+              Orders count it down; at 0 the item auto-hides from the menu. Cancellations restock it.
+            </p>
+            @if (fieldErrors()['stockCount']) { <p class="error-text">{{ fieldErrors()['stockCount'] }}</p> }
+          </div>
+
+          <div class="field" style="margin-top: 1.1rem; display: flex; flex-direction: column; gap: 0.55rem">
+            <label style="display: inline-flex; align-items: center; gap: 0.55rem; font-size: 0.92rem; font-weight: 600; color: var(--cocoa)">
+              <label class="adm-switch"><input type="checkbox" [(ngModel)]="available" name="available" /><span></span></label>
+              Available to order
+            </label>
+            <label style="display: inline-flex; align-items: center; gap: 0.55rem; font-size: 0.92rem; font-weight: 600; color: var(--cocoa)">
+              <label class="adm-switch"><input type="checkbox" [(ngModel)]="featured" name="featured" /><span></span></label>
+              Featured on the homepage
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="adm-modal__actions" style="margin-top: 0.6rem">
+        <a routerLink="/admin/products" class="btn btn--ghost btn--sm">Discard</a>
+        <button type="submit" class="btn btn--primary btn--sm" [disabled]="saving()">
+          {{ saving() ? 'Saving…' : isEdit() ? 'Save changes' : 'Create product' }}
+        </button>
+      </div>
+    </form>
+  }
+</div>

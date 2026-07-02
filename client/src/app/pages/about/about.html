@@ -1,0 +1,140 @@
+<!-- ============ 1 · PAGE HERO (dark) ============ -->
+<header class="page-hero grain">
+  <div class="container page-hero__inner">
+    <!-- DUMMY STORY COPY — generic small-batch copy; replace with real client data before launch -->
+    <span class="eyebrow" appReveal>Our story</span>
+    <h1 appReveal [revealDelay]="70">Every good day starts at <em>5&nbsp;a.m.</em></h1>
+    <p class="page-hero__lead" appReveal [revealDelay]="140">
+      That’s when our ovens come on. Butter gets folded, dough gets shaped and the first
+      trays go in — so everything you order today was baked today.
+    </p>
+
+    <!-- REAL CLIENT DATA — uncomment before launch
+    <span class="eyebrow" appReveal>Our story</span>
+    <h1 appReveal>Baked with love since day one</h1>
+    <p class="page-hero__lead" appReveal>
+      Sweet Savory Savor started as a tiny home kitchen with one wood oven and a long list of
+      family recipes. Today we bake everything fresh each morning — from fudgy brownies to
+      wood-fired pizza — and bring it to your table, counter or doorstep.
+    </p>
+    -->
+  </div>
+</header>
+
+<!-- ============ 2 · STORY (cream editorial, photo stack) ============ -->
+<section class="section story">
+  <div class="container story__grid">
+    <div class="story__copy" appReveal="left">
+      <span class="eyebrow">Small batch, on purpose</span>
+      <h2>Small batches, <em class="serif-italic">zero</em> shortcuts</h2>
+      <p class="story__lead">
+        We bake in small batches because butter, chocolate and patience all behave better
+        that way. Whatever comes out of the ovens each morning is what we sell — and when
+        a bake runs out, it’s gone until tomorrow’s trays.
+      </p>
+      <p class="story__body">
+        No premixes, no week-old freezer stock. Croissants are laminated by hand, brownies
+        leave the oven while their centres are still molten, and the pizza oven burns real
+        wood from open to close.
+      </p>
+      <a routerLink="/menu" class="story__link">Taste the difference <span aria-hidden="true">→</span></a>
+    </div>
+
+    <div class="story__stack" appReveal="zoom">
+      <figure class="story__photo story__photo--1" [appParallax]="0.12">
+        <img [src]="storyPhotos[0].src" [alt]="storyPhotos[0].alt" loading="lazy" width="520" height="390" />
+        <figcaption>{{ storyPhotos[0].caption }}</figcaption>
+      </figure>
+      <figure class="story__photo story__photo--2" [appParallax]="-0.16">
+        <img [src]="storyPhotos[1].src" [alt]="storyPhotos[1].alt" loading="lazy" width="520" height="390" />
+        <figcaption>{{ storyPhotos[1].caption }}</figcaption>
+      </figure>
+      <figure class="story__photo story__photo--3" [appParallax]="0.22">
+        <img [src]="storyPhotos[2].src" [alt]="storyPhotos[2].alt" loading="lazy" width="520" height="390" />
+        <figcaption>{{ storyPhotos[2].caption }}</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3 · VALUES ============ -->
+<section class="section values-act">
+  <div class="container">
+    <div class="section__head section__head--center" appReveal>
+      <span class="eyebrow eyebrow--bare">What we stand by</span>
+      <h2>Three promises, every single bake</h2>
+    </div>
+
+    <!-- Values — real client copy (previously staged under REAL CLIENT DATA) -->
+    <div class="values" appReveal="group">
+      @for (value of values; track value.title) {
+        <article class="value">
+          <span class="value__icon" aria-hidden="true">
+            @switch (value.icon) {
+              @case ('wheat') {
+                <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <path d="M12 21v-6" stroke-linecap="round" />
+                  <path d="M12 15c-2.8 0-4.3-1.6-4.3-4.3 2.7 0 4.3 1.6 4.3 4.3Z" stroke-linejoin="round" />
+                  <path d="M12 15c2.8 0 4.3-1.6 4.3-4.3-2.7 0-4.3 1.6-4.3 4.3Z" stroke-linejoin="round" />
+                  <path d="M12 10.4C9.7 10.1 8.5 8.6 8.6 6.2c2.4.3 3.6 1.7 3.4 4.2Z" stroke-linejoin="round" />
+                  <path d="M12 10.4c2.3-.3 3.5-1.8 3.4-4.2-2.4.3-3.6 1.7-3.4 4.2Z" stroke-linejoin="round" />
+                  <path d="M12 6c-1.1-1-1.3-2.1-.5-3.4 1.1.9 1.3 2 .5 3.4Z" stroke-linejoin="round" />
+                </svg>
+              }
+              @case ('flame') {
+                <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <path d="M12 3c.6 3.2-4 5.2-4 9a4 4 0 0 0 8 0c0-1.5-.6-2.7-1.5-3.8-.3 1.1-1 2-2 2.6C13 8.6 13.3 5.6 12 3Z" stroke-linejoin="round" />
+                  <path d="M12 21a6.9 6.9 0 0 1-5.4-2.6" stroke-linecap="round" />
+                </svg>
+              }
+              @case ('heart') {
+                <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <path d="M12 20.3C7.2 17.2 4.5 14.2 4.5 10.9 4.5 8.7 6.2 7 8.4 7c1.5 0 2.8.8 3.6 2 .8-1.2 2.1-2 3.6-2 2.2 0 3.9 1.7 3.9 3.9 0 3.3-2.7 6.3-7.5 9.4Z" stroke-linejoin="round" />
+                </svg>
+              }
+            }
+          </span>
+          <h3>{{ value.title }}</h3>
+          <p>{{ value.copy }}</p>
+        </article>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4 · STATS + GOLD CTA (dark act) ============ -->
+<div class="dark-act grain">
+  <section class="stats-strip on-dark">
+    <div class="container stats-strip__grid" appReveal="group">
+      <div class="stat">
+        <span class="stat__value"><span [appCounter]="30">30</span>+</span>
+        <span class="stat__label">artisan bakes, every day</span>
+      </div>
+      <div class="stat">
+        <span class="stat__value"><span [appCounter]="10">10</span></span>
+        <span class="stat__label">categories, sweet to savoury</span>
+      </div>
+      <div class="stat">
+        <span class="stat__value"><span [appCounter]="4.9" [counterDecimals]="1">4.9</span>★</span>
+        <span class="stat__label">average guest rating</span>
+      </div>
+      <div class="stat">
+        <span class="stat__value"><span [appCounter]="25">25</span><em>min</em></span>
+        <span class="stat__label">average, oven to door</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta on-dark">
+    <div class="container cta__inner">
+      <!-- CTA — real text per client: “Come hungry.” -->
+      <span class="eyebrow eyebrow--bare" appReveal>The ovens are already lit</span>
+      <h2 class="cta__title" appReveal="blur">Come <em class="serif-italic">hungry.</em></h2>
+      <p appReveal>Everything on today’s menu came out of these ovens this morning.</p>
+      <div class="cta__actions" appReveal>
+        <a routerLink="/menu" class="btn btn--gold btn--lg" appMagnetic>Browse the menu</a>
+        <a routerLink="/contact" class="btn btn--ghost-dark btn--lg">Say hello</a>
+      </div>
+    </div>
+  </section>
+</div>

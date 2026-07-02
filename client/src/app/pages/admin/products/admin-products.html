@@ -1,0 +1,115 @@
+<div class="adm-page">
+  <div class="adm-head">
+    <div>
+      <span class="eyebrow eyebrow--bare">Catalogue</span>
+      <h1>Products</h1>
+    </div>
+    <div class="adm-head__actions">
+      <a routerLink="/admin/products/new" class="btn btn--gold btn--sm">+ New product</a>
+    </div>
+  </div>
+
+  <div class="adm-filters">
+    <input
+      class="input"
+      type="search"
+      placeholder="Search products…"
+      style="min-width: 200px"
+      [(ngModel)]="q"
+      (ngModelChange)="onSearch()"
+      aria-label="Search products"
+    />
+    <select class="select" [(ngModel)]="group" (ngModelChange)="fetch()" aria-label="Filter by group">
+      <option value="">Bakery + Savoury</option>
+      <option value="bakery">Bakery</option>
+      <option value="savoury">Savoury</option>
+    </select>
+    <select class="select" [(ngModel)]="availability" (ngModelChange)="fetch()" aria-label="Filter by availability">
+      <option value="">Any availability</option>
+      <option value="true">Available</option>
+      <option value="false">Unavailable</option>
+    </select>
+    <label style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.88rem; font-weight: 600; color: var(--cocoa)">
+      <input type="checkbox" [(ngModel)]="showArchived" (ngModelChange)="fetch()" />
+      Show archived
+    </label>
+  </div>
+
+  @if (loading()) {
+    <div class="skeleton" style="height: 360px" aria-hidden="true"></div>
+  } @else {
+    <div class="adm-table-wrap">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Product</th>
+            <th>Category</th>
+            <th class="num">Price</th>
+            <th>Diet</th>
+            <th>Available</th>
+            <th>Featured</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of products(); track p._id) {
+            <tr [style.opacity]="p.archived ? 0.55 : 1">
+              <td style="width: 54px">
+                @if (p.image) {
+                  <img [src]="p.image" alt="" class="adm-thumb" loading="lazy" />
+                }
+              </td>
+              <td>
+                <strong>{{ p.name }}</strong>
+                @if (p.archived) {
+                  <span class="adm-badge adm-badge--mock" style="margin-left: 0.4rem">archived</span>
+                }
+                <div class="muted" style="font-size: 0.78rem; text-transform: capitalize">{{ p.group }}</div>
+              </td>
+              <td>{{ p.category }}</td>
+              <td class="num">₹{{ p.price | number: '1.0-2' }}</td>
+              <td><span class="diet diet--{{ p.dietary }}" [title]="p.dietary"></span></td>
+              <td>
+                <label class="adm-switch" [attr.aria-label]="'Toggle availability for ' + p.name">
+                  <input type="checkbox" [checked]="p.available" [disabled]="p.archived" (change)="toggle(p, 'available')" />
+                  <span></span>
+                </label>
+              </td>
+              <td>
+                <label class="adm-switch" [attr.aria-label]="'Toggle featured for ' + p.name">
+                  <input type="checkbox" [checked]="p.featured" [disabled]="p.archived" (change)="toggle(p, 'featured')" />
+                  <span></span>
+                </label>
+              </td>
+              <td class="nowrap" style="text-align: right">
+                <a [routerLink]="['/admin/products', p._id, 'edit']" class="btn btn--ghost btn--sm">Edit</a>
+                <button type="button" class="btn btn--ghost btn--sm" style="margin-left: 0.35rem" (click)="archiveTarget.set(p)">
+                  {{ p.archived ? 'Restore' : 'Archive' }}
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="8"><div class="adm-empty">No products match. Try clearing the filters.</div></td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+@if (archiveTarget(); as target) {
+  <adm-confirm-modal
+    [title]="(target.archived ? 'Restore' : 'Archive') + ' “' + target.name + '”?'"
+    [message]="
+      target.archived
+        ? 'It will reappear in the admin catalogue as unavailable; switch it on when ready to sell.'
+        : 'It disappears from the storefront immediately' + (target.featured ? ' — including the featured rail on the homepage' : '') + '. Past orders keep their records. You can restore it anytime.'
+    "
+    [confirmLabel]="target.archived ? 'Restore' : 'Archive'"
+    [tone]="target.archived ? 'primary' : 'danger'"
+    [busy]="busy()"
+    (confirmed)="confirmArchive()"
+    (cancelled)="archiveTarget.set(null)"
+  />
+}

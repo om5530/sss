@@ -1,0 +1,412 @@
+/* ==================================================================
+   PRODUCT DETAIL — "Midnight Patisserie"
+   Cream editorial PDP: large photography left, sticky purchase
+   column right, gold-band CTA back to the counter below.
+   ================================================================== */
+
+.pd {
+  background: var(--cream);
+  padding: clamp(36px, 6vw, 72px) 0 clamp(80px, 10vw, 130px);
+}
+
+/* ---------------- Two-column stage ---------------- */
+
+.pd__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: clamp(2rem, 5vw, 4.5rem);
+  align-items: start;
+}
+
+/* ---------------- LEFT · media ---------------- */
+
+.pd__media {
+  position: relative;
+  margin: 0;
+  aspect-ratio: 4 / 3.4;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--sand);
+  box-shadow: var(--shadow-lg);
+}
+.pd__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.02);
+  transition: transform 1.1s var(--ease-out), filter 0.5s ease;
+}
+.pd__media:hover img { transform: scale(1.06); filter: saturate(1.08); }
+
+/* quiet vignette that deepens on hover, like the product cards */
+.pd__media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 60%, rgba(18, 10, 6, 0.24));
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+.pd__media:hover::after { opacity: 1; }
+
+.pd__tag {
+  position: absolute;
+  z-index: 2;
+  top: 16px;
+  left: 16px;
+  background: rgba(18, 10, 6, 0.62);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(242, 197, 128, 0.35);
+  color: var(--gold-bright);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+}
+
+.pd__soldout {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(18, 10, 6, 0.55);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 0.95rem;
+}
+
+/* ---------------- RIGHT · sticky info ---------------- */
+
+.pd__info {
+  position: sticky;
+  top: 104px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-top: 0.4rem;
+}
+
+/* --- Breadcrumb --- */
+.pd__crumb {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 1.4rem;
+  max-width: 100%;
+}
+.pd__crumb-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--cocoa);
+  transition: color 0.25s ease;
+}
+.pd__crumb-link svg { transition: transform 0.35s var(--ease-out); }
+.pd__crumb-link:hover { color: var(--berry); }
+.pd__crumb-link:hover svg { transform: translateX(-4px); }
+.pd__crumb-sep { color: var(--muted); opacity: 0.6; }
+.pd__crumb-here {
+  color: var(--muted);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- Meta row: diet dot + category pill --- */
+.pd__meta { display: flex; align-items: center; gap: 0.55rem; margin-bottom: 1rem; }
+.pd__diet-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  text-transform: capitalize;
+  margin-right: 0.35rem;
+}
+.pd__cat {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.68rem;
+  padding: 0.34rem 0.8rem;
+  transition: background 0.3s ease, color 0.3s ease, transform 0.35s var(--ease-out);
+}
+.pd__cat:hover { background: var(--gold); color: var(--night); transform: translateY(-2px); }
+
+/* --- Name & price --- */
+.pd__name {
+  font-size: clamp(2rem, 4.2vw, 2.9rem);
+  font-weight: 620;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.55rem;
+  color: var(--choco);
+}
+.pd__price {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 2.6vw, 2.1rem);
+  font-weight: 700;
+  color: var(--cocoa);
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 1.1rem;
+}
+
+.pd__desc {
+  color: var(--ink);
+  font-size: 1.02rem;
+  line-height: 1.75;
+  max-width: 52ch;
+  margin: 0 0 1.2rem;
+}
+
+/* --- Tags --- */
+.pd__tags {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0 0 0.4rem;
+  padding: 0;
+}
+.pd__tags li {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: capitalize;
+  color: var(--caramel-dark);
+  background: rgba(223, 167, 87, 0.13);
+  border: 1px solid rgba(223, 167, 87, 0.28);
+  padding: 0.26rem 0.7rem;
+  border-radius: 999px;
+}
+
+/* --- Add-to-cart zone --- */
+.pd__buy {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-top: 1.6rem;
+  padding-top: 1.7rem;
+  border-top: 1px solid var(--line);
+}
+.pd__add { flex: 1 1 auto; max-width: 380px; }
+
+/* Dark stepper — same recipe as the product card, sized up for the PDP */
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: var(--night-3);
+  border-radius: 999px;
+  padding: 0.3rem;
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+.stepper button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--gold-bright);
+  font-size: 1.25rem;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  transition: background 0.25s ease, color 0.25s ease, transform 0.2s ease;
+}
+.stepper button:hover { background: var(--gold); color: var(--night); }
+.stepper button:active { transform: scale(0.9); }
+.stepper span {
+  min-width: 30px;
+  text-align: center;
+  font-weight: 800;
+  font-size: 1.02rem;
+  color: var(--d-text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Reassurance note --- */
+.pd__note {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1.1rem 0 0;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+.pd__note svg { color: var(--caramel-dark); flex: none; }
+
+/* --- Unavailable state --- */
+.pd__sold {
+  width: 100%;
+  margin-top: 1.6rem;
+  padding: 1.4rem 1.5rem;
+  border-radius: var(--radius);
+  background: var(--cream-2);
+  border: 1px dashed var(--line);
+  display: grid;
+  gap: 1rem;
+  justify-items: start;
+}
+.pd__sold p { margin: 0; color: var(--muted); font-size: 0.95rem; line-height: 1.65; }
+.pd__sold strong { color: var(--danger); font-weight: 700; }
+
+/* ---------------- Gold-band CTA ---------------- */
+
+.pd-cta {
+  position: relative;
+  overflow: hidden;
+  margin-top: clamp(64px, 9vw, 110px);
+  border-radius: var(--radius-lg);
+  padding: clamp(2.2rem, 5vw, 3.4rem) clamp(1.8rem, 5vw, 4rem);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(1.6rem, 4vw, 3rem);
+  background:
+    radial-gradient(90% 160% at 88% 0%, rgba(255, 255, 255, 0.4), transparent 55%),
+    linear-gradient(100deg, var(--gold-bright), var(--gold) 55%, var(--caramel));
+  box-shadow: 0 24px 60px rgba(223, 167, 87, 0.32);
+}
+.pd-cta__eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.26em;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: rgba(18, 10, 6, 0.58);
+}
+.pd-cta h2 {
+  color: var(--night);
+  font-size: clamp(1.65rem, 3.2vw, 2.5rem);
+  font-weight: 620;
+  letter-spacing: -0.015em;
+  margin: 0.55rem 0 0.45rem;
+}
+.pd-cta h2 em { font-weight: 480; }
+.pd-cta p {
+  margin: 0;
+  color: rgba(18, 10, 6, 0.66);
+  font-size: 0.98rem;
+  line-height: 1.65;
+  max-width: 52ch;
+}
+.pd-cta__btn { flex: none; }
+
+/* ---------------- Skeleton (mirrors final layout) ---------------- */
+
+.pd-skel__media { aspect-ratio: 4 / 3.4; border-radius: var(--radius-lg); }
+.pd-skel__info { display: grid; gap: 0.95rem; align-content: start; padding-top: 0.4rem; }
+.pd-skel__line { height: 15px; border-radius: 999px; }
+.pd-skel__line--crumb { width: 34%; }
+.pd-skel__line--pill { width: 44%; height: 26px; margin-top: 0.4rem; }
+.pd-skel__line--title { width: 86%; height: 52px; border-radius: var(--radius-sm); }
+.pd-skel__line--price { width: 30%; height: 34px; border-radius: var(--radius-sm); }
+.pd-skel__line--text { width: 100%; }
+.pd-skel__line--short { width: 58%; }
+.pd-skel__buy { height: 56px; width: 74%; border-radius: 999px; margin-top: 1.2rem; }
+
+/* ---------------- Not found ---------------- */
+
+.pd__missing {
+  max-width: 560px;
+  margin: clamp(24px, 5vw, 56px) auto 0;
+  padding: clamp(2.4rem, 5vw, 3.4rem) clamp(1.6rem, 4vw, 3rem);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  display: grid;
+  gap: 0.5rem;
+  place-items: center;
+}
+.pd__missing-icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(223, 167, 87, 0.14);
+  color: var(--caramel-dark);
+  margin-bottom: 0.6rem;
+}
+.pd__missing h3 {
+  font-size: clamp(1.5rem, 3vw, 1.9rem);
+  margin: 0 0 0.2rem;
+}
+.pd__missing p {
+  margin: 0 0 1.3rem;
+  color: var(--muted);
+  line-height: 1.7;
+  max-width: 42ch;
+}
+
+/* ---------------- Responsive ---------------- */
+
+@media (max-width: 1020px) {
+  .pd__grid { gap: clamp(1.8rem, 4vw, 2.6rem); }
+}
+
+@media (max-width: 900px) {
+  .pd__grid { grid-template-columns: 1fr; }
+  .pd__info { position: static; padding-top: 0; }
+  .pd-cta { flex-direction: column; align-items: flex-start; }
+}
+
+@media (max-width: 560px) {
+  .pd { padding-top: 24px; }
+  .pd__buy { gap: 0.9rem; }
+  .pd__add { max-width: none; flex: 1 1 100%; }
+  .stepper button { width: 44px; height: 44px; }
+  .pd-cta { padding: 1.9rem 1.5rem; }
+  .pd-cta__btn { width: 100%; }
+}
+
+@media (max-width: 380px) {
+  .pd__name { font-size: 1.85rem; }
+  .pd__crumb { font-size: 0.8rem; }
+}
+
+/* ---------------- Stars + Reviews ---------------- */
+
+.pd__stars { display: flex; align-items: center; gap: 0.55rem; margin: -0.4rem 0 0.5rem; }
+.pd__star { color: var(--line); font-size: 1rem; }
+.pd__star--on { color: var(--gold); }
+.pd__stars-num { font-size: 0.86rem; font-weight: 700; color: var(--caramel-dark); }
+
+.pd-reviews { max-width: 760px; margin: clamp(48px, 7vw, 88px) auto 0; }
+.pd-reviews__head { margin-bottom: 1.4rem; }
+.pd-reviews__head h2 { margin: 0.2rem 0 0; }
+.pd-reviews__hint { margin: 0.6rem 0; }
+
+.pd-review-form { padding: 1.3rem 1.4rem; display: grid; gap: 0.9rem; margin-bottom: 1.4rem; }
+.pd-review-form__lead { margin: 0; font-weight: 600; color: var(--cocoa); }
+.pd-review-form__stars { display: flex; gap: 0.2rem; }
+.pd-review-form__star {
+  border: none;
+  background: none;
+  font-size: 1.7rem;
+  line-height: 1;
+  color: var(--line);
+  padding: 0.1rem;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+.pd-review-form__star:hover { transform: scale(1.15); }
+.pd-review-form__star.is-on { color: var(--gold); }
+.pd-review-form .btn { justify-self: start; }
+
+.pd-reviews__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.9rem; }
+.pd-review { padding: 1.1rem 1.3rem; }
+.pd-review__top { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; }
+.pd-review__stars .pd__star { font-size: 0.85rem; }
+.pd-review__text { margin: 0.5rem 0 0.2rem; color: var(--cocoa); white-space: pre-line; }
+.pd-review__when { font-size: 0.78rem; color: var(--muted); }

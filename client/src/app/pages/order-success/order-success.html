@@ -1,0 +1,152 @@
+<section class="celebrate grain">
+  <div class="container celebrate__inner on-dark">
+    @if (loading()) {
+      <!-- Loading — skeleton mirrors the final layout -->
+      <div class="celebrate__loading" role="status" aria-live="polite">
+        <div class="skeleton celebrate__skel-badge"></div>
+        <div class="skeleton celebrate__skel-line celebrate__skel-line--wide"></div>
+        <div class="skeleton celebrate__skel-line"></div>
+        <div class="skeleton celebrate__skel-card"></div>
+        <p class="celebrate__loading-copy">Whisking up your order…</p>
+      </div>
+    } @else if (order(); as o) {
+      <!-- ============ Celebration stage ============ -->
+      <header class="celebrate__stage">
+        <div class="celebrate__seal" aria-hidden="true">
+          <svg class="celebrate__mark" viewBox="0 0 120 120" fill="none">
+            <circle class="celebrate__ring" cx="60" cy="60" r="54" stroke-width="2.5" />
+            <path
+              class="celebrate__tick"
+              d="M38 62.5 53.5 78 84 45"
+              stroke-width="5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </div>
+
+        <span class="eyebrow eyebrow--bare">Order confirmed</span>
+        <h1 class="celebrate__title">It’s in the <em>oven.</em></h1>
+        <p class="celebrate__lead">
+          @switch (o.orderType) {
+            @case ('delivery') {
+              Our bakers just took your ticket — it leaves the oven, gets boxed warm, and rides straight to your door.
+            }
+            @case ('takeaway') {
+              Our bakers just took your ticket — it’ll be boxed, warm and waiting for you at the counter.
+            }
+            @case ('dining') {
+              Our bakers just took your ticket — settle in, it’s on its way to your table.
+            }
+          }
+        </p>
+
+        <div class="celebrate__chip glass-dark">
+          <span class="celebrate__chip-label">Order</span>
+          <strong class="celebrate__chip-no">{{ o.orderNumber }}</strong>
+          <span class="celebrate__chip-divider" aria-hidden="true"></span>
+          <span class="celebrate__pay" [class.celebrate__pay--paid]="o.paymentStatus === 'paid'">
+            <span class="celebrate__pay-dot" aria-hidden="true"></span>
+            {{ payChip(o) }}
+          </span>
+        </div>
+      </header>
+
+      <!-- ============ Light summary card ============ -->
+      <div class="card celebrate__summary" appReveal [revealDelay]="200">
+        <div class="celebrate__tracker">
+          <app-status-tracker [order]="o" />
+        </div>
+
+        <div class="celebrate__grid">
+          <section class="celebrate__items">
+            <h3>Your bakes</h3>
+            <ul>
+              @for (item of o.items; track item.name) {
+                <li>
+                  <span class="celebrate__item-qty">{{ item.quantity }}×</span>
+                  <span class="celebrate__item-name">{{ item.name }}</span>
+                  <span class="celebrate__item-price">₹{{ item.lineTotal }}</span>
+                </li>
+              }
+            </ul>
+            <dl class="celebrate__rows">
+              <div><dt>Subtotal</dt><dd>₹{{ o.pricing.subtotal.toFixed(2) }}</dd></div>
+              @if (o.pricing.discount) {
+                <div><dt>Discount{{ o.pricing.couponCode ? ' · ' + o.pricing.couponCode : '' }}</dt><dd>−₹{{ o.pricing.discount!.toFixed(2) }}</dd></div>
+              }
+              <div><dt>Tax</dt><dd>₹{{ o.pricing.tax.toFixed(2) }}</dd></div>
+              @if (o.pricing.deliveryFee > 0) {
+                <div><dt>Delivery</dt><dd>₹{{ o.pricing.deliveryFee.toFixed(2) }}</dd></div>
+              }
+              <div class="celebrate__rows-total"><dt>Total</dt><dd>₹{{ o.pricing.total.toFixed(2) }}</dd></div>
+            </dl>
+          </section>
+
+          <aside class="celebrate__fulfil">
+            <h3>
+              <span class="celebrate__fulfil-icon" aria-hidden="true">
+                @switch (o.orderType) {
+                  @case ('delivery') {
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 21s-7-5.6-7-11a7 7 0 0 1 14 0c0 5.4-7 11-7 11Z" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.6"/></svg>
+                  }
+                  @case ('dining') {
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 16.5h16" stroke-linecap="round"/><path d="M5.5 16.5a6.5 6.5 0 0 1 13 0"/><path d="M12 10V8.9" stroke-linecap="round"/><circle cx="12" cy="7.6" r="1.1"/></svg>
+                  }
+                  @case ('takeaway') {
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5.5 8h13l-1 12h-11l-1-12Z" stroke-linejoin="round"/><path d="M9 10.5V6.5a3 3 0 0 1 6 0v4" stroke-linecap="round"/></svg>
+                  }
+                }
+              </span>
+              {{ o.orderType === 'delivery' ? 'Delivering to' : o.orderType === 'dining' ? 'Dine-in' : 'Takeaway' }}
+            </h3>
+            @switch (o.orderType) {
+              @case ('dining') {
+                <p>{{ o.dining?.customerName || 'Guest' }}</p>
+                @if (o.dining?.tableNumber) { <p class="muted">Table {{ o.dining?.tableNumber }}</p> }
+              }
+              @case ('takeaway') {
+                <p>{{ o.takeaway?.customerName }}</p>
+                <p class="muted">{{ o.takeaway?.phone }}</p>
+              }
+              @case ('delivery') {
+                <p>{{ o.delivery?.fullAddress }}</p>
+                <p class="muted">{{ o.delivery?.area }}, {{ o.delivery?.city }} {{ o.delivery?.pincode }}</p>
+                @if (o.delivery?.landmark) { <p class="muted">Landmark: {{ o.delivery?.landmark }}</p> }
+              }
+            }
+            <p class="celebrate__placed">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Placed {{ o.createdAt | date: 'h:mm a, d MMM' }}
+            </p>
+          </aside>
+        </div>
+      </div>
+
+      <!-- ============ CTAs ============ -->
+      <div class="celebrate__actions" appReveal [revealDelay]="320">
+        <a [routerLink]="['/orders', o._id]" class="btn btn--gold btn--lg" appMagnetic>
+          Track your order
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <a routerLink="/menu" class="btn btn--ghost-dark btn--lg">Back to menu</a>
+      </div>
+      <p class="celebrate__hint" appReveal [revealDelay]="420">
+        We’ll keep baking — you can track this order live any time from your orders.
+      </p>
+    } @else {
+      <!-- ============ Not found ============ -->
+      <div class="celebrate__missing glass-dark">
+        <span class="celebrate__missing-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3.5h12V20l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4-2 1.4V3.5Z" stroke-linejoin="round"/><path d="M9 8.5h6M9 12h6" stroke-linecap="round"/></svg>
+        </span>
+        <h2>We couldn’t find that order</h2>
+        <p>It may belong to a different account, or the link has gone stale — your order history has the full list.</p>
+        <div class="celebrate__missing-actions">
+          <a routerLink="/orders" class="btn btn--gold">View my orders</a>
+          <a routerLink="/menu" class="btn btn--ghost-dark">Back to menu</a>
+        </div>
+      </div>
+    }
+  </div>
+</section>

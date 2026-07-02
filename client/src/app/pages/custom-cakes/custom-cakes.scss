@@ -1,0 +1,40 @@
+.cakes {
+  padding: clamp(40px, 6vw, 72px) 0 clamp(64px, 9vw, 112px);
+  display: grid;
+  justify-items: center;
+}
+
+.cakes__form {
+  width: 100%;
+  max-width: 640px;
+  padding: clamp(1.4rem, 3vw, 2.2rem);
+  display: grid;
+  gap: 0.35rem;
+}
+
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1rem; }
+@media (max-width: 560px) { .row { grid-template-columns: 1fr; gap: 0; } }
+
+.cakes__upload { display: flex; align-items: center; gap: 0.8rem; }
+.cakes__ref { border-radius: 10px; object-fit: cover; border: 1px solid var(--line); }
+.cakes__note { text-align: center; font-size: 0.82rem; margin: 0.7rem 0 0; }
+
+.cakes__done {
+  width: 100%;
+  max-width: 560px;
+  padding: clamp(2rem, 4vw, 3rem);
+  text-align: center;
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+}
+.cakes__done-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(63, 155, 88, 0.12);
+  color: #3f9b58;
+}
+.cakes__done-cta { margin-top: 0.6rem; }

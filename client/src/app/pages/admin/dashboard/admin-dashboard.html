@@ -1,0 +1,128 @@
+<div class="adm-page">
+  <div class="adm-head">
+    <div>
+      <span class="eyebrow eyebrow--bare">Today at the bakery</span>
+      <h1>Dashboard</h1>
+    </div>
+    <div class="adm-head__actions">
+      <button type="button" class="btn btn--ghost btn--sm" (click)="load()">Refresh</button>
+      <a routerLink="/admin/queue" class="btn btn--gold btn--sm">Open live queue</a>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="adm-grid" aria-hidden="true">
+      @for (s of [1, 2, 3, 4]; track s) {
+        <div class="skeleton" style="height: 108px"></div>
+      }
+    </div>
+  } @else if (stats(); as s) {
+    <!-- KPI tiles -->
+    <div class="adm-grid">
+      <div class="adm-stat">
+        <div class="adm-stat__label">Revenue today</div>
+        <div class="adm-stat__value">₹{{ s.today.revenue | number: '1.0-0' }}</div>
+        <div class="adm-stat__sub">paid orders only</div>
+      </div>
+      <div class="adm-stat">
+        <div class="adm-stat__label">Orders today</div>
+        <div class="adm-stat__value">{{ s.today.orders }}</div>
+        <div class="adm-stat__sub">{{ s.today.cancelled }} cancelled</div>
+      </div>
+      <div class="adm-stat">
+        <div class="adm-stat__label">Avg order value</div>
+        <div class="adm-stat__value">₹{{ s.today.avgOrderValue | number: '1.0-0' }}</div>
+        <div class="adm-stat__sub">across paid orders</div>
+      </div>
+      <a routerLink="/admin/queue" class="adm-stat adm-stat--link">
+        <div class="adm-stat__label">In the kitchen</div>
+        <div class="adm-stat__value">{{ queueTotal() }}</div>
+        <div class="adm-stat__sub">active orders — open queue →</div>
+      </a>
+    </div>
+
+    <!-- Active queue by stage -->
+    <div class="adm-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr))">
+      @for (row of queueStages(); track row.stage) {
+        <a routerLink="/admin/queue" class="adm-stat adm-stat--link">
+          <div class="adm-stat__label" style="text-transform: capitalize">{{ row.stage }}</div>
+          <div class="adm-stat__value" style="font-size: 1.5rem">{{ row.count }}</div>
+        </a>
+      }
+    </div>
+
+    <div class="adm-cols">
+      <!-- Order type split -->
+      <div class="adm-card">
+        <h3>Today by order type</h3>
+        @for (row of typeRows(); track row.label) {
+          <div class="adm-hbar">
+            <span class="adm-hbar__label">{{ row.label }}</span>
+            <span class="adm-hbar__track"><span class="adm-hbar__fill" [style.width.%]="row.pct"></span></span>
+            <span class="adm-hbar__value">{{ row.value }} orders</span>
+          </div>
+        } @empty {
+          <div class="adm-empty">No orders yet today.</div>
+        }
+      </div>
+
+      <!-- Sold-out items -->
+      <div class="adm-card">
+        <h3>Marked unavailable</h3>
+        @if (s.unavailable.length) {
+          <p class="muted" style="font-size: 0.85rem; margin: -0.3rem 0 0.7rem">
+            Sold-out items stay hidden from carts until switched back on.
+          </p>
+          <ul style="margin: 0; padding-left: 1.1rem; font-size: 0.92rem; line-height: 2">
+            @for (p of s.unavailable; track p._id) {
+              <li>{{ p.name }} <span class="muted">· {{ p.category }}</span></li>
+            }
+          </ul>
+          <a routerLink="/admin/products" class="btn btn--ghost btn--sm" style="margin-top: 0.8rem">Manage products</a>
+        } @else {
+          <div class="adm-empty">Everything on the menu is available. 🎉</div>
+        }
+      </div>
+    </div>
+
+    <!-- Recent orders -->
+    <div class="adm-card" style="margin-top: 1rem; padding: 0">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem 0.4rem">
+        <h3 style="margin: 0">Latest orders</h3>
+        <a routerLink="/admin/orders" class="btn btn--ghost btn--sm">All orders</a>
+      </div>
+      <div class="adm-table-wrap" style="border: none; box-shadow: none">
+        <table class="adm-table">
+          <thead>
+            <tr>
+              <th>Order</th>
+              <th>Placed</th>
+              <th>Customer</th>
+              <th>Type</th>
+              <th class="num">Total</th>
+              <th>Payment</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (o of s.recentOrders; track o._id) {
+              <tr class="is-clickable" [routerLink]="['/admin/orders', o._id]">
+                <td class="nowrap"><strong>{{ o.orderNumber }}</strong></td>
+                <td class="nowrap">{{ o.createdAt | date: 'MMM d, h:mm a' }}</td>
+                <td>{{ orderCustomer(o) }}</td>
+                <td><span class="adm-badge adm-badge--type">{{ o.orderType }}</span></td>
+                <td class="num">₹{{ o.pricing.total | number: '1.2-2' }}</td>
+                <td><span [class]="badgeClass(o.paymentStatus)">{{ o.paymentStatus }}</span></td>
+                <td><span [class]="badgeClass(o.orderStatus)">{{ o.orderStatus }}</span></td>
+              </tr>
+            } @empty {
+              <tr><td colspan="7"><div class="adm-empty">No orders yet.</div></td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  } @else {
+    <div class="adm-empty">Couldn't load the dashboard — check that the API is running.</div>
+  }
+</div>

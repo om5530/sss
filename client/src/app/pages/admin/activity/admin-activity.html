@@ -1,0 +1,55 @@
+<div class="adm-page">
+  <div class="adm-head">
+    <div>
+      <span class="eyebrow eyebrow--bare">Append-only audit trail</span>
+      <h1>Activity</h1>
+      <p>Every change staff make — status moves, catalogue edits, refunds — lands here with who and when.</p>
+    </div>
+  </div>
+
+  <div class="adm-filters">
+    <select class="select" [(ngModel)]="entity" (ngModelChange)="page = 1; fetch()" aria-label="Filter by area">
+      <option value="">All areas</option>
+      <option value="order">Orders</option>
+      <option value="product">Products</option>
+      <option value="payment">Payments</option>
+    </select>
+  </div>
+
+  @if (loading()) {
+    <div class="skeleton" style="height: 320px" aria-hidden="true"></div>
+  } @else {
+    <div class="adm-table-wrap">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>When</th>
+            <th>Who</th>
+            <th>Action</th>
+            <th>What happened</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (e of entries(); track e._id) {
+            <tr>
+              <td class="nowrap">{{ e.createdAt | date: 'MMM d, y · h:mm:ss a' }}</td>
+              <td class="nowrap">{{ e.actorName }}</td>
+              <td class="nowrap"><span class="adm-badge">{{ e.action }}</span></td>
+              <td>{{ e.summary }}</td>
+            </tr>
+          } @empty {
+            <tr><td colspan="4"><div class="adm-empty">No admin activity recorded yet.</div></td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (pages() > 1) {
+      <div class="adm-pagination">
+        <button type="button" class="btn btn--ghost btn--sm" [disabled]="page <= 1" (click)="goToPage(page - 1)">← Prev</button>
+        <span>Page {{ page }} of {{ pages() }}</span>
+        <button type="button" class="btn btn--ghost btn--sm" [disabled]="page >= pages()" (click)="goToPage(page + 1)">Next →</button>
+      </div>
+    }
+  }
+</div>

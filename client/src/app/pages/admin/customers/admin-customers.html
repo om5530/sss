@@ -1,0 +1,68 @@
+<div class="adm-page">
+  <div class="adm-head">
+    <div>
+      <span class="eyebrow eyebrow--bare">{{ total() }} accounts</span>
+      <h1>Customers</h1>
+    </div>
+  </div>
+
+  <div class="adm-filters">
+    <input
+      class="input"
+      type="search"
+      placeholder="Search name, phone or email…"
+      style="min-width: 260px"
+      [(ngModel)]="q"
+      (ngModelChange)="onSearch()"
+      aria-label="Search customers"
+    />
+  </div>
+
+  @if (loading()) {
+    <div class="skeleton" style="height: 320px" aria-hidden="true"></div>
+  } @else {
+    <div class="adm-table-wrap">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>Customer</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th>Joined</th>
+            <th class="num">Orders</th>
+            <th class="num">Lifetime value</th>
+            <th>Last order</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of customers(); track c._id) {
+            <tr class="is-clickable" [routerLink]="['/admin/customers', c._id]">
+              <td>
+                <strong>{{ c.name || '—' }}</strong>
+                @if (c.role === 'admin') {
+                  <span class="adm-badge adm-badge--admin" style="margin-left: 0.4rem">staff</span>
+                }
+              </td>
+              <td class="nowrap">{{ c.phone || '—' }}</td>
+              <td>{{ c.email || '—' }}</td>
+              <td class="nowrap">{{ c.createdAt | date: 'MMM d, y' }}</td>
+              <td class="num">{{ c.orderCount }}</td>
+              <td class="num">₹{{ c.totalSpent | number: '1.0-0' }}</td>
+              <td class="nowrap">{{ c.lastOrderAt ? (c.lastOrderAt | date: 'MMM d, y') : '—' }}</td>
+            </tr>
+          } @empty {
+            <tr><td colspan="7"><div class="adm-empty">No customers found.</div></td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (pages() > 1) {
+      <div class="adm-pagination">
+        <button type="button" class="btn btn--ghost btn--sm" [disabled]="page <= 1" (click)="goToPage(page - 1)">← Prev</button>
+        <span>Page {{ page }} of {{ pages() }}</span>
+        <button type="button" class="btn btn--ghost btn--sm" [disabled]="page >= pages()" (click)="goToPage(page + 1)">Next →</button>
+      </div>
+    }
+  }
+</div>

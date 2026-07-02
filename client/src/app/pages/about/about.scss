@@ -1,0 +1,196 @@
+/* ==================================================================
+   ABOUT — "Midnight Patisserie"
+   Dark page-hero → cream story with overlapping photo stack →
+   values row → dark stats strip + gold CTA finale.
+   ================================================================== */
+
+/* ---------------- 1 · Page hero ---------------- */
+
+.page-hero {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(80% 100% at 85% 0%, rgba(223, 167, 87, 0.12), transparent 55%),
+    linear-gradient(180deg, var(--night-2), var(--night));
+  padding: clamp(56px, 9vw, 110px) 0 clamp(40px, 6vw, 72px);
+}
+.page-hero__inner { position: relative; z-index: 2; }
+.page-hero .eyebrow { color: var(--gold); }
+.page-hero h1 {
+  color: var(--d-text);
+  font-size: clamp(2.2rem, 5vw, 3.6rem);
+  margin: 0.9rem 0 0.7rem;
+  max-width: 20ch;
+}
+.page-hero h1 em {
+  font-style: italic;
+  font-weight: 480;
+  background: linear-gradient(100deg, var(--gold-bright), var(--gold) 60%, var(--caramel));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.page-hero__lead {
+  color: var(--d-muted);
+  font-size: 1.05rem;
+  line-height: 1.7;
+  max-width: 52ch;
+  margin: 0;
+}
+
+/* ---------------- 2 · Story ---------------- */
+
+.story { background: var(--cream); }
+.story__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(2.4rem, 6vw, 5.5rem);
+  align-items: center;
+}
+
+.story__copy h2 {
+  font-size: clamp(1.9rem, 3.6vw, 2.9rem);
+  margin: 0.9rem 0 1.2rem;
+  max-width: 17ch;
+}
+.story__lead { color: var(--cocoa); font-size: 1.08rem; line-height: 1.7; margin: 0 0 1rem; }
+.story__body { color: var(--muted); font-size: 0.98rem; line-height: 1.75; margin: 0 0 1.8rem; }
+
+.story__link { font-weight: 700; color: var(--cocoa); transition: color 0.25s ease; }
+.story__link:hover { color: var(--berry); }
+.story__link span { display: inline-block; transition: transform 0.35s var(--ease-out); }
+.story__link:hover span { transform: translateX(5px); }
+
+/* --- Overlapping photo stack --- */
+.story__stack { position: relative; aspect-ratio: 10 / 11; }
+.story__photo {
+  position: absolute;
+  margin: 0;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 10px 10px 4px;
+  box-shadow: var(--shadow-lg);
+  will-change: transform;
+  transition: box-shadow 0.5s var(--ease-out);
+}
+.story__photo:hover { box-shadow: var(--shadow-lg), var(--glow-gold); z-index: 5; }
+.story__photo img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: calc(var(--radius) - 8px);
+  filter: saturate(1.02);
+}
+.story__photo figcaption {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.88rem;
+  color: var(--cocoa);
+  padding: 0.55rem 0.25rem 0.5rem;
+}
+/* CSS `rotate` (not transform) so GSAP parallax can own translateY. */
+.story__photo--1 { width: 58%; top: 0; left: 0; rotate: -4.5deg; z-index: 2; }
+.story__photo--2 { width: 53%; top: 26%; right: 0; rotate: 3.5deg; z-index: 3; }
+.story__photo--3 { width: 47%; bottom: 0; left: 7%; rotate: -2deg; z-index: 1; }
+
+/* ---------------- 3 · Values ---------------- */
+
+.values-act { background: linear-gradient(180deg, var(--cream), var(--cream-2)); }
+.values {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(1.1rem, 2vw, 1.6rem);
+}
+.value {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 2rem 1.8rem;
+  transition: transform 0.5s var(--ease-out), box-shadow 0.5s var(--ease-out), border-color 0.35s ease;
+}
+.value:hover {
+  transform: translateY(-7px);
+  box-shadow: var(--shadow);
+  border-color: rgba(223, 167, 87, 0.5);
+}
+.value__icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: rgba(223, 167, 87, 0.14);
+  color: var(--caramel-dark);
+  transition: background 0.4s ease, color 0.4s ease, transform 0.5s var(--ease-out);
+}
+.value:hover .value__icon {
+  background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+  color: var(--night);
+  transform: rotate(-6deg) scale(1.06);
+}
+.value h3 { font-size: 1.18rem; margin: 1.2rem 0 0.5rem; }
+.value p { margin: 0; font-size: 0.92rem; line-height: 1.65; color: var(--muted); }
+
+/* ---------------- 4 · Dark act: stats + CTA ---------------- */
+
+.dark-act {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(80% 60% at 15% 0%, rgba(223, 167, 87, 0.1), transparent 55%),
+    radial-gradient(50% 60% at 90% 100%, rgba(217, 79, 120, 0.08), transparent 60%),
+    linear-gradient(180deg, var(--night-2), var(--night));
+}
+.dark-act .container { position: relative; z-index: 2; }
+
+.stats-strip { padding: clamp(48px, 6vw, 76px) 0; border-bottom: 1px solid var(--d-line); }
+.stats-strip__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem 1.2rem;
+  text-align: center;
+}
+.stat__value {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 4.5vw, 3.4rem);
+  font-weight: 640;
+  color: var(--gold-bright);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.stat__value em { font-style: normal; font-size: 0.42em; margin-left: 0.2em; color: var(--gold); }
+.stat__label { display: block; margin-top: 0.65rem; font-size: 0.84rem; letter-spacing: 0.05em; color: var(--d-muted); }
+
+.cta { padding: clamp(84px, 11vw, 150px) 0; text-align: center; }
+.cta__inner { display: grid; justify-items: center; gap: 1rem; }
+.cta .eyebrow { color: var(--gold); }
+.cta__title {
+  margin: 0;
+  font-size: clamp(3rem, 9vw, 6rem);
+  font-weight: 640;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--d-text);
+}
+.cta__title em { color: var(--gold-bright); text-shadow: 0 0 60px rgba(223, 167, 87, 0.45); }
+.cta p { margin: 0; color: var(--d-muted); font-size: 1.05rem; }
+.cta__actions { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; margin-top: 1.1rem; }
+
+/* ---------------- Responsive ---------------- */
+
+@media (max-width: 900px) {
+  .story__grid { grid-template-columns: 1fr; }
+  .story__stack { max-width: 520px; margin-inline: auto; width: 100%; }
+  .stats-strip__grid { grid-template-columns: repeat(2, 1fr); gap: 2.2rem 1rem; }
+}
+
+@media (max-width: 760px) {
+  .values { grid-template-columns: 1fr; max-width: 560px; margin-inline: auto; }
+}
+
+@media (max-width: 380px) {
+  .story__photo figcaption { font-size: 0.78rem; padding-top: 0.4rem; }
+  .stat__label { font-size: 0.76rem; }
+}

@@ -1,0 +1,218 @@
+<!-- ============ Compact dark page hero ============ -->
+<header class="ohero grain on-dark">
+  <div class="container ohero__inner">
+    <a routerLink="/orders" class="ohero__back">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M19 12H5m6 6-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      All orders
+    </a>
+
+    @if (loading()) {
+      <div class="ohero__skel" aria-hidden="true">
+        <span class="ohero__skel-eyebrow"></span>
+        <span class="ohero__skel-title"></span>
+        <span class="ohero__skel-meta"></span>
+      </div>
+      <p class="sr">Loading order…</p>
+    } @else if (order(); as o) {
+      <span class="eyebrow eyebrow--bare">Your order</span>
+      <h1 class="ohero__title">{{ o.orderNumber }}</h1>
+      <div class="ohero__meta">
+        <span class="ohero__placed">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Placed {{ o.createdAt | date: 'medium' }}
+        </span>
+        <span class="opill" [class.opill--done]="statusTone() === 'done'" [class.opill--danger]="statusTone() === 'danger'">
+          <span class="opill__dot" aria-hidden="true"></span>
+          {{ o.orderStatus }}
+        </span>
+      </div>
+    } @else {
+      <span class="eyebrow eyebrow--bare">Your order</span>
+      <h1 class="ohero__title">Gone missing</h1>
+      <p class="ohero__lead">We couldn’t find that order — but your history is safe and sound.</p>
+    }
+  </div>
+</header>
+
+<section class="detail">
+  <div class="container">
+    @if (loading()) {
+      <!-- Skeletons matching the final layout -->
+      <div class="detail__skel pull" aria-hidden="true">
+        <div class="skeleton detail__skel-tracker"></div>
+        <div class="detail__skel-cols">
+          <div class="detail__skel-main">
+            <div class="skeleton detail__skel-box"></div>
+            <div class="skeleton detail__skel-box detail__skel-box--short"></div>
+          </div>
+          <div class="skeleton detail__skel-aside"></div>
+        </div>
+      </div>
+    } @else if (order(); as o) {
+      <!-- ============ Status tracker band ============ -->
+      <div class="card detail__tracker pull" appReveal>
+        <span class="eyebrow eyebrow--bare detail__tracker-eyebrow">Where it’s at</span>
+        <app-status-tracker [order]="o" />
+      </div>
+
+      <!-- ============ Two-column: items + fulfilment / payment ============ -->
+      <div class="detail__cols">
+        <div class="detail__main">
+          <!-- Items -->
+          <div class="card obox" appReveal>
+            <header class="obox__head">
+              <span class="obox__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m5.2 10 2-6M18.8 10l-2-6" stroke-linecap="round"/><path d="M3.5 10h17l-1.7 8.3a2 2 0 0 1-2 1.7H7.2a2 2 0 0 1-2-1.7L3.5 10Z" stroke-linejoin="round"/><path d="M12 13.3v3.4M8.6 13.3l.4 3.4M15.4 13.3l-.4 3.4" stroke-linecap="round"/></svg>
+              </span>
+              <div>
+                <h2>In this order</h2>
+                <p class="obox__sub">{{ o.items.length }} {{ o.items.length === 1 ? 'treat' : 'treats' }}, baked to order</p>
+              </div>
+            </header>
+
+            <ul class="olist">
+              @for (item of o.items; track item.name) {
+                <li class="olist__row">
+                  <img class="olist__photo" [src]="itemImage(item.name)" [alt]="item.name" width="62" height="62" loading="lazy" />
+                  <div class="olist__info">
+                    <span class="olist__name">{{ item.name }}</span>
+                    <span class="olist__qty">{{ item.quantity }} × ₹{{ item.price.toFixed(2) }}</span>
+                  </div>
+                  <span class="olist__total">₹{{ item.lineTotal.toFixed(2) }}</span>
+                </li>
+              }
+            </ul>
+          </div>
+
+          <!-- Fulfilment -->
+          <div class="card obox" appReveal [revealDelay]="90">
+            <header class="obox__head">
+              <span class="obox__icon" aria-hidden="true">
+                @switch (o.orderType) {
+                  @case ('delivery') {
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 21.5s-7-5.4-7-11a7 7 0 0 1 14 0c0 5.6-7 11-7 11Z" stroke-linejoin="round"/><circle cx="12" cy="10.2" r="2.6"/></svg>
+                  }
+                  @case ('dining') {
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2.5v6a2.8 2.8 0 0 0 2.8 2.8A2.8 2.8 0 0 0 9.6 8.5v-6"/><path d="M6.8 2.5v19"/><path d="M20 15.5V2.5a4.6 4.6 0 0 0-4.6 4.6v6c0 1.3 1 2.4 2.3 2.4H20Zm0 0v6"/></svg>
+                  }
+                  @case ('takeaway') {
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6.4 8h11.2l1 11.1a1.7 1.7 0 0 1-1.7 1.9H7.1a1.7 1.7 0 0 1-1.7-1.9L6.4 8Z" stroke-linejoin="round"/><path d="M9 10.5V6.8A3 3 0 0 1 12 4a3 3 0 0 1 3 2.8v3.7" stroke-linecap="round"/></svg>
+                  }
+                }
+              </span>
+              <div>
+                <h2>{{ o.orderType === 'delivery' ? 'Delivery' : o.orderType === 'dining' ? 'Dine-in' : 'Takeaway' }}</h2>
+                <p class="obox__sub">{{ o.orderType === 'delivery' ? 'Coming warm to your door' : o.orderType === 'dining' ? 'Served at your table' : 'Ready at the counter' }}</p>
+              </div>
+            </header>
+
+            @switch (o.orderType) {
+              @case ('dining') {
+                <p class="obox__primary">{{ o.dining?.customerName || 'Guest' }}</p>
+                @if (o.dining?.tableNumber; as table) { <p class="obox__line">Table {{ table }}</p> }
+              }
+              @case ('takeaway') {
+                <p class="obox__primary">{{ o.takeaway?.customerName }}</p>
+                <p class="obox__line">{{ o.takeaway?.phone }}</p>
+              }
+              @case ('delivery') {
+                <p class="obox__primary">{{ o.delivery?.fullAddress }}</p>
+                <p class="obox__line">{{ o.delivery?.area }}, {{ o.delivery?.city }} {{ o.delivery?.pincode }}</p>
+                @if (o.delivery?.landmark; as landmark) { <p class="obox__line obox__line--soft">Landmark: {{ landmark }}</p> }
+              }
+            }
+          </div>
+        </div>
+
+        <!-- Sticky payment summary -->
+        <aside class="detail__aside">
+          <div class="osummary grain" appReveal="right" [revealDelay]="140">
+            <header class="obox__head">
+              <span class="obox__icon obox__icon--gold" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 3h12v18l-2-1.5-2 1.5-2-1.5L10 21l-2-1.5L6 21V3Z" stroke-linejoin="round"/><path d="M9.5 8.5h5M9.5 12h5" stroke-linecap="round"/></svg>
+              </span>
+              <div>
+                <h2>Payment</h2>
+                <p class="obox__sub">Every rupee, accounted for</p>
+              </div>
+            </header>
+
+            <dl class="osummary__rows">
+              <div><dt>Subtotal</dt><dd>₹{{ o.pricing.subtotal.toFixed(2) }}</dd></div>
+              @if (o.pricing.discount) {
+                <div><dt>Discount{{ o.pricing.couponCode ? ' · ' + o.pricing.couponCode : '' }}</dt><dd>−₹{{ o.pricing.discount!.toFixed(2) }}</dd></div>
+              }
+              <div><dt>Tax</dt><dd>₹{{ o.pricing.tax.toFixed(2) }}</dd></div>
+              @if (o.pricing.deliveryFee > 0) {
+                <div><dt>Delivery</dt><dd>₹{{ o.pricing.deliveryFee.toFixed(2) }}</dd></div>
+              }
+            </dl>
+
+            <div class="osummary__total">
+              <span>Total</span>
+              <strong>₹{{ o.pricing.total.toFixed(2) }}</strong>
+            </div>
+
+            <div class="osummary__pay">
+              <span class="osummary__method">
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M3 10.2h18" stroke-linecap="round"/></svg>
+                {{ o.paymentMethod === 'cash' ? 'Cash payment' : 'Online payment' }}
+              </span>
+              <span
+                class="ppill"
+                [class.ppill--paid]="o.paymentStatus === 'paid'"
+                [class.ppill--failed]="o.paymentStatus === 'failed'"
+                [class.ppill--refunded]="o.paymentStatus === 'refunded'"
+              >
+                {{ payChip(o) }}
+              </span>
+            </div>
+
+            @if (canPayNow()) {
+              <button class="btn btn--gold btn--block btn--lg" style="margin-top: 0.9rem" (click)="completePayment()" [disabled]="paying()">
+                {{ paying() ? 'Opening payment…' : 'Complete payment · ₹' + o.pricing.total.toFixed(2) }}
+              </button>
+            }
+
+            <p class="osummary__help">Something not right? <a routerLink="/contact">Talk to us</a> — a human answers.</p>
+          </div>
+        </aside>
+      </div>
+
+      <!-- ============ Timeline ============ -->
+      @if (o.statusHistory.length) {
+        <section class="jtl">
+          <header class="jtl__head" appReveal>
+            <span class="eyebrow">The journey</span>
+            <h2>Every step, on the record</h2>
+          </header>
+          <ol class="jtl__list" appReveal="group">
+            @for (event of o.statusHistory; track event.at) {
+              <li class="jtl__item">
+                <span class="jtl__dot" aria-hidden="true"></span>
+                <div class="jtl__body">
+                  <span class="jtl__status">{{ event.status }}</span>
+                  <time class="jtl__when">{{ event.at | date: 'MMM d, y · h:mm a' }}</time>
+                  @if (event.note) { <p class="jtl__note">{{ event.note }}</p> }
+                </div>
+              </li>
+            }
+          </ol>
+        </section>
+      }
+    } @else {
+      <!-- ============ Not found ============ -->
+      <div class="card detail__missing pull" appReveal>
+        <span class="detail__missing-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 3h12v18l-2-1.5-2 1.5-2-1.5L10 21l-2-1.5L6 21V3Z" stroke-linejoin="round"/><path d="m9.8 8.8 4.4 4.4M14.2 8.8l-4.4 4.4" stroke-linecap="round"/></svg>
+        </span>
+        <h2>That order isn’t on our counter</h2>
+        <p>It may belong to a different account, or the link has gone stale. Everything you’ve ever ordered with us lives safely in your history.</p>
+        <div class="detail__missing-cta">
+          <a routerLink="/orders" class="btn btn--primary">Back to my orders</a>
+          <a routerLink="/menu" class="btn btn--ghost">Browse the menu</a>
+        </div>
+      </div>
+    }
+  </div>
+</section>

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Sweet Savory Savor — Artisan Bakery & Café</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Small-batch brownies, cookies, cakes, wood-fired pizza and barista coffee — an immersive online bakery. Order for dine-in, takeaway or delivery.">
+  <meta name="theme-color" content="#120a06">
+  <meta property="og:title" content="Sweet Savory Savor — Artisan Bakery & Café">
+  <meta property="og:description" content="Small-batch bakes and café favourites, made fresh every morning.">
+  <meta property="og:type" content="website">
+  <link rel="icon" type="image/svg+xml" href="logo-mark.svg">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://images.pexels.com" crossorigin>
+  <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Manrope:wght@400..800&display=swap" rel="stylesheet">
+  <!-- Hero video poster is the first paint — preload it so the hero fills fast. -->
+  <link rel="preload" as="image" fetchpriority="high" href="/baking-flour-poster.jpg">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <!-- Local-business structured data for search results. Street address joins at launch. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Bakery",
+    "name": "Sweet Savory Savor",
+    "servesCuisine": ["Bakery", "Café"],
+    "areaServed": "Dahisar East, Mumbai",
+    "address": { "@type": "PostalAddress", "addressLocality": "Mumbai", "addressRegion": "MH", "addressCountry": "IN" },
+    "openingHours": "Mo-Su 08:00-22:00",
+    "image": "/baking-flour-poster.jpg"
+  }
+  </script>
+</head>
+<body>
+  <app-root></app-root>
+</body>
+</html>

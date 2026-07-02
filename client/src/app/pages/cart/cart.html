@@ -1,0 +1,118 @@
+<!-- ============ Page hero (compact, dark) ============ -->
+<header class="page-hero grain on-dark">
+  <div class="container">
+    <span class="eyebrow">Order in progress</span>
+    <h1>
+      Your cart
+      @if (!cart.isEmpty()) {
+        <span class="page-hero__count" aria-hidden="true">{{ cart.count() }}</span>
+      }
+    </h1>
+    <p class="page-hero__lead">
+      @if (cart.isEmpty()) {
+        Nothing boxed up yet — the ovens are warm whenever you are.
+      } @else {
+        {{ cart.count() }} {{ cart.count() === 1 ? 'item' : 'items' }} tucked in, re-priced fresh by our kitchen.
+      }
+    </p>
+  </div>
+</header>
+
+<!-- ============ Body (cream) ============ -->
+<div class="cart-body">
+  <div class="container">
+    @if (cart.isEmpty()) {
+      <!-- ---- Empty state ---- -->
+      <section class="cart-empty" appReveal>
+        <figure class="cart-empty__media">
+          <img [src]="emptyImage" alt="Freshly baked butter croissants" loading="lazy" width="360" height="288" />
+        </figure>
+        <span class="eyebrow eyebrow--bare">The box is empty</span>
+        <h2>Nothing sweet in here&hellip; yet</h2>
+        <p class="muted">
+          Brownies still gooey, croissants still crackly — add a few bakes and
+          they&rsquo;ll be waiting right here, priced and ready.
+        </p>
+        <a routerLink="/menu" class="btn btn--gold btn--lg">
+          Browse the menu
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </section>
+    } @else {
+      <div class="cart-grid">
+        <!-- ---- Line items ---- -->
+        <section class="cart-items" aria-label="Items in your cart">
+          <div class="cart-items__list" appReveal="group">
+            @for (item of cart.items(); track item.productId) {
+              <article class="line">
+                <a class="line__media" [routerLink]="['/product', item.slug]" tabindex="-1" aria-hidden="true">
+                  <img [src]="item.image" [alt]="item.name" loading="lazy" width="112" height="112" />
+                </a>
+
+                <div class="line__info">
+                  <a [routerLink]="['/product', item.slug]" class="line__name">{{ item.name }}</a>
+                  <span class="line__unit">₹{{ item.price }} each</span>
+                </div>
+
+                <div class="stepper">
+                  <button type="button" (click)="cart.decrement(item.productId)" [attr.aria-label]="'Decrease quantity of ' + item.name">−</button>
+                  <span>{{ item.quantity }}</span>
+                  <button type="button" (click)="cart.increment(item.productId)" [attr.aria-label]="'Increase quantity of ' + item.name">+</button>
+                </div>
+
+                <span class="line__total">₹{{ item.price * item.quantity }}</span>
+
+                <button
+                  type="button"
+                  class="line__remove"
+                  (click)="cart.remove(item.productId)"
+                  [attr.aria-label]="'Remove ' + item.name + ' from cart'"
+                >
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke-linecap="round"/></svg>
+                </button>
+              </article>
+            }
+          </div>
+
+          <button type="button" class="btn btn--ghost btn--sm cart-clear" (click)="cart.clear()">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m3 0-.8 12.1a2 2 0 0 1-2 1.9H8.8a2 2 0 0 1-2-1.9L6 7" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6M14 11v6" stroke-linecap="round"/></svg>
+            Clear cart
+          </button>
+        </section>
+
+        <!-- ---- Sticky summary ---- -->
+        <aside class="summary card" appReveal [revealDelay]="120">
+          <h3>Order summary</h3>
+
+          <dl class="summary__rows">
+            <div><dt>Subtotal</dt><dd>₹{{ (pricing()?.subtotal ?? cart.subtotal()).toFixed(2) }}</dd></div>
+            <div>
+              <dt>Tax @if (pricing()) { <span class="muted">({{ (pricing()!.taxRate * 100) | number:'1.0-0' }}%)</span> }</dt>
+              <dd>@if (pricing()) { ₹{{ pricing()!.tax.toFixed(2) }} } @else { — }</dd>
+            </div>
+            <div>
+              <dt>Delivery</dt>
+              <dd>{{ pricing() ? (pricing()!.deliveryFee ? '₹' + pricing()!.deliveryFee.toFixed(2) : 'Calculated at checkout') : '—' }}</dd>
+            </div>
+          </dl>
+
+          <div class="summary__total">
+            <span>Total</span>
+            <strong>@if (pricing()) { ₹{{ pricing()!.total.toFixed(2) }} } @else { ₹{{ cart.subtotal().toFixed(2) }} }</strong>
+          </div>
+
+          @if (pricingLoading()) {
+            <p class="summary__note summary__note--live" aria-live="polite"><span class="summary__pulse"></span>Updating totals…</p>
+          }
+          <p class="summary__note muted">Delivery fee (if any) is added once you choose an order type.</p>
+
+          <a routerLink="/checkout" class="btn btn--accent btn--block btn--lg">
+            {{ auth.isAuthenticated() ? 'Checkout' : 'Sign in & checkout' }}
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <a routerLink="/menu" class="btn btn--ghost btn--block summary__browse">Keep browsing</a>
+        </aside>
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,115 @@
+<div class="adm-page">
+  <div class="adm-head">
+    <div>
+      <span class="eyebrow eyebrow--bare">
+        {{ total() }} requests @if (newCount()) { · {{ newCount() }} new }
+      </span>
+      <h1>Cake requests</h1>
+    </div>
+  </div>
+
+  <div class="adm-filters">
+    <select class="select" [(ngModel)]="status" (ngModelChange)="page = 1; fetch()" aria-label="Filter by status">
+      <option value="">All statuses</option>
+      <option value="new">New</option>
+      <option value="quoted">Quoted</option>
+      <option value="accepted">Accepted</option>
+      <option value="declined">Declined</option>
+      <option value="closed">Closed</option>
+    </select>
+  </div>
+
+  @if (loading()) {
+    <div class="skeleton" style="height: 320px" aria-hidden="true"></div>
+  } @else {
+    <div class="adm-table-wrap">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>Received</th>
+            <th>Customer</th>
+            <th>The brief</th>
+            <th>Needed by</th>
+            <th>Quote</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of requests(); track r._id) {
+            <tr>
+              <td class="nowrap">{{ r.createdAt | date: 'MMM d · h:mm a' }}</td>
+              <td>
+                <strong>{{ r.name }}</strong>
+                <div style="font-size: 0.82rem">{{ r.phone }}</div>
+                @if (r.email) { <div style="font-size: 0.78rem"><a href="mailto:{{ r.email }}" style="text-decoration: underline">{{ r.email }}</a></div> }
+              </td>
+              <td style="max-width: 380px">
+                <strong>{{ r.occasion }}</strong> · serves ~{{ r.servings }} · {{ r.flavour }}
+                @if (r.messageOnCake) { <div class="muted" style="font-size: 0.82rem">“{{ r.messageOnCake }}”</div> }
+                @if (r.details) { <div style="font-size: 0.82rem; white-space: pre-line">{{ r.details }}</div> }
+                @if (r.referenceImage) {
+                  <a [href]="r.referenceImage" target="_blank" rel="noopener" style="text-decoration: underline; font-size: 0.8rem">Reference photo ↗</a>
+                }
+              </td>
+              <td class="nowrap">{{ r.dateNeeded | date: 'EEE, MMM d' }}</td>
+              <td class="nowrap">
+                @if (r.quote.amount) {
+                  ₹{{ r.quote.amount }}
+                  @if (r.quote.note) { <div class="muted" style="font-size: 0.78rem; max-width: 160px; white-space: normal">{{ r.quote.note }}</div> }
+                } @else {
+                  —
+                }
+              </td>
+              <td><span [class]="badge(r)">{{ r.status }}</span></td>
+              <td class="nowrap" style="text-align: right">
+                @if (r.status === 'new' || r.status === 'quoted') {
+                  <button type="button" class="btn btn--primary btn--sm" [disabled]="busyId() === r._id" (click)="openQuote(r)">
+                    {{ openId() === r._id ? 'Close' : r.status === 'new' ? 'Quote' : 'Re-quote' }}
+                  </button>
+                }
+                @if (r.status === 'quoted') {
+                  <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === r._id" (click)="setStatus(r, 'accepted')">Accepted</button>
+                  <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === r._id" (click)="setStatus(r, 'declined')">Declined</button>
+                }
+                @if (r.status === 'accepted' || r.status === 'declined') {
+                  <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === r._id" (click)="setStatus(r, 'closed')">Close</button>
+                }
+              </td>
+            </tr>
+            @if (openId() === r._id) {
+              <tr>
+                <td colspan="7" style="background: var(--cream-2)">
+                  <div style="display: flex; gap: 0.8rem; align-items: flex-end; padding: 0.4rem 0; flex-wrap: wrap">
+                    <div class="field" style="margin: 0">
+                      <label class="label" for="q-amount">Quote (₹)</label>
+                      <input id="q-amount" class="input" type="number" min="0" [(ngModel)]="quoteAmount" name="quoteAmount" style="width: 140px" />
+                    </div>
+                    <div class="field" style="margin: 0; flex: 1; min-width: 220px">
+                      <label class="label" for="q-note">Note <span class="muted">(what the quote covers)</span></label>
+                      <input id="q-note" class="input" [(ngModel)]="quoteNote" name="quoteNote" maxlength="500" />
+                    </div>
+                    <button type="button" class="btn btn--primary btn--sm" [disabled]="busyId() === r._id" (click)="saveQuote(r)">
+                      {{ busyId() === r._id ? 'Saving…' : 'Save quote' }}
+                    </button>
+                  </div>
+                  <p class="muted" style="font-size: 0.78rem; margin: 0 0 0.5rem">Call {{ r.phone }} with the quote — saving here records it for the team.</p>
+                </td>
+              </tr>
+            }
+          } @empty {
+            <tr><td colspan="7"><div class="adm-empty">No cake requests yet — briefs from the Custom Cakes page land here.</div></td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (pages() > 1) {
+      <div class="adm-pagination">
+        <button type="button" class="btn btn--ghost btn--sm" [disabled]="page <= 1" (click)="goToPage(page - 1)">← Prev</button>
+        <span>Page {{ page }} of {{ pages() }}</span>
+        <button type="button" class="btn btn--ghost btn--sm" [disabled]="page >= pages()" (click)="goToPage(page + 1)">Next →</button>
+      </div>
+    }
+  }
+</div>

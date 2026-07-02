@@ -1,0 +1,91 @@
+<div class="adm-page">
+  @if (loading()) {
+    <div class="skeleton" style="height: 360px" aria-hidden="true"></div>
+  } @else if (detail(); as d) {
+    <div class="adm-head">
+      <div>
+        <a routerLink="/admin/customers" class="eyebrow eyebrow--bare" style="cursor: pointer">← Customers</a>
+        <h1>
+          {{ d.customer.name || d.customer.phone || 'Customer' }}
+          @if (d.customer.role === 'admin') {
+            <span class="adm-badge adm-badge--admin">staff</span>
+          }
+        </h1>
+        <p>Joined {{ d.customer.createdAt | date: 'MMMM d, y' }}</p>
+      </div>
+    </div>
+
+    <div class="adm-grid">
+      <div class="adm-stat">
+        <div class="adm-stat__label">Orders</div>
+        <div class="adm-stat__value">{{ d.orders.length }}</div>
+      </div>
+      <div class="adm-stat">
+        <div class="adm-stat__label">Lifetime value</div>
+        <div class="adm-stat__value">₹{{ d.totalSpent | number: '1.0-0' }}</div>
+        <div class="adm-stat__sub">paid orders only</div>
+      </div>
+      <div class="adm-stat">
+        <div class="adm-stat__label">Last order</div>
+        <div class="adm-stat__value" style="font-size: 1.3rem">
+          {{ d.orders.length ? (d.orders[0].createdAt | date: 'MMM d, y') : '—' }}
+        </div>
+      </div>
+    </div>
+
+    <div class="adm-cols" style="grid-template-columns: minmax(0, 1fr) minmax(0, 2fr)">
+      <div>
+        <div class="adm-card">
+          <h3>Contact</h3>
+          <dl class="adm-kv">
+            <dt>Phone</dt><dd>{{ d.customer.phone || '—' }}</dd>
+            <dt>Email</dt><dd>{{ d.customer.email || '—' }}</dd>
+          </dl>
+        </div>
+
+        <div class="adm-card">
+          <h3>Saved addresses</h3>
+          @if (d.customer.addresses?.length) {
+            @for (a of d.customer.addresses; track $index) {
+              <p style="font-size: 0.88rem; margin: 0 0 0.7rem; line-height: 1.5">
+                {{ a.fullAddress }}@if (a.area) {, {{ a.area }}}@if (a.city) {, {{ a.city }}} {{ a.pincode }}
+                @if (a.isDefault) {
+                  <span class="adm-badge" style="margin-left: 0.3rem">default</span>
+                }
+              </p>
+            }
+          } @else {
+            <div class="adm-empty" style="padding: 0.8rem 0">No saved addresses.</div>
+          }
+        </div>
+      </div>
+
+      <div class="adm-card" style="padding: 0">
+        <h3 style="padding: 1rem 1.25rem 0.4rem">Order history</h3>
+        <div class="adm-table-wrap" style="border: none; box-shadow: none">
+          <table class="adm-table">
+            <thead>
+              <tr><th>Order</th><th>Placed</th><th>Type</th><th class="num">Total</th><th>Payment</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              @for (o of d.orders; track o._id) {
+                <tr class="is-clickable" [routerLink]="['/admin/orders', o._id]">
+                  <td class="nowrap"><strong>{{ o.orderNumber }}</strong></td>
+                  <td class="nowrap">{{ o.createdAt | date: 'MMM d, y · h:mm a' }}</td>
+                  <td><span class="adm-badge adm-badge--type">{{ o.orderType }}</span></td>
+                  <td class="num">₹{{ o.pricing.total | number: '1.2-2' }}</td>
+                  <td><span [class]="badgeClass(o.paymentStatus)">{{ o.paymentStatus }}</span></td>
+                  <td><span [class]="badgeClass(o.orderStatus)">{{ o.orderStatus }}</span></td>
+                </tr>
+              } @empty {
+                <tr><td colspan="6"><div class="adm-empty">No orders yet.</div></td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="adm-empty">Customer not found.</div>
+  }
+</div>
