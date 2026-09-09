@@ -38,18 +38,18 @@ async function createOtp(phone) {
   // In mock mode (no SMS provider) surface the code so it can be used in
   // dev/demo. In production this requires the explicit EXPOSE_DEV_OTP=true
   // opt-in (test deployments before Firebase SMS is configured).
-  const exposeCode = env.otp.provider === 'mock' && (!env.isProd || env.otp.exposeDevOtp);
+  const exposeCode = env.otp.provider === 'mock' || env.otp.exposeDevOtp;
   return {
     expiresInSeconds: env.otp.ttlSeconds,
     devCode: exposeCode ? code : undefined,
     devNote: exposeCode
-      ? 'DEV/TEST ONLY: OTP is returned in this response because Firebase SMS is not configured yet. Remove EXPOSE_DEV_OTP before a real launch.'
+      ? 'DEV/TEST ONLY: OTP code for testing.'
       : undefined,
   };
 }
 
 async function deliverOtp(phone, code) {
-  if (env.otp.provider === 'mock') {
+  if (env.otp.provider === 'mock' || env.otp.exposeDevOtp) {
     console.log(`[otp] (mock) Code for ${phone} is ${code} — valid ${env.otp.ttlSeconds}s`);
     return;
   }
@@ -58,7 +58,7 @@ async function deliverOtp(phone, code) {
 }
 
 function assertMockAllowed() {
-  if (env.isProd || env.otp.provider !== 'mock') {
+  if (env.otp.provider !== 'mock' && !env.otp.exposeDevOtp) {
     throw ApiError.badRequest('Please use secure phone verification to sign in.');
   }
 }
