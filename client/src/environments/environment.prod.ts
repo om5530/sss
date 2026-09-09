@@ -11,7 +11,7 @@ export const environment = {
   // Firebase web config (SAFE to commit — public identifiers, not secrets).
   // From: Firebase console -> Project settings -> General -> "Your apps" (Web app).
   firebase: {
-    apiKey: 'AIzaSyC_Apc-tNLP6fxefBi-FGSfyc17Z0mcCOE',
+    apiKey: 'AIzaSyC_Apc-tNlP6fxefBi-FGSfyc17Z0mcCOE',
     authDomain: 'ssss-ade3d.firebaseapp.com',
     projectId: 'ssss-ade3d',
     appId: '1:446405901962:web:a365bc2c68f90353a3b773',

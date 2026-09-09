@@ -9,7 +9,7 @@ router.get('/phone-config', (req, res) => {
   const env = require('../config/env');
   const ready = require('../services/firebase.service').isConfigured();
   const fbConfig = {
-    apiKey: env.firebase.apiKey || (env.isProd ? 'AIzaSyC_Apc-tNLP6fxefBi-FGSfyc17Z0mcCOE' : ''),
+    apiKey: env.firebase.apiKey || (env.isProd ? 'AIzaSyC_Apc-tNlP6fxefBi-FGSfyc17Z0mcCOE' : ''),
     authDomain: env.firebase.authDomain || (env.isProd ? 'ssss-ade3d.firebaseapp.com' : ''),
     projectId: env.firebase.projectId || (env.isProd ? 'ssss-ade3d' : ''),
     appId: env.firebase.appId || (env.isProd ? '1:446405901962:web:a365bc2c68f90353a3b773' : ''),
