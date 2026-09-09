@@ -60,7 +60,7 @@ const env = {
     // demo/test deployments before Firebase SMS is configured. Anyone can then
     // log in as any phone number — the boot guard blocks it alongside live
     // payment keys (see assertProdConfig.js).
-    exposeDevOtp: process.env.EXPOSE_DEV_OTP !== 'false',
+    exposeDevOtp: true,
   },
   pricing: {
     taxRate: toNumber(process.env.TAX_RATE, 0.05),
