@@ -18,3 +18,8 @@ export interface CartPricing {
   currency: string;
   taxRate: number;
 }
+
+export interface CartQuote {
+  items: { product: string; name: string; price: number; quantity: number; lineTotal: number }[];
+  pricing: CartPricing;
+}

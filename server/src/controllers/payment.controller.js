@@ -9,7 +9,7 @@ const { emailForOrder, notifyOrderStatus } = require('../services/notify.service
 /** Fire-and-forget "your order is confirmed" email once money arrives. */
 function notifyPaid(order) {
   if (order.orderStatus !== 'confirmed') return;
-  emailForOrder(order).then((email) => notifyOrderStatus(order, 'confirmed', email)).catch(() => {});
+  return emailForOrder(order).then((email) => notifyOrderStatus(order, 'confirmed', email));
 }
 
 // Authorises a caller to act on an order's payment. Guest orders (no user) are
@@ -140,7 +140,7 @@ const verifyRazorpayPayment = asyncHandler(async (req, res) => {
   if (order.paymentStatus !== 'paid' && order.paymentStatus !== 'refunded') {
     markOrderPaid(order, 'Payment confirmed');
     await order.save();
-    notifyPaid(order);
+    await notifyPaid(order);
   }
   if (payment.status !== 'succeeded' && payment.status !== 'refunded') {
     payment.status = 'succeeded';
@@ -188,7 +188,7 @@ const razorpayWebhook = asyncHandler(async (req, res) => {
         if (succeeded) markOrderPaid(order, 'Payment confirmed');
         else order.paymentStatus = 'failed';
         await order.save();
-        if (succeeded) notifyPaid(order);
+        if (succeeded) await notifyPaid(order);
       }
     }
   }

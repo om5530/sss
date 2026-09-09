@@ -13,6 +13,7 @@ function hashCode(code) {
 }
 
 async function createOtp(phone) {
+  assertMockAllowed();
   // Enforce a resend cooldown to prevent SMS spamming.
   const recent = await Otp.findOne({ phone, consumed: false }).sort({ createdAt: -1 });
   if (recent) {
@@ -53,10 +54,17 @@ async function deliverOtp(phone, code) {
     return;
   }
   // Integrate a real SMS provider (Twilio, MSG91, etc.) here.
-  console.warn(`[otp] Provider "${env.otp.provider}" not implemented; logging code for ${phone}: ${code}`);
+  throw ApiError.badRequest('Phone sign-in is unavailable. Please contact the café.');
+}
+
+function assertMockAllowed() {
+  if (env.isProd || env.otp.provider !== 'mock' || require('./firebase.service').isConfigured()) {
+    throw ApiError.badRequest('Please use secure phone verification to sign in.');
+  }
 }
 
 async function verifyOtp(phone, code) {
+  assertMockAllowed();
   const otp = await Otp.findOne({ phone, consumed: false }).sort({ createdAt: -1 });
   if (!otp) {
     return { ok: false, reason: 'No active OTP for this number. Please request a new code.' };

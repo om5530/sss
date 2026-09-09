@@ -1,0 +1,32 @@
+<div class="adm-page">
+  <div class="adm-head">
+    <div><span class="eyebrow eyebrow--bare">Operations</span><h1>Store settings</h1><p>Change pricing, hours and contact details without a deployment.</p></div>
+  </div>
+  @if (loading()) {
+    <div class="skeleton" style="height: 420px" aria-hidden="true"></div>
+  } @else if (loadFailed()) {
+    <p role="alert">Settings could not be loaded. Reload this page to retry.</p>
+  } @else {
+    <form class="adm-card" (ngSubmit)="save()">
+      <h2>Pricing</h2>
+      <div class="adm-cols" style="grid-template-columns: repeat(3, 1fr); gap: 0 1rem">
+        <div class="field"><label class="label" for="s-tax">Tax rate (%)</label><input id="s-tax" class="input" type="number" min="0" max="100" step="0.01" [(ngModel)]="taxPercent" name="taxRate" required /></div>
+        <div class="field"><label class="label" for="s-delivery">Delivery fee</label><input id="s-delivery" class="input" type="number" min="0" step="0.01" [(ngModel)]="deliveryFee" name="deliveryFee" required /></div>
+        <div class="field"><label class="label" for="s-currency">Currency</label><select id="s-currency" class="select" [(ngModel)]="currency" name="currency"><option value="inr">INR — Indian rupee</option></select><small>INR is currently supported.</small></div>
+      </div>
+      <h2>Opening hours</h2>
+      <p class="muted">Times use India Standard Time. Use 00:00–24:00 for all day, or the same time to keep the shop closed.</p>
+      <div class="adm-cols" style="grid-template-columns: repeat(2, 1fr); gap: 0 1rem">
+        <div class="field"><label class="label" for="s-open">Opens (HH:MM)</label><input id="s-open" class="input" placeholder="08:00" [(ngModel)]="opensAt" name="opensAt" required /></div>
+        <div class="field"><label class="label" for="s-close">Closes (HH:MM)</label><input id="s-close" class="input" placeholder="22:00" [(ngModel)]="closesAt" name="closesAt" required /></div>
+      </div>
+      <h2>Contact details</h2>
+      <div class="field"><label class="label" for="s-address">Address</label><textarea id="s-address" class="textarea" rows="2" maxlength="240" [(ngModel)]="contactAddress" name="contactAddress"></textarea></div>
+      <div class="adm-cols" style="grid-template-columns: repeat(2, 1fr); gap: 0 1rem">
+        <div class="field"><label class="label" for="s-phone">Phone</label><input id="s-phone" class="input" maxlength="40" [(ngModel)]="contactPhone" name="contactPhone" /></div>
+        <div class="field"><label class="label" for="s-email">Email</label><input id="s-email" class="input" type="email" maxlength="240" [(ngModel)]="contactEmail" name="contactEmail" /></div>
+      </div>
+      <div class="adm-modal__actions"><button type="submit" class="btn btn--primary" [disabled]="saving()">{{ saving() ? 'Saving…' : 'Save settings' }}</button></div>
+    </form>
+  }
+</div>

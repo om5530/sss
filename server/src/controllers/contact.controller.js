@@ -12,7 +12,7 @@ const submitMessage = asyncHandler(async (req, res) => {
   const saved = await ContactMessage.create({ name, email, message });
 
   // Fire-and-forget shop alert (logs in dev when no email key is set).
-  notifyEnquiry(saved);
+  await notifyEnquiry(saved);
 
   res.status(201).json({ success: true });
 });
@@ -26,6 +26,9 @@ function parsePagination(query, defaultLimit = 20) {
 }
 
 const MESSAGE_STATUSES = ['new', 'read', 'closed'];
+const unreadCount = asyncHandler(async (req, res) => {
+  res.json({ success: true, newCount: await ContactMessage.countDocuments({ status: 'new' }) });
+});
 
 const listMessages = asyncHandler(async (req, res) => {
   const { status } = req.query;
@@ -78,4 +81,4 @@ const validators = {
   updateStatus: [body('status').isIn(['new', 'read', 'closed']).withMessage('Choose a valid status')],
 };
 
-module.exports = { submitMessage, listMessages, updateMessageStatus, validators };
+module.exports = { submitMessage, listMessages, unreadCount, updateMessageStatus, validators };

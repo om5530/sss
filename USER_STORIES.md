@@ -6,6 +6,10 @@
 **Last updated:** 2026-06-24
 **Status:** Draft for backlog refinement
 
+**Store settings update — 2026-09-09:** Contact details and opening hours now come from database settings. New quotes use saved tax/delivery fees; order acceptance uses saved hours. Historical orders retain their original pricing. INR remains the supported currency. See [implementation priorities](docs/IMPLEMENTATION-PRIORITIES.md) for validation and remaining gaps.
+
+**Implementation update — 2026-09-09:** Implemented server-side sign-out revocation (US-4.6), mandatory reviewed-price comparison and checkout reconfirmation (US-3.3 / US-5.2), saved-address editing/validation (US-4.4), and Google-owned profile protection (US-4.5). The second batch adds durable email retries and error request IDs, managed menu categories/order, and admin account controls. Sign-out ends all account sessions. Live notification configuration and full acceptance verification remain; see [implementation priorities](docs/IMPLEMENTATION-PRIORITIES.md) for the ordered backlog and verification limits.
+
 ---
 
 ## 1. Purpose

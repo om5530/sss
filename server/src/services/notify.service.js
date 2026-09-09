@@ -14,32 +14,8 @@ async function emailForOrder(order) {
   }
 }
 
-/**
- * Email notifications via Resend's REST API. With no RESEND_API_KEY the
- * service logs instead of sending, so every hook is safe to call in dev.
- * All sends are fire-and-forget: a notification failure must never fail
- * the order/enquiry that triggered it (same contract as audit.service).
- */
-async function sendEmail({ to, subject, html }) {
-  if (!to) return;
-  if (!env.notify.resendApiKey) {
-    console.log(`[notify:mock] → ${to} · ${subject}`);
-    return;
-  }
-  try {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${env.notify.resendApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ from: env.notify.from, to, subject, html }),
-    });
-    if (!res.ok) console.error('[notify] send failed:', res.status, await res.text());
-  } catch (err) {
-    console.error('[notify] send failed:', err.message);
-  }
-}
+// Persist notifications before the request ends; the delivery worker handles retries.
+const { enqueueEmail: sendEmail } = require('./notification-queue.service');
 
 /* ---------------- Templates (simple, inline, email-client-safe) ---------------- */
 
@@ -78,23 +54,25 @@ const STATUS_COPY = {
 
 /** Customer + shop alert on a new order. */
 function notifyOrderPlaced(order, customerEmail) {
-  void sendEmail({
+  return Promise.all([sendEmail({
+    key: `order-placed/${order._id}/customer`,
     to: customerEmail,
     subject: `${BRAND} — order ${order.orderNumber} received`,
     html: wrap(`Order ${order.orderNumber} received`, `<p>Thanks! We’ve got your ${order.orderType} order.</p>${itemsTable(order)}`),
-  });
-  void sendEmail({
+  }), sendEmail({
+    key: `order-placed/${order._id}/shop`,
     to: env.notify.shopEmail,
     subject: `New ${order.orderType} order ${order.orderNumber} — ₹${order.pricing.total.toFixed(2)}`,
     html: wrap(`New order ${order.orderNumber}`, itemsTable(order)),
-  });
+  })]);
 }
 
 /** Customer update when the order moves through its lifecycle. */
 function notifyOrderStatus(order, status, customerEmail) {
   const copy = STATUS_COPY[status];
   if (!copy) return;
-  void sendEmail({
+  return sendEmail({
+    key: `order-status/${order._id}/${status}`,
     to: customerEmail,
     subject: `${BRAND} — ${copy.subject} (${order.orderNumber})`,
     html: wrap(copy.subject, `<p>${copy.line}</p><p>Order <strong>${order.orderNumber}</strong> · ₹${order.pricing.total.toFixed(2)}</p>`),
@@ -102,7 +80,8 @@ function notifyOrderStatus(order, status, customerEmail) {
 }
 
 function notifyRefund(order, customerEmail) {
-  void sendEmail({
+  return sendEmail({
+    key: `refund/${order._id}`,
     to: customerEmail,
     subject: `${BRAND} — refund issued for ${order.orderNumber}`,
     html: wrap('Refund issued', `<p>₹${order.pricing.total.toFixed(2)} for order <strong>${order.orderNumber}</strong> is on its way back to you.</p>`),
@@ -111,7 +90,8 @@ function notifyRefund(order, customerEmail) {
 
 /** Shop alert for a contact-form enquiry. */
 function notifyEnquiry(message) {
-  void sendEmail({
+  return sendEmail({
+    key: `enquiry/${message._id}`,
     to: env.notify.shopEmail,
     subject: `New enquiry from ${message.name}`,
     html: wrap('New enquiry', `<p><strong>${esc(message.name)}</strong> &lt;${esc(message.email)}&gt;</p><p style="white-space: pre-line;">${esc(message.message)}</p>`),
@@ -120,7 +100,8 @@ function notifyEnquiry(message) {
 
 /** Shop alert for a custom-cake request. */
 function notifyCakeRequest(request) {
-  void sendEmail({
+  return sendEmail({
+    key: `cake-request/${request._id}`,
     to: env.notify.shopEmail,
     subject: `Custom cake request — ${request.occasion} on ${request.dateNeeded ? new Date(request.dateNeeded).toDateString() : 'TBD'}`,
     html: wrap(

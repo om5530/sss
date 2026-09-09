@@ -3,9 +3,13 @@
 **Project:** Bakery & Café Online Ordering Platform — Admin Console
 **Stack:** MEAN (MongoDB · Express · Angular · Node.js)
 **Document version:** 1.1
-**Last updated:** 2026-07-02
-**Status:** v1.1 core implemented (epics A1–A4, A6–A8, A10 — see `/admin`). Open: A5 (managed categories), A9 (settings & content), AS-6.3, AS-5.2.
+**Last updated:** 2026-09-09
+**Status:** Core admin features, managed categories, customer deactivation and INR store settings implemented. Editable content and reporting refinements remain; see the current implementation priorities below.
 **Companion document:** [`USER_STORIES.md`](./USER_STORIES.md) (customer-side backlog, epics E1–E9). This document expands **Epic E8 — Admin Console** into a full, actionable backlog for the **v1.1 (Admin Console) release**.
+
+**Reporting/inbox update — 2026-09-09:** Best sellers now support revenue/quantity ranking, report categories follow renames, and the enquiry navigation badge displays the current unread count. Audit filters, audited exports and other reporting refinements remain open.
+
+**Implementation update — 2026-09-09:** Sign-out revocation, server-enforced admin inactivity expiry, product-form unsaved warnings/draft restoration, customer deactivation/reactivation, managed categories/menu ordering, durable email retries and error request IDs are implemented. Store settings at `/admin/settings` now manage tax, delivery fee, daily hours and contact details; currency remains INR only. The contact unread badge and category/ranking report fixes are implemented; editable content and further reporting refinements remain. Broader unsaved-form coverage and live scheduler/provider verification remain open. See [implementation priorities](docs/IMPLEMENTATION-PRIORITIES.md) for current status; the historical baseline below is not a complete acceptance-criteria audit.
 
 ---
 

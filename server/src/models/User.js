@@ -24,6 +24,9 @@ const userSchema = new mongoose.Schema(
     addresses: { type: [addressSchema], default: [] },
     role: { type: String, enum: ['customer', 'admin'], default: 'customer' },
     lastLoginAt: { type: Date },
+    sessionVersion: { type: Number, default: 0 },
+    active: { type: Boolean, default: true },
+    deactivationReason: { type: String, default: '' },
   },
   { timestamps: true },
 );

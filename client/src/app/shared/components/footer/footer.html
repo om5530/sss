@@ -43,8 +43,8 @@
     <!-- DUMMY VISIT — replace with real client data before launch -->
     <div class="footer__col">
       <h4>Visit</h4>
-      <p>123 Placeholder Street, Suite 000<br />City, State 000000</p>
-      <p class="footer__hours"><span class="footer__dot"></span>Open daily · 0:00–0:00</p>
+      <p>{{ shop.info()?.contactAddress || 'Visit us in Dahisar East, Mumbai' }}</p>
+      <p class="footer__hours"><span class="footer__dot"></span>Open daily · {{ shop.info()?.opensAt || '8:00' }}–{{ shop.info()?.closesAt || '22:00' }}</p>
     </div>
     <!-- REAL CLIENT DATA — uncomment before launch
     <div class="footer__col">
@@ -57,8 +57,8 @@
     <!-- DUMMY CONTACT — replace with real client data before launch -->
     <div class="footer__col">
       <h4>Say hello</h4>
-      <p><a class="contact-link" href="mailto:hello&#64;example.com">hello&#64;example.com</a></p>
-      <p><a class="contact-link" href="tel:+910000000000">+91 00000 00000</a></p>
+      <p><a class="contact-link" [href]="'mailto:' + (shop.info()?.contactEmail || '')">{{ shop.info()?.contactEmail || 'Email the café' }}</a></p>
+      <p><a class="contact-link" [href]="'tel:' + (shop.info()?.contactPhone || '')">{{ shop.info()?.contactPhone || 'Contact the café' }}</a></p>
     </div>
     <!-- REAL CLIENT DATA — uncomment before launch
     <div class="footer__col">
@@ -71,7 +71,7 @@
 
   <div class="container footer__base">
     <!-- DUMMY COPYRIGHT — real: "© {{ year }} Sweet Savory Savor. All rights reserved." -->
-    <span>© {{ year }} Your Brand Name. All rights reserved.</span>
+    <span>© {{ year }} sweet savory savor. All rights reserved.</span>
     <span class="footer__made">Baked fresh · Served warm · Loved daily</span>
   </div>
 </footer>

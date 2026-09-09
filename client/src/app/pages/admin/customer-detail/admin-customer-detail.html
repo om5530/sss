@@ -12,8 +12,19 @@
           }
         </h1>
         <p>Joined {{ d.customer.createdAt | date: 'MMMM d, y' }}</p>
+        @if (d.customer.active === false) { <p class="error-text">Account deactivated</p> }
       </div>
+      @if (d.customer.role === 'customer') {
+        <button class="btn btn--ghost" (click)="confirming.set(true)">{{ d.customer.active === false ? 'Reactivate account' : 'Deactivate account' }}</button>
+      }
     </div>
+    @if (confirming()) {
+      <adm-confirm-modal [title]="d.customer.active === false ? 'Reactivate customer?' : 'Deactivate customer?'"
+        [message]="(d.customer.name || d.customer.phone || 'This customer') + (d.customer.active === false ? ' will be able to sign in again. Existing orders are unchanged.' : ' will no longer be able to sign in. Existing orders remain available to staff.')"
+        [confirmLabel]="d.customer.active === false ? 'Reactivate' : 'Deactivate'" tone="danger"
+        [requireReason]="d.customer.active !== false" [busy]="busy()" reasonPlaceholder="Explain why this account is being deactivated"
+        (confirmed)="changeStatus($event)" (cancelled)="confirming.set(false)" />
+    }
 
     <div class="adm-grid">
       <div class="adm-stat">

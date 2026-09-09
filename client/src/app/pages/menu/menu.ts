@@ -71,7 +71,7 @@ export class Menu implements OnDestroy {
           ),
         }))
         .filter((c) => c.products.length > 0)
-        .sort((a, b) => a.category.localeCompare(b.category));
+        .sort((a, b) => (a.products[0]?.categoryOrder ?? 0) - (b.products[0]?.categoryOrder ?? 0) || a.category.localeCompare(b.category));
       return { group: key, label, categories };
     }).filter((g) => g.categories.length > 0);
   });

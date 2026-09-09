@@ -6,9 +6,11 @@ const Order = require('../models/Order');
 const Product = require('../models/Product');
 const Coupon = require('../models/Coupon');
 const { priceCart } = require('../services/pricing.service');
+const { quoteMatches } = require('../services/quote.service');
 const { audit } = require('../services/audit.service');
 const { emailForOrder, notifyOrderPlaced, notifyOrderStatus } = require('../services/notify.service');
 const { isOpenAt } = require('../services/shop.service');
+const { getStoreSettings } = require('../services/store-settings.service');
 
 const MIN_LEAD_MS = 30 * 60 * 1000; // scheduled orders need at least 30 min notice
 const MAX_AHEAD_MS = 48 * 60 * 60 * 1000; // and at most 2 days
@@ -17,9 +19,9 @@ const MAX_AHEAD_MS = 48 * 60 * 60 * 1000; // and at most 2 days
  * Validates the requested fulfilment time against opening hours.
  * Returns null (ASAP) or a Date for scheduled pre-orders.
  */
-function resolveFulfilAt(raw) {
+function resolveFulfilAt(raw, settings) {
   if (!raw) {
-    if (!isOpenAt()) {
+    if (!isOpenAt(new Date(), settings)) {
       throw ApiError.badRequest('The ovens are off right now — schedule a pre-order for our opening hours instead');
     }
     return null;
@@ -33,7 +35,7 @@ function resolveFulfilAt(raw) {
   if (when.getTime() > now + MAX_AHEAD_MS) {
     throw ApiError.badRequest('We take pre-orders up to 2 days ahead — for anything bigger, send a custom-cake brief');
   }
-  if (!isOpenAt(when)) {
+  if (!isOpenAt(when, settings)) {
     throw ApiError.badRequest('That time is outside our opening hours — pick a time we’re open');
   }
   return when;
@@ -105,18 +107,24 @@ function generateOrderNumber() {
 }
 
 function buildFulfilment(orderType, payload) {
+  const text = (value) => typeof value === 'string' ? value.trim() : '';
   if (orderType === 'dining') {
-    return { dining: { tableNumber: payload.dining?.tableNumber, customerName: payload.dining?.customerName } };
+    const customerName = text(payload.dining?.customerName);
+    if (!customerName) throw ApiError.badRequest('Please provide your name for dine-in');
+    return { dining: { tableNumber: text(payload.dining?.tableNumber), customerName } };
   }
   if (orderType === 'takeaway') {
     const t = payload.takeaway || {};
-    if (!t.customerName || !t.phone) throw ApiError.badRequest('Takeaway requires a name and phone number');
-    return { takeaway: { customerName: t.customerName, phone: t.phone } };
+    const customerName = text(t.customerName);
+    const phone = text(t.phone).replace(/\s/g, '');
+    if (!customerName || !/^\+?[0-9]{7,15}$/.test(phone)) throw ApiError.badRequest('Takeaway requires a name and valid phone number');
+    return { takeaway: { customerName, phone } };
   }
   if (orderType === 'delivery') {
-    const d = payload.delivery || {};
-    if (!d.fullAddress || !d.city || !d.pincode) {
-      throw ApiError.badRequest('Delivery requires full address, city and pincode');
+    const d = Object.fromEntries(['fullAddress', 'area', 'city', 'pincode', 'landmark']
+      .map((key) => [key, text(payload.delivery?.[key])]));
+    if (!d.fullAddress || !d.area || !d.city || !/^[1-9][0-9]{5}$/.test(d.pincode)) {
+      throw ApiError.badRequest('Delivery requires full address, area, city and a valid 6-digit pincode');
     }
     return { delivery: { fullAddress: d.fullAddress, area: d.area, city: d.city, pincode: d.pincode, landmark: d.landmark } };
   }
@@ -134,10 +142,19 @@ const createOrder = asyncHandler(async (req, res) => {
   }
 
   const fulfilment = buildFulfilment(orderType, req.body);
-  const fulfilAt = resolveFulfilAt(req.body.fulfilAt);
+  const settings = await getStoreSettings();
+  const fulfilAt = resolveFulfilAt(req.body.fulfilAt, settings);
 
   // Re-price on the server; never trust client totals.
-  const { items: pricedItems, pricing, coupon } = await priceCart(items, { orderType, couponCode });
+  const { items: pricedItems, pricing, coupon } = await priceCart(items, { orderType, couponCode, settings });
+  if (!quoteMatches(req.body.expectedQuote, pricedItems, pricing)) {
+    return res.status(409).json({
+      success: false,
+      code: 'PRICE_CHANGED',
+      message: 'Your order prices have changed. Review the updated summary and confirm before placing your order.',
+      quote: { items: pricedItems, pricing },
+    });
+  }
 
   // Claim stock BEFORE persisting the order; roll back if anything fails.
   const claimed = await claimStock(pricedItems);
@@ -185,7 +202,7 @@ const createOrder = asyncHandler(async (req, res) => {
     throw err;
   }
 
-  emailForOrder(order).then((email) => notifyOrderPlaced(order, email)).catch(() => {});
+  await emailForOrder(order).then((email) => notifyOrderPlaced(order, email));
 
   res.status(201).json({ success: true, order });
 });
@@ -265,8 +282,8 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   });
 
   // Let the customer know about the moves they care about.
-  if (['ready', 'completed', 'cancelled'].includes(status)) {
-    emailForOrder(order).then((email) => notifyOrderStatus(order, status, email)).catch(() => {});
+  if (['confirmed', 'preparing', 'ready', 'completed', 'cancelled'].includes(status)) {
+    await emailForOrder(order).then((email) => notifyOrderStatus(order, status, email));
   }
 
   res.json({ success: true, order });
@@ -274,6 +291,13 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
 
 const validators = {
   create: [
+    body('expectedQuote').isObject().withMessage('Review your order summary before placing the order'),
+    body('expectedQuote.items').isArray({ min: 1 }).withMessage('Review your order items'),
+    body('expectedQuote.items.*').isObject(),
+    body('expectedQuote.items.*.product').isMongoId(),
+    body('expectedQuote.items.*.price').isFloat({ min: 0 }),
+    body('expectedQuote.items.*.quantity').isInt({ min: 1 }),
+    body('expectedQuote.pricing').isObject().withMessage('Review your order total'),
     body('items').isArray({ min: 1 }).withMessage('Your cart cannot be empty'),
     body('items.*.productId').notEmpty().withMessage('Each item needs a productId'),
     body('items.*.quantity').isInt({ min: 1 }).withMessage('Quantity must be at least 1'),

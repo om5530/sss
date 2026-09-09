@@ -125,6 +125,10 @@
       <div class="adm-card" style="margin-top: 1rem; padding: 0">
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem 0.4rem">
           <h3 style="margin: 0">Best sellers</h3>
+          <select class="select" style="width: auto" aria-label="Rank best sellers by" [(ngModel)]="rankBy" (ngModelChange)="fetch()">
+            <option value="revenue">By revenue</option>
+            <option value="quantity">By quantity sold</option>
+          </select>
           <button type="button" class="btn btn--ghost btn--sm" (click)="exportProducts()">Export CSV</button>
         </div>
         <div class="adm-table-wrap" style="border: none; box-shadow: none">

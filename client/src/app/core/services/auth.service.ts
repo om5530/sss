@@ -1,5 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { ToastService } from './toast.service';
 import { firstValueFrom, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Address, ApiResponse, AuthResponse, OtpRequestResponse, User } from '../models/user.model';
@@ -9,6 +10,7 @@ const TOKEN_KEY = 'bc_token';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private http = inject(HttpClient);
+  private toast = inject(ToastService);
   private base = environment.apiUrl;
 
   readonly user = signal<User | null>(null);
@@ -75,8 +77,12 @@ export class AuthService {
 
   logout() {
     return firstValueFrom(this.http.post<ApiResponse>(`${this.base}/auth/logout`, {}))
-      .catch(() => undefined)
-      .finally(() => this.clearSession());
+      .then(() => { this.clearSession(); return true; })
+      .catch((err: HttpErrorResponse) => {
+        if (err.status === 401 || err.status === 403) { this.clearSession(); return true; }
+        this.toast.error('Could not sign out securely. Please check your connection and retry.');
+        return false;
+      });
   }
 
   private setSession(res: AuthResponse) {
@@ -89,7 +95,7 @@ export class AuthService {
     if (current) this.user.set({ ...current, addresses });
   }
 
-  private clearSession() {
+  clearSession() {
     localStorage.removeItem(TOKEN_KEY);
     this.user.set(null);
   }

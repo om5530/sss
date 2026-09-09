@@ -18,10 +18,14 @@ const env = {
     secret: process.env.JWT_SECRET || 'dev-secret-change-me',
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   },
+  admin: { idleMinutes: Math.max(1, toNumber(process.env.ADMIN_IDLE_MINUTES, 30)) },
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID || '',
   },
   firebase: {
+    apiKey: process.env.FIREBASE_WEB_API_KEY || '',
+    authDomain: process.env.FIREBASE_AUTH_DOMAIN || '',
+    appId: process.env.FIREBASE_WEB_APP_ID || '',
     projectId: process.env.FIREBASE_PROJECT_ID || '',
     clientEmail: process.env.FIREBASE_CLIENT_EMAIL || '',
     // Env stores the PEM with literal "\n"; restore real newlines for the SDK.

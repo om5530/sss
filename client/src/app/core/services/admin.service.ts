@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { map } from 'rxjs';
+import { map, Subject, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Product } from '../models/product.model';
 import { Order, OrderStatus } from '../models/order.model';
@@ -35,12 +35,23 @@ function toParams(obj: object): HttpParams {
   return params;
 }
 
+export interface ManagedCategory { _id: string; name: string; group: 'bakery' | 'savoury'; displayOrder: number; count: number; archived?: boolean }
+export interface StoreSettings {
+  taxRate: number; deliveryFee: number; currency: string; opensAt: string; closesAt: string;
+  contactAddress: string; contactPhone: string; contactEmail: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminService {
+  readonly enquiryChanges = new Subject<void>();
+  unreadEnquiries() { return this.http.get<{ newCount: number }>(`${this.base}/messages/unread-count`); }
   private http = inject(HttpClient);
   private base = `${environment.apiUrl}/admin`;
 
   /* ---- Dashboard ---- */
+  setCustomerActive(id: string, active: boolean, reason: string) {
+    return this.http.patch(`${this.base}/customers/${id}/status`, { active, reason });
+  }
 
   dashboard() {
     return this.http.get<DashboardStats & { success: boolean }>(`${this.base}/dashboard`);
@@ -72,6 +83,14 @@ export class AdminService {
   }
 
   /* ---- Products ---- */
+  categories() { return this.http.get<{ categories: ManagedCategory[] }>(`${this.base}/categories`).pipe(map((r) => r.categories)); }
+  saveCategory(data: { name: string; group: string }, id?: string) {
+    return id ? this.http.patch(`${this.base}/categories/${id}`, data) : this.http.post(`${this.base}/categories`, data);
+  }
+  deleteCategory(id: string) { return this.http.delete(`${this.base}/categories/${id}`); }
+  reorderCategories(group: string, ids: string[]) { return this.http.patch(`${this.base}/categories/order`, { group, ids }); }
+  settings() { return this.http.get<{ settings: StoreSettings }>(`${this.base}/settings`).pipe(map((r) => r.settings)); }
+  updateSettings(data: Partial<StoreSettings>) { return this.http.patch<{ settings: StoreSettings }>(`${this.base}/settings`, data).pipe(map((r) => r.settings)); }
 
   products(filters: { q?: string; group?: string; category?: string; available?: string; archived?: string } = {}) {
     return this.http
@@ -155,7 +174,7 @@ export class AdminService {
   updateMessageStatus(id: string, status: ContactMessageStatus) {
     return this.http
       .patch<{ message: ContactMessage }>(`${this.base}/messages/${id}/status`, { status })
-      .pipe(map((r) => r.message));
+      .pipe(tap(() => this.enquiryChanges.next()), map((r) => r.message));
   }
 
   /* ---- Reports ---- */
@@ -173,7 +192,7 @@ export class AdminService {
     }>(`${this.base}/reports/prep`);
   }
 
-  productReport(filters: { from?: string; to?: string } = {}) {
+  productReport(filters: { from?: string; to?: string; rankBy?: 'revenue' | 'quantity' } = {}) {
     return this.http.get<ProductReport>(`${this.base}/reports/products`, { params: toParams(filters) });
   }
 

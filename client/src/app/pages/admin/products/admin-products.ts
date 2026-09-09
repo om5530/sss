@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../../core/services/admin.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -23,6 +23,8 @@ export class AdminProducts {
 
   protected q = '';
   protected group = '';
+  protected category = '';
+  protected allArchives = false;
   protected availability = '';
   protected showArchived = false;
 
@@ -33,7 +35,12 @@ export class AdminProducts {
   private searchTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor() {
-    this.fetch();
+    inject(ActivatedRoute).queryParamMap.subscribe((params) => {
+      this.category = params.get('category') || '';
+      this.group = params.get('group') || '';
+      this.allArchives = params.get('archived') === 'all';
+      this.fetch();
+    });
   }
 
   protected onSearch() {
@@ -47,8 +54,9 @@ export class AdminProducts {
       .products({
         q: this.q || undefined,
         group: this.group || undefined,
+        category: this.category || undefined,
         available: this.availability || undefined,
-        archived: this.showArchived ? 'true' : undefined,
+        archived: this.allArchives ? 'all' : this.showArchived ? 'true' : undefined,
       })
       .subscribe({
         next: (products) => {

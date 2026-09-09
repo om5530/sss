@@ -4,6 +4,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ContactService } from '../../core/services/contact.service';
 import { ToastService } from '../../core/services/toast.service';
 import { RevealOnScroll } from '../../shared/directives/reveal.directive';
+import { ShopService } from '../../core/services/shop.service';
 
 @Component({
   selector: 'app-contact',
@@ -14,8 +15,10 @@ import { RevealOnScroll } from '../../shared/directives/reveal.directive';
 export class Contact {
   private contact = inject(ContactService);
   private toast = inject(ToastService);
+  protected shop = inject(ShopService);
   protected readonly sending = signal(false);
   protected form = { name: '', email: '', message: '' };
+  constructor() { this.shop.load(); }
 
   submit() {
     if (!this.form.name.trim() || !this.form.email.trim() || !this.form.message.trim()) {

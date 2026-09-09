@@ -4,13 +4,18 @@ const ApiError = require('../utils/ApiError');
 const Product = require('../models/Product');
 const Review = require('../models/Review');
 const Order = require('../models/Order');
+const Category = require('../models/Category');
+const { migrateCategories, decorateProducts } = require('../services/category.service');
 
 const listProducts = asyncHandler(async (req, res) => {
   const { group, category, q, available, featured } = req.query;
   // Archived products never appear on the storefront (AS-4.5).
   const filter = { archived: { $ne: true } };
   if (group) filter.group = group;
-  if (category) filter.category = category;
+  if (category) {
+    const matches = await Category.find({ nameKey: String(category).trim().toLowerCase() }).select('_id');
+    filter.$and = [{ $or: [{ categoryId: { $in: matches.map((c) => c._id) } }, { category, categoryId: null }] }];
+  }
   if (available !== undefined) filter.available = available === 'true';
   if (featured !== undefined) filter.featured = featured === 'true';
   if (q) {
@@ -21,16 +26,18 @@ const listProducts = asyncHandler(async (req, res) => {
   }
 
   const products = await Product.find(filter).sort({ group: 1, category: 1, name: 1 });
-  res.json({ success: true, count: products.length, products });
+  res.json({ success: true, count: products.length, products: await decorateProducts(products) });
 });
 
 const getMenu = asyncHandler(async (req, res) => {
-  const products = await Product.find({ available: true, archived: { $ne: true } }).sort({ name: 1 });
+  await migrateCategories();
+  const products = await decorateProducts(await Product.find({ available: true, archived: { $ne: true } }).sort({ name: 1 }));
+  products.sort((a, b) => a.categoryOrder - b.categoryOrder || a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
 
   // Shape: { bakery: { Brownies: [...] }, savoury: { Pizza: [...] } }
-  const menu = {};
+  const menu = Object.create(null);
   for (const p of products) {
-    menu[p.group] = menu[p.group] || {};
+    menu[p.group] = menu[p.group] || Object.create(null);
     menu[p.group][p.category] = menu[p.group][p.category] || [];
     menu[p.group][p.category].push(p);
   }
@@ -38,10 +45,13 @@ const getMenu = asyncHandler(async (req, res) => {
 });
 
 const getCategories = asyncHandler(async (req, res) => {
+  await migrateCategories();
   const rows = await Product.aggregate([
     { $match: { archived: { $ne: true } } },
-    { $group: { _id: { group: '$group', category: '$category' }, count: { $sum: 1 } } },
-    { $sort: { '_id.group': 1, '_id.category': 1 } },
+    { $lookup: { from: 'categories', localField: 'categoryId', foreignField: '_id', as: 'managed' } },
+    { $set: { category: { $ifNull: [{ $first: '$managed.name' }, '$category'] }, displayOrder: { $ifNull: [{ $first: '$managed.displayOrder' }, 0] } } },
+    { $group: { _id: { group: '$group', category: '$category' }, count: { $sum: 1 }, displayOrder: { $first: '$displayOrder' } } },
+    { $sort: { '_id.group': 1, displayOrder: 1, '_id.category': 1 } },
   ]);
   const categories = rows.map((r) => ({ group: r._id.group, category: r._id.category, count: r.count }));
   res.json({ success: true, categories });
@@ -50,7 +60,7 @@ const getCategories = asyncHandler(async (req, res) => {
 const getProduct = asyncHandler(async (req, res) => {
   const product = await Product.findOne({ slug: req.params.slug, archived: { $ne: true } });
   if (!product) throw ApiError.notFound('Product not found');
-  res.json({ success: true, product });
+  res.json({ success: true, product: (await decorateProducts([product]))[0] });
 });
 
 /* ============ Reviews (verified purchase only) ============ */

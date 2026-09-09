@@ -10,6 +10,8 @@ const AuditLog = require('../models/AuditLog');
 const stripeService = require('../services/stripe.service');
 const razorpayService = require('../services/razorpay.service');
 const { audit } = require('../services/audit.service');
+const { resolveCategory, decorateProducts } = require('../services/category.service');
+const Category = require('../models/Category');
 const { emailForOrder, notifyOrderStatus, notifyRefund } = require('../services/notify.service');
 
 // The store's day runs on IST (AS-8.1); the server may not.
@@ -221,7 +223,7 @@ const settleCashOrder = asyncHandler(async (req, res) => {
   });
 
   if (order.orderStatus === 'confirmed') {
-    emailForOrder(order).then((email) => notifyOrderStatus(order, 'confirmed', email)).catch(() => {});
+    await emailForOrder(order).then((email) => notifyOrderStatus(order, 'confirmed', email));
   }
 
   res.json({ success: true, order, payment });
@@ -273,7 +275,7 @@ const refundOrder = asyncHandler(async (req, res) => {
     after: { paymentStatus: 'refunded', reason },
   });
 
-  emailForOrder(order).then((email) => notifyRefund(order, email)).catch(() => {});
+  await emailForOrder(order).then((email) => notifyRefund(order, email));
 
   res.json({ success: true, order, payment });
 });
@@ -298,26 +300,32 @@ const listProductsAdmin = asyncHandler(async (req, res) => {
   if (archived === 'true') filter.archived = true;
   else if (archived !== 'all') filter.archived = { $ne: true };
   if (group) filter.group = group;
-  if (category) filter.category = category;
+  if (category) {
+    const matches = await Category.find({ nameKey: String(category).trim().toLowerCase() }).select('_id');
+    filter.$or = [{ categoryId: { $in: matches.map((c) => c._id) } }, { category, categoryId: null }];
+  }
   if (available !== undefined) filter.available = available === 'true';
   if (featured !== undefined) filter.featured = featured === 'true';
   if (q && q.trim()) filter.name = new RegExp(escapeRegex(q.trim()), 'i');
 
   const products = await Product.find(filter).sort({ group: 1, category: 1, name: 1 });
-  res.json({ success: true, count: products.length, products });
+  res.json({ success: true, count: products.length, products: await decorateProducts(products) });
 });
 
 const getProductAdmin = asyncHandler(async (req, res) => {
   assertObjectId(req.params.id, 'Product');
   const product = await Product.findById(req.params.id);
   if (!product) throw ApiError.notFound('Product not found');
-  res.json({ success: true, product });
+  res.json({ success: true, product: (await decorateProducts([product]))[0] });
 });
 
 const createProduct = asyncHandler(async (req, res) => {
   const data = {};
   for (const f of PRODUCT_FIELDS) if (req.body[f] !== undefined) data[f] = req.body[f];
   data.slug = await uniqueSlug(data.name);
+  const category = await resolveCategory(data.group, data.category);
+  data.categoryId = category._id;
+  data.category = category.name;
 
   const product = await Product.create(data);
 
@@ -344,6 +352,12 @@ const updateProduct = asyncHandler(async (req, res) => {
 
   const before = {};
   const after = {};
+  if (req.body.category !== undefined || req.body.group !== undefined) {
+    const current = (await decorateProducts([product]))[0];
+    const category = await resolveCategory(req.body.group ?? product.group, req.body.category ?? current.category);
+    product.categoryId = category._id;
+    req.body.category = category.name;
+  }
   for (const f of PRODUCT_FIELDS) {
     if (req.body[f] === undefined) continue;
     const prev = f === 'tags' ? (product[f] || []).join(', ') : product[f];
@@ -462,6 +476,21 @@ const getCustomer = asyncHandler(async (req, res) => {
   res.json({ success: true, customer, orders, totalSpent: Math.round(totalSpent * 100) / 100 });
 });
 
+const setCustomerActive = asyncHandler(async (req, res) => {
+  assertObjectId(req.params.id, 'Customer');
+  const { active, reason } = req.body;
+  if (typeof active !== 'boolean') throw ApiError.badRequest('Choose whether the account is active');
+  if (!active && (typeof reason !== 'string' || !reason.trim() || reason.length > 500)) throw ApiError.badRequest('Enter a reason (up to 500 characters)');
+  const previous = await User.findOneAndUpdate({ _id: req.params.id, role: 'customer', active: { $ne: active } }, {
+    $set: { active, deactivationReason: active ? '' : reason.trim() }, $inc: { sessionVersion: 1 },
+  });
+  if (!previous) throw ApiError.conflict('This customer was already updated, or this is a staff account. Refresh and try again.');
+  audit(req, { action: active ? 'customer.reactivate' : 'customer.deactivate', entity: 'customer', entityId: previous._id,
+    summary: `${active ? 'Reactivated' : 'Deactivated'} customer ${previous.name || previous._id}`,
+    before: { active: previous.active, reason: previous.deactivationReason }, after: { active, reason: active ? '' : reason.trim() } });
+  res.json({ success: true, active });
+});
+
 /* ============ Payments (AS-7.1) ============ */
 
 const listPayments = asyncHandler(async (req, res) => {
@@ -549,6 +578,11 @@ const salesReport = asyncHandler(async (req, res) => {
 const productReport = asyncHandler(async (req, res) => {
   const { start, endExclusive } = parseRange(req.query);
   const match = { createdAt: { $gte: start, $lt: endExclusive }, ...PAID_MATCH };
+  const rankBy = req.query.rankBy === 'quantity' ? 'quantity' : 'revenue';
+  const categoryProjection = [
+    { $lookup: { from: 'categories', localField: 'categoryId', foreignField: '_id', as: 'managedCategory' } },
+    { $project: { category: { $ifNull: [{ $first: '$managedCategory.name' }, '$category'] }, archived: 1 } },
+  ];
 
   const [topProducts, byCategory, byType] = await Promise.all([
     Order.aggregate([
@@ -562,14 +596,14 @@ const productReport = asyncHandler(async (req, res) => {
           revenue: { $sum: '$items.lineTotal' },
         },
       },
-      { $sort: { revenue: -1 } },
+      { $sort: { [rankBy]: -1, _id: 1 } },
       { $limit: 10 },
       {
         $lookup: {
           from: 'products',
           localField: '_id',
           foreignField: '_id',
-          pipeline: [{ $project: { category: 1, archived: 1 } }],
+          pipeline: categoryProjection,
           as: 'product',
         },
       },
@@ -591,7 +625,7 @@ const productReport = asyncHandler(async (req, res) => {
           from: 'products',
           localField: 'items.product',
           foreignField: '_id',
-          pipeline: [{ $project: { category: 1 } }],
+          pipeline: categoryProjection,
           as: 'product',
         },
       },
@@ -699,6 +733,7 @@ const validators = {
 };
 
 module.exports = {
+  setCustomerActive,
   dashboard,
   listOrders,
   getOrderAdmin,

@@ -82,7 +82,7 @@
     </nav>
     <div class="nav__sheet-foot">
       <a routerLink="/menu" class="btn btn--gold btn--lg btn--block">Order now</a>
-      <p>Fresh from the oven · Dahisar East · Open daily 8:00–22:00</p>
+      <p>Fresh from the oven · Dahisar East · Open daily {{ shop.info()?.opensAt || '8:00' }}–{{ shop.info()?.closesAt || '22:00' }}</p>
     </div>
   </div>
 </header>

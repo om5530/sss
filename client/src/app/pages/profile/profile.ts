@@ -21,6 +21,9 @@ export class Profile {
   protected readonly editing = signal(false);
   protected readonly savingProfile = signal(false);
   protected readonly addingAddress = signal(false);
+  protected readonly editingAddressId = signal<string | null>(null);
+  protected readonly savingAddress = signal(false);
+  protected readonly addressError = signal('');
 
   protected profileForm = { name: '', email: '' };
   protected newAddress: Address = { fullAddress: '', area: '', city: '', pincode: '', landmark: '', isDefault: false };
@@ -38,6 +41,11 @@ export class Profile {
   }
 
   saveProfile() {
+    if (this.auth.user()?.identityReadOnly || this.savingProfile()) return;
+    if (!this.profileForm.name.trim() || (this.profileForm.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.profileForm.email.trim()))) {
+      this.toast.error('Enter your name and a valid email address.');
+      return;
+    }
     this.savingProfile.set(true);
     this.auth.updateProfile(this.profileForm).subscribe({
       next: () => {
@@ -52,18 +60,38 @@ export class Profile {
     });
   }
 
+  startAddress(address?: Address) {
+    this.editingAddressId.set(address?._id ?? null);
+    this.newAddress = address ? { ...address } : { fullAddress: '', area: '', city: '', pincode: '', landmark: '', isDefault: false };
+    this.addressError.set('');
+    this.addingAddress.set(true);
+  }
+
   saveAddress() {
-    if (!this.newAddress.fullAddress.trim()) {
-      this.toast.error('Full address is required.');
+    if (this.savingAddress()) return;
+    if (!this.newAddress.fullAddress.trim() || !this.newAddress.area?.trim() || !this.newAddress.city?.trim()) {
+      this.addressError.set('Full address, area and city are required.');
       return;
     }
-    this.auth.addAddress(this.newAddress).subscribe({
+    if (!/^[1-9][0-9]{5}$/.test(this.newAddress.pincode?.trim() ?? '')) {
+      this.addressError.set('Enter a valid 6-digit pincode.');
+      return;
+    }
+    this.addressError.set('');
+    this.savingAddress.set(true);
+    const id = this.editingAddressId();
+    const request = id ? this.auth.updateAddress(id, this.newAddress) : this.auth.addAddress(this.newAddress);
+    request.subscribe({
       next: () => {
-        this.toast.success('Address added.');
+        this.savingAddress.set(false);
+        this.toast.success(id ? 'Address updated.' : 'Address added.');
         this.addingAddress.set(false);
         this.newAddress = { fullAddress: '', area: '', city: '', pincode: '', landmark: '', isDefault: false };
       },
-      error: (err: HttpErrorResponse) => this.toast.error(err.error?.message || 'Could not add address.'),
+      error: (err: HttpErrorResponse) => {
+        this.savingAddress.set(false);
+        this.addressError.set(err.error?.details?.[0]?.message || err.error?.message || 'Could not save address.');
+      },
     });
   }
 
@@ -76,7 +104,7 @@ export class Profile {
   }
 
   async logout() {
-    await this.auth.logout();
+    if (!await this.auth.logout()) return;
     this.toast.info('Signed out.');
     this.router.navigateByUrl('/');
   }

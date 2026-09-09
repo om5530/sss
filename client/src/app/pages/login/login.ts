@@ -1,4 +1,4 @@
-import { Component, afterNextRender, inject, signal } from '@angular/core';
+import { Component, DestroyRef, afterNextRender, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -34,7 +34,7 @@ export class Login {
   protected readonly googleEnabled = !!environment.googleClientId;
   // When Firebase is configured, real SMS OTP is used instead of the backend
   // mock flow (which is what surfaces the on-screen "Dev mode" code).
-  protected readonly firebaseEnabled = this.fb.enabled;
+  protected get firebaseEnabled() { return this.fb.enabled; }
 
   /* ---- Presentation only: curated photography for the visual panel ---- */
   protected readonly visualPhoto = categoryImage('Pastries');
@@ -45,14 +45,17 @@ export class Login {
 
   private returnUrl = '/';
   private resendTimer?: ReturnType<typeof setInterval>;
+  private readonly destroyRef = inject(DestroyRef);
 
   constructor() {
+    this.destroyRef.onDestroy(() => { clearInterval(this.resendTimer); this.fb.reset(); });
     this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/';
     if (this.auth.isAuthenticated()) this.router.navigateByUrl(this.returnUrl);
     afterNextRender(() => this.initGoogle());
   }
 
-  requestOtp() {
+  async requestOtp() {
+    if (this.loading() || this.resendIn() > 0) return;
     const raw = this.phone().trim();
     if (!/^\+?[0-9\s()-]{7,20}$/.test(raw)) {
       this.errorMsg.set('Enter a valid phone number (with country code).');
@@ -60,6 +63,9 @@ export class Login {
     }
     this.errorMsg.set('');
     this.loading.set(true);
+    try { await this.fb.configure(); }
+    catch { this.loading.set(false); this.errorMsg.set('Phone sign-in is unavailable. Please try again later or contact the café.'); return; }
+    if (this.destroyRef.destroyed) return;
 
     // Production path: Firebase sends the SMS directly from the browser.
     if (this.firebaseEnabled) {
@@ -68,12 +74,14 @@ export class Login {
       this.fb
         .sendCode(e164, RECAPTCHA_CONTAINER_ID)
         .then(() => {
+          if (this.destroyRef.destroyed) return;
           this.loading.set(false);
           this.step.set('code');
           this.startResendCooldown(30);
           this.toast.success('OTP sent to your phone.');
         })
         .catch((err) => {
+          if (this.destroyRef.destroyed) return;
           this.loading.set(false);
           this.errorMsg.set(this.firebaseError(err));
         });
@@ -97,6 +105,7 @@ export class Login {
   }
 
   verifyOtp() {
+    if (this.loading()) return;
     const code = this.code().trim();
     if (code.length < 4) {
       this.errorMsg.set('Enter the OTP you received.');
@@ -155,6 +164,7 @@ export class Login {
       case 'auth/invalid-phone-number':
         return 'That phone number looks invalid. Include the country code.';
       case 'auth/too-many-requests':
+      case 'auth/quota-exceeded':
         return 'Too many attempts. Please wait a while and try again.';
       case 'auth/invalid-verification-code':
         return 'Incorrect code. Please check and try again.';
@@ -163,6 +173,11 @@ export class Login {
       case 'auth/captcha-check-failed':
       case 'auth/missing-app-credential':
         return 'Verification check failed. Reload the page and try again.';
+      case 'auth/unauthorized-domain':
+      case 'auth/invalid-app-credential':
+        return 'Phone verification is unavailable on this website. Please contact the café.';
+      case 'auth/network-request-failed':
+        return 'Could not load phone verification. Check your connection and try again.';
       default:
         return 'Could not complete phone verification. Please try again.';
     }

@@ -10,6 +10,7 @@
   </div>
 
   <div class="adm-filters">
+    @if (category) { <span>Category: {{ category }}</span><button class="btn btn--ghost btn--sm" (click)="category = ''; allArchives = false; fetch()">Clear category filter</button> }
     <input
       class="input"
       type="search"
@@ -30,7 +31,7 @@
       <option value="false">Unavailable</option>
     </select>
     <label style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.88rem; font-weight: 600; color: var(--cocoa)">
-      <input type="checkbox" [(ngModel)]="showArchived" (ngModelChange)="fetch()" />
+      <input type="checkbox" [(ngModel)]="showArchived" (ngModelChange)="allArchives = false; fetch()" />
       Show archived
     </label>
   </div>

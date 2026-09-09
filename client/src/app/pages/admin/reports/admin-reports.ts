@@ -28,6 +28,8 @@ export class AdminReports {
   protected from = '';
   protected to = '';
   protected granularity: 'day' | 'week' | 'month' = 'day';
+  protected rankBy: 'revenue' | 'quantity' = 'revenue';
+  private requestVersion = 0;
 
   /** Bars scaled to the busiest period; labels shown on hover + in the table. */
   protected readonly bars = computed(() => {
@@ -71,22 +73,26 @@ export class AdminReports {
   }
 
   protected fetch() {
+    const version = ++this.requestVersion;
     this.loading.set(true);
     const range = { from: this.from, to: this.to };
     let pending = 2;
     const done = () => {
+      if (version !== this.requestVersion) return;
       pending -= 1;
       if (!pending) this.loading.set(false);
     };
     this.admin.salesReport({ ...range, granularity: this.granularity }).subscribe({
       next: (sales) => {
+        if (version !== this.requestVersion) return;
         this.sales.set(sales);
         done();
       },
       error: done,
     });
-    this.admin.productReport(range).subscribe({
+    this.admin.productReport({ ...range, rankBy: this.rankBy }).subscribe({
       next: (products) => {
+        if (version !== this.requestVersion) return;
         this.products.set(products);
         done();
       },

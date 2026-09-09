@@ -34,7 +34,7 @@ const submitRequest = asyncHandler(async (req, res) => {
     referenceImage: referenceImage || '',
   });
 
-  notifyCakeRequest(request);
+  await notifyCakeRequest(request);
 
   res.status(201).json({ success: true, request: { _id: request._id, status: request.status } });
 });

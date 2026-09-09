@@ -7,24 +7,27 @@ export interface ShopInfo {
   closesAt: string;
   openNow: boolean;
   timezone: string;
+  contactAddress: string;
+  contactPhone: string;
+  contactEmail: string;
 }
 
-/** Opening hours + open-now, fetched once per session and shared. */
+/** Shared shop details, refreshed when storefront pages request them. */
 @Injectable({ providedIn: 'root' })
 export class ShopService {
   private http = inject(HttpClient);
 
   readonly info = signal<ShopInfo | null>(null);
-  private loaded = false;
+  private loading = false;
 
-  /** Safe to call from any page — only hits the API once. */
+  /** Coalesces concurrent component requests without caching for the session. */
   load(): void {
-    if (this.loaded) return;
-    this.loaded = true;
+    if (this.loading) return;
+    this.loading = true;
     this.http.get<{ shop: ShopInfo }>(`${environment.apiUrl}/shop`).subscribe({
-      next: (res) => this.info.set(res.shop),
+      next: (res) => { this.info.set(res.shop); this.loading = false; },
       error: () => {
-        this.loaded = false; // allow a retry on the next page that asks
+        this.loading = false;
       },
     });
   }

@@ -1,6 +1,6 @@
 const Product = require('../models/Product');
 const Coupon = require('../models/Coupon');
-const env = require('../config/env');
+const { getStoreSettings } = require('./store-settings.service');
 const ApiError = require('../utils/ApiError');
 
 const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
@@ -47,7 +47,7 @@ async function resolveCoupon(couponCode, subtotal) {
  * @param {{ orderType?: string, couponCode?: string }} options
  * @returns items, pricing, and the resolved coupon doc (null when no code).
  */
-async function priceCart(items, { orderType, couponCode } = {}) {
+async function priceCart(items, { orderType, couponCode, settings: suppliedSettings } = {}) {
   if (!Array.isArray(items) || items.length === 0) {
     throw ApiError.badRequest('Your cart is empty');
   }
@@ -79,9 +79,10 @@ async function priceCart(items, { orderType, couponCode } = {}) {
     ({ coupon, discount } = await resolveCoupon(couponCode, subtotal));
   }
 
+  const settings = suppliedSettings || await getStoreSettings();
   const taxable = round2(subtotal - discount);
-  const tax = round2(taxable * env.pricing.taxRate);
-  const deliveryFee = orderType === 'delivery' ? env.pricing.deliveryFee : 0;
+  const tax = round2(taxable * settings.taxRate);
+  const deliveryFee = orderType === 'delivery' ? settings.deliveryFee : 0;
   const total = round2(taxable + tax + deliveryFee);
 
   return {
@@ -94,8 +95,8 @@ async function priceCart(items, { orderType, couponCode } = {}) {
       tax,
       deliveryFee,
       total,
-      currency: env.pricing.currency,
-      taxRate: env.pricing.taxRate,
+      currency: settings.currency,
+      taxRate: settings.taxRate,
     },
   };
 }

@@ -1,10 +1,13 @@
 const express = require('express');
+const notifications = require('../controllers/notification.controller');
+const categories = require('../controllers/category.controller');
 const ctrl = require('../controllers/admin.controller');
 const orderCtrl = require('../controllers/order.controller');
 const contactCtrl = require('../controllers/contact.controller');
 const couponCtrl = require('../controllers/coupon.controller');
 const cakeCtrl = require('../controllers/cake.controller');
 const uploadCtrl = require('../controllers/upload.controller');
+const settingsCtrl = require('../controllers/settings.controller');
 const validate = require('../middleware/validate');
 const { requireAuth, requireRole } = require('../middleware/auth');
 
@@ -19,6 +22,15 @@ router.use((req, res, next) => {
 });
 
 router.get('/dashboard', ctrl.dashboard);
+router.get('/categories', categories.list);
+router.post('/categories', categories.create);
+router.patch('/categories/order', categories.reorder);
+router.patch('/categories/:id', categories.update);
+router.delete('/categories/:id', categories.remove);
+router.get('/notifications', notifications.summary);
+router.post('/notifications/dispatch', notifications.dispatch);
+router.get('/settings', settingsCtrl.list);
+router.patch('/settings', settingsCtrl.validators, validate, settingsCtrl.update);
 
 router.get('/orders', ctrl.listOrders);
 router.get('/orders/:id', ctrl.getOrderAdmin);
@@ -36,11 +48,13 @@ router.patch('/products/:id/archive', ctrl.archiveProduct);
 
 router.get('/customers', ctrl.listCustomers);
 router.get('/customers/:id', ctrl.getCustomer);
+router.patch('/customers/:id/status', ctrl.setCustomerActive);
 
 router.get('/payments', ctrl.listPayments);
 
 // Contact-form enquiries (triage: new → read → closed).
 router.get('/messages', contactCtrl.listMessages);
+router.get('/messages/unread-count', contactCtrl.unreadCount);
 router.patch('/messages/:id/status', contactCtrl.validators.updateStatus, validate, contactCtrl.updateMessageStatus);
 
 // Custom-cake requests (triage: new → quoted → accepted/declined → closed).

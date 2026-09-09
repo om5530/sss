@@ -17,6 +17,7 @@ export interface User {
   avatar?: string;
   role: 'customer' | 'admin';
   addresses: Address[];
+  identityReadOnly?: boolean;
 }
 
 export interface ApiResponse {

@@ -6,6 +6,7 @@ const productSchema = new mongoose.Schema(
     slug: { type: String, required: true, lowercase: true, trim: true },
     group: { type: String, enum: ['bakery', 'savoury'], required: true },
     category: { type: String, required: true, trim: true },
+    categoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', index: true },
     description: { type: String, trim: true, default: '' },
     price: { type: Number, required: true, min: 0 },
     image: { type: String, default: '' },

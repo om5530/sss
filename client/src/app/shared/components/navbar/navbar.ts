@@ -5,6 +5,7 @@ import { filter } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { CartService } from '../../../core/services/cart.service';
 import { MotionService } from '../../../core/services/motion.service';
+import { ShopService } from '../../../core/services/shop.service';
 
 @Component({
   selector: 'app-navbar',
@@ -16,6 +17,7 @@ export class Navbar {
   protected auth = inject(AuthService);
   protected cart = inject(CartService);
   private motion = inject(MotionService);
+  protected shop = inject(ShopService);
   private router = inject(Router);
 
   protected readonly scrolled = signal(false);
@@ -27,6 +29,7 @@ export class Navbar {
   private lastCount = 0;
 
   constructor() {
+    this.shop.load();
     effect(() => {
       const count = this.cart.count();
       if (count !== this.lastCount && this.lastCount !== 0 || (this.lastCount === 0 && count > 0)) {

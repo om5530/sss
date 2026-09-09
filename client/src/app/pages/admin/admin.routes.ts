@@ -1,11 +1,15 @@
 import { Routes } from '@angular/router';
 import { AdminLayout } from './layout/admin-layout';
+import { unsavedGuard } from '../../core/guards/unsaved.guard';
 
 export const ADMIN_ROUTES: Routes = [
   {
     path: '',
     component: AdminLayout,
     children: [
+      { path: 'categories', loadComponent: () => import('./categories/admin-categories').then((m) => m.AdminCategories), title: 'Categories — SSS Admin' },
+      { path: 'notifications', loadComponent: () => import('./notifications/admin-notifications').then((m) => m.AdminNotifications), title: 'Email delivery — SSS Admin' },
+      { path: 'settings', loadComponent: () => import('./settings/admin-settings').then((m) => m.AdminSettings), title: 'Store settings — SSS Admin' },
       { path: '', loadComponent: () => import('./dashboard/admin-dashboard').then((m) => m.AdminDashboard), title: 'Dashboard — SSS Admin' },
       { path: 'queue', loadComponent: () => import('./queue/admin-queue').then((m) => m.AdminQueue), title: 'Live queue — SSS Admin' },
       { path: 'prep', loadComponent: () => import('./prep/admin-prep').then((m) => m.AdminPrep), title: 'Prep sheet — SSS Admin' },
@@ -13,8 +17,8 @@ export const ADMIN_ROUTES: Routes = [
       { path: 'orders', loadComponent: () => import('./orders/admin-orders').then((m) => m.AdminOrders), title: 'Orders — SSS Admin' },
       { path: 'orders/:id', loadComponent: () => import('./order-detail/admin-order-detail').then((m) => m.AdminOrderDetail), title: 'Order — SSS Admin' },
       { path: 'products', loadComponent: () => import('./products/admin-products').then((m) => m.AdminProducts), title: 'Products — SSS Admin' },
-      { path: 'products/new', loadComponent: () => import('./product-form/admin-product-form').then((m) => m.AdminProductForm), title: 'New product — SSS Admin' },
-      { path: 'products/:id/edit', loadComponent: () => import('./product-form/admin-product-form').then((m) => m.AdminProductForm), title: 'Edit product — SSS Admin' },
+      { path: 'products/new', canDeactivate: [unsavedGuard], loadComponent: () => import('./product-form/admin-product-form').then((m) => m.AdminProductForm), title: 'New product — SSS Admin' },
+      { path: 'products/:id/edit', canDeactivate: [unsavedGuard], loadComponent: () => import('./product-form/admin-product-form').then((m) => m.AdminProductForm), title: 'Edit product — SSS Admin' },
       { path: 'customers', loadComponent: () => import('./customers/admin-customers').then((m) => m.AdminCustomers), title: 'Customers — SSS Admin' },
       { path: 'customers/:id', loadComponent: () => import('./customer-detail/admin-customer-detail').then((m) => m.AdminCustomerDetail), title: 'Customer — SSS Admin' },
       { path: 'payments', loadComponent: () => import('./payments/admin-payments').then((m) => m.AdminPayments), title: 'Payments — SSS Admin' },

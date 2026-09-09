@@ -1,0 +1,32 @@
+<div class="adm-page">
+  <div class="adm-head"><div><h1>Categories</h1><p>Organise the menu. Renaming updates product labels; arrow controls set the storefront order.</p></div></div>
+  @if (error()) { <p class="error-text" role="alert">{{ error() }}</p><button class="btn btn--ghost btn--sm" (click)="load()">Refresh categories</button> }
+  <form class="adm-card" (ngSubmit)="save()">
+    <h2>{{ editing() ? 'Rename category' : 'New category' }}</h2>
+    <div class="adm-filters">
+      <label>Name <input class="input" name="name" [(ngModel)]="name" required maxlength="80" [disabled]="busy()" /></label>
+      <label>Group <select class="select" name="group" [(ngModel)]="group" [disabled]="!!editing() || busy()"><option value="bakery">Bakery</option><option value="savoury">Savoury</option></select></label>
+      <button class="btn btn--primary" [disabled]="busy() || !name.trim()">{{ editing() ? 'Save name' : 'Create category' }}</button>
+      @if (editing()) { <button class="btn btn--ghost" type="button" (click)="reset()" [disabled]="busy()">Cancel edit</button> }
+    </div>
+  </form>
+  @for (g of groups; track g) {
+    <h2>{{ g === 'bakery' ? 'Bakery' : 'Savoury' }}</h2>
+    @for (category of rows(g); track category._id; let i = $index; let last = $last) {
+      <article class="adm-card">
+        <div class="adm-head"><div><h3>{{ category.name }}</h3><p>{{ category.count }} products @if (category.archived) { · Removed category — reassign remaining products }</p></div>
+          <div class="adm-filters">
+            <button type="button" class="btn btn--ghost btn--sm" [disabled]="busy() || i === 0 || category.archived" (click)="move(category, -1)" [attr.aria-label]="'Move ' + category.name + ' up'">↑</button>
+            <button type="button" class="btn btn--ghost btn--sm" [disabled]="busy() || last || category.archived" (click)="move(category, 1)" [attr.aria-label]="'Move ' + category.name + ' down'">↓</button>
+            <button type="button" class="btn btn--ghost btn--sm" [disabled]="busy() || category.archived" (click)="edit(category)">Rename</button>
+            <button type="button" class="btn btn--ghost btn--sm" [disabled]="busy() || category.archived" (click)="deleteTarget.set(category)">Delete</button>
+            <a class="btn btn--ghost btn--sm" routerLink="/admin/products" [queryParams]="{ category: category.name, group: category.group, archived: 'all' }">View / reassign products</a>
+          </div>
+        </div>
+      </article>
+    } @empty { <p>No categories in this group yet.</p> }
+  }
+  @if (deleteTarget(); as target) {
+    <adm-confirm-modal title="Delete category?" [message]="'Delete ' + target.name + '? Categories containing products cannot be deleted; reassign those products first.'" confirmLabel="Delete category" tone="danger" [busy]="busy()" (confirmed)="remove()" (cancelled)="deleteTarget.set(null)" />
+  }
+</div>

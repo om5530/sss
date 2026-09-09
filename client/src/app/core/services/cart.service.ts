@@ -1,7 +1,7 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { CartItem, CartPricing } from '../models/cart.model';
+import { CartItem, CartQuote } from '../models/cart.model';
 import { Product } from '../models/product.model';
 import { OrderType } from '../models/order.model';
 import { foodImage, isPlaceholderImage } from '../utils/food-image';
@@ -78,7 +78,7 @@ export class CartService {
 
   /** Server-side re-pricing — authoritative totals (subtotal, discount, tax, delivery). */
   price(orderType?: OrderType, couponCode?: string) {
-    return this.http.post<{ items: unknown[]; pricing: CartPricing }>(`${this.base}/cart/price`, {
+    return this.http.post<CartQuote>(`${this.base}/cart/price`, {
       items: this.payload(),
       orderType,
       couponCode: couponCode || undefined,

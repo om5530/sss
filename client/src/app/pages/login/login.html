@@ -42,6 +42,7 @@
         <span class="eyebrow eyebrow--bare">Members’ entrance</span>
         <h1>Welcome back</h1>
         <p class="muted">Sign in to place your order and track it.</p>
+        <p class="muted">By requesting a code, you agree to receive a sign-in SMS. Google processes your phone number for verification and abuse prevention.</p>
       </div>
 
       @if (step() === 'phone') {
@@ -121,6 +122,7 @@
       }
 
       <!-- Invisible reCAPTCHA host for Firebase phone auth (unused in mock mode). -->
+      <!-- Keep mounted across phone/code steps so Firebase can render its challenge. -->
       <div id="recaptcha-container"></div>
 
       <div class="auth__divider"><span>or</span></div>

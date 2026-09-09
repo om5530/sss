@@ -43,6 +43,7 @@ export interface OrderFilters {
 }
 
 export interface CustomerRow {
+  active?: boolean;
   _id: string;
   name?: string;
   phone?: string;

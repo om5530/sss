@@ -29,12 +29,13 @@
             </div>
             <div class="field">
               <label class="label" for="p-category">Category</label>
-              <input id="p-category" class="input" [(ngModel)]="category" name="category" list="category-options" required placeholder="e.g. Pastries" />
-              <datalist id="category-options">
-                @for (c of categories(); track c) {
-                  <option [value]="c"></option>
+              <select id="p-category" class="select" [(ngModel)]="category" name="category" required>
+                <option value="">Choose a category</option>
+                @for (c of categories(); track c._id) {
+                  @if (c.group === group) { <option [value]="c.name">{{ c.name }}</option> }
                 }
-              </datalist>
+              </select>
+              <a routerLink="/admin/categories">Manage categories</a>
               @if (fieldErrors()['category']) { <p class="error-text">{{ fieldErrors()['category'] }}</p> }
             </div>
           </div>

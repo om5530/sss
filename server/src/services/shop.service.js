@@ -17,15 +17,15 @@ function istMinutes(date) {
   return ist.getUTCHours() * 60 + ist.getUTCMinutes();
 }
 
-function windowMinutes() {
-  const open = parseHHMM(env.shop.opensAt) ?? 8 * 60;
-  const close = parseHHMM(env.shop.closesAt) ?? 22 * 60;
+function windowMinutes(settings = env.shop) {
+  const open = parseHHMM(settings.opensAt) ?? 8 * 60;
+  const close = parseHHMM(settings.closesAt) ?? 22 * 60;
   return { open, close };
 }
 
 /** True when the shop accepts orders at the given instant (default: now). */
-function isOpenAt(date = new Date()) {
-  const { open, close } = windowMinutes();
+function isOpenAt(date = new Date(), settings) {
+  const { open, close } = windowMinutes(settings);
   const mins = istMinutes(date);
   // Overnight window (e.g. 20:00–01:00) wraps past midnight. opens === closes
   // stays "always closed" because the strict < never matches.
@@ -33,12 +33,15 @@ function isOpenAt(date = new Date()) {
   return mins >= open && mins < close;
 }
 
-function shopInfo() {
+function shopInfo(settings = env.shop) {
   return {
-    opensAt: env.shop.opensAt,
-    closesAt: env.shop.closesAt,
-    openNow: isOpenAt(),
+    opensAt: settings.opensAt,
+    closesAt: settings.closesAt,
+    openNow: isOpenAt(new Date(), settings),
     timezone: 'Asia/Kolkata',
+    contactAddress: settings.contactAddress || '',
+    contactPhone: settings.contactPhone || '',
+    contactEmail: settings.contactEmail || '',
   };
 }
 

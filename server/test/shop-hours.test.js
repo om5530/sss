@@ -13,6 +13,7 @@ let mongod;
 let server;
 let base;
 let product;
+let expectedQuote;
 
 const json = (method, path, body) =>
   fetch(`${base}${path}`, {
@@ -33,6 +34,9 @@ before(async () => {
   product = await Product.create({
     name: 'Night Bun', slug: 'night-bun', group: 'bakery', category: 'Buns', price: 40, available: true,
   });
+  expectedQuote = await (await json('POST', '/cart/price', {
+    items: [{ productId: product._id, quantity: 1 }], orderType: 'takeaway',
+  })).json();
 });
 
 after(async () => {
@@ -52,6 +56,7 @@ test('/api/shop reports the configured window and closed state', async () => {
 
 test('ASAP orders are rejected while the shop is closed', async () => {
   const res = await json('POST', '/orders', {
+    expectedQuote,
     items: [{ productId: product._id, quantity: 1 }],
     orderType: 'takeaway', paymentMethod: 'cash',
     takeaway: { customerName: 'Night Owl', phone: '+919999000021' },
@@ -63,6 +68,7 @@ test('ASAP orders are rejected while the shop is closed', async () => {
 
 test('scheduled orders must land inside opening hours', async () => {
   const res = await json('POST', '/orders', {
+    expectedQuote,
     items: [{ productId: product._id, quantity: 1 }],
     orderType: 'takeaway', paymentMethod: 'cash',
     fulfilAt: new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString(), // 5h out — but never open

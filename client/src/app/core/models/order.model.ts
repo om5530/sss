@@ -1,3 +1,5 @@
+import { CartQuote } from './cart.model';
+
 export type OrderType = 'dining' | 'takeaway' | 'delivery';
 export type OrderStatus = 'placed' | 'confirmed' | 'preparing' | 'ready' | 'completed' | 'cancelled';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
@@ -51,6 +53,7 @@ export interface Order {
 }
 
 export interface CreateOrderPayload {
+  expectedQuote: CartQuote;
   items: { productId: string; quantity: number }[];
   orderType: OrderType;
   paymentMethod?: PaymentMethod;

@@ -3,6 +3,8 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
+const crypto = require('crypto');
+const { backgroundContext } = require('./services/background.service');
 
 const env = require('./config/env');
 const routes = require('./routes');
@@ -11,6 +13,12 @@ const paymentController = require('./controllers/payment.controller');
 const { UPLOAD_DIR } = require('./services/upload.service');
 
 const app = express();
+app.use((req, res, next) => {
+  req.requestId = crypto.randomUUID();
+  res.set('X-Request-ID', req.requestId);
+  next();
+});
+app.use(backgroundContext);
 
 // Behind a reverse proxy (nginx/Caddy) the client IP arrives in
 // X-Forwarded-For; without this, every visitor shares the proxy's IP and the

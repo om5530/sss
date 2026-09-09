@@ -15,7 +15,7 @@
       </span>
       <div>
         <strong>Visit</strong>
-        <p>123 Placeholder Street, Suite 000, City, State 000000</p>
+        <p>{{ shop.info()?.contactAddress || 'Visit us in Dahisar East, Mumbai' }}</p>
       </div>
     </div>
     <!-- REAL CLIENT DATA — uncomment before launch
@@ -38,7 +38,7 @@
       </span>
       <div>
         <strong>Hours</strong>
-        <p><span class="info-card__dot"></span>Open daily · 0:00 – 0:00</p>
+        <p><span class="info-card__dot"></span>Open daily · {{ shop.info()?.opensAt || '8:00' }} – {{ shop.info()?.closesAt || '22:00' }}</p>
       </div>
     </div>
     <!-- REAL CLIENT DATA — uncomment before launch
@@ -61,7 +61,7 @@
       </span>
       <div>
         <strong>Call</strong>
-        <p><a class="contact-link" href="tel:+910000000000">+91 00000 00000</a></p>
+        <p><a class="contact-link" [href]="'tel:' + (shop.info()?.contactPhone || '')">{{ shop.info()?.contactPhone || 'Contact the café' }}</a></p>
       </div>
     </div>
     <!-- REAL CLIENT DATA — uncomment before launch
@@ -84,7 +84,7 @@
       </span>
       <div>
         <strong>Email</strong>
-        <p><a class="contact-link" href="mailto:hello&#64;example.com">hello&#64;example.com</a></p>
+        <p><a class="contact-link" [href]="'mailto:' + (shop.info()?.contactEmail || '')">{{ shop.info()?.contactEmail || 'Email the café' }}</a></p>
       </div>
     </div>
     <!-- REAL CLIENT DATA — uncomment before launch

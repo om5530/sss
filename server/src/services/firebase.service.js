@@ -27,16 +27,22 @@ async function verifyFirebaseIdToken(idToken) {
 
   let decoded;
   try {
-    decoded = await admin.auth(app).verifyIdToken(idToken);
+    decoded = await admin.auth(app).verifyIdToken(idToken, true);
   } catch {
     throw ApiError.unauthorized('Invalid or expired verification. Please request a new code.');
   }
 
-  if (!decoded.phone_number) {
+  return verifiedPhone(decoded);
+}
+
+// Called only after Admin SDK signature, project and revocation verification.
+function verifiedPhone(decoded) {
+  if (!/^\+[1-9]\d{6,14}$/.test(decoded.phone_number || '') || decoded.firebase?.sign_in_provider !== 'phone' ||
+      !Number.isFinite(decoded.auth_time) || Date.now() / 1000 - decoded.auth_time > 300 || decoded.auth_time > Date.now() / 1000 + 60) {
     throw ApiError.badRequest('This sign-in did not include a verified phone number.');
   }
 
   return { firebaseUid: decoded.uid, phone: decoded.phone_number };
 }
 
-module.exports = { verifyFirebaseIdToken, isConfigured: () => Boolean(app) };
+module.exports = { verifyFirebaseIdToken, verifiedPhone, isConfigured: () => Boolean(app) };

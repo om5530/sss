@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -8,7 +8,7 @@ import { OrderService } from '../../core/services/order.service';
 import { PaymentFlowService } from '../../core/services/payment-flow.service';
 import { ShopService } from '../../core/services/shop.service';
 import { ToastService } from '../../core/services/toast.service';
-import { CartPricing } from '../../core/models/cart.model';
+import { CartPricing, CartQuote } from '../../core/models/cart.model';
 import { Address } from '../../core/models/user.model';
 import { CreateOrderPayload, OrderType, PaymentMethod } from '../../core/models/order.model';
 import { RevealOnScroll } from '../../shared/directives/reveal.directive';
@@ -31,6 +31,20 @@ export class Checkout {
   protected readonly orderType = signal<OrderType>('takeaway');
   protected readonly paymentMethod = signal<PaymentMethod>('cash');
   protected readonly pricing = signal<CartPricing | null>(null);
+  private readonly quote = signal<CartQuote | null>(null);
+  private readonly quotedKey = signal('');
+  private readonly refresh = signal(0);
+  protected readonly priceNotice = signal('');
+  protected readonly needsPriceConfirmation = signal(false);
+  private readonly requestKey = computed(() => JSON.stringify({
+    items: this.cart.payload(), type: this.orderType(), coupon: this.appliedCoupon(),
+  }));
+  protected readonly canPlace = computed(() => Boolean(this.quote()) &&
+    this.quotedKey() === this.requestKey() && !this.needsPriceConfirmation() && !this.applyingCoupon());
+  protected readonly summaryItems = computed(() => this.cart.items().map((item) => {
+    const priced = this.quote()?.items.find((line) => line.product === item.productId);
+    return { ...item, price: priced?.price ?? item.price };
+  }));
   protected readonly placing = signal(false);
   protected readonly errorMsg = signal('');
   /** Coupon state: what's typed, what's actually applied, and why it failed. */
@@ -100,15 +114,24 @@ export class Checkout {
     }
 
     // Re-price whenever the order type, cart, or applied coupon changes.
-    effect(() => {
+    effect((onCleanup) => {
       const type = this.orderType();
       const coupon = this.appliedCoupon();
+      const key = this.requestKey();
+      this.refresh();
+      this.quote.set(null);
+      this.pricing.set(null);
       if (this.cart.isEmpty()) {
-        this.pricing.set(null);
         return;
       }
-      this.cart.price(type, coupon || undefined).subscribe({
-        next: (res) => this.pricing.set(res.pricing),
+      const subscription = this.cart.price(type, coupon || undefined).subscribe({
+        next: (res) => untracked(() => {
+          this.acceptQuote(res, key);
+          if (res.items.some((line) => this.cart.items().find((item) => item.productId === line.product)?.price !== line.price)) {
+            this.priceNotice.set('Some item prices have changed since you added them. Review the updated prices below.');
+            this.needsPriceConfirmation.set(true);
+          }
+        }),
         error: (err: HttpErrorResponse) => {
           if (coupon) {
             // Coupon stopped applying (e.g. cart dropped below its minimum) —
@@ -117,10 +140,28 @@ export class Checkout {
             this.appliedCoupon.set('');
           } else {
             this.pricing.set(null);
+            this.errorMsg.set(err.error?.message || 'Could not check prices. Please retry.');
           }
         },
       });
+      onCleanup(() => subscription.unsubscribe());
     });
+  }
+
+  private acceptQuote(quote: CartQuote, key: string) {
+    this.quote.set(quote);
+    this.pricing.set(quote.pricing);
+    this.quotedKey.set(key);
+  }
+
+  confirmPrices() {
+    this.needsPriceConfirmation.set(false);
+    this.priceNotice.set('');
+  }
+
+  retryPricing() {
+    this.errorMsg.set('');
+    this.refresh.update((n) => n + 1);
   }
 
   applyCoupon() {
@@ -131,7 +172,6 @@ export class Checkout {
     this.cart.price(this.orderType(), code).subscribe({
       next: (res) => {
         this.applyingCoupon.set(false);
-        this.pricing.set(res.pricing);
         this.appliedCoupon.set(code);
         this.couponInput = '';
       },
@@ -171,20 +211,22 @@ export class Checkout {
       return 'Please sign in to place a delivery order.';
     }
     if (type === 'takeaway') {
-      if (!this.form.takeaway.customerName.trim() || !this.form.takeaway.phone.trim()) {
-        return 'Please provide your name and phone number for takeaway.';
+      if (!this.form.takeaway.customerName.trim() || !/^\+?[0-9]{7,15}$/.test(this.form.takeaway.phone.replace(/\s/g, ''))) {
+        return 'Please provide your name and a valid phone number for takeaway.';
       }
     }
+    if (type === 'dining' && !this.form.dining.customerName.trim()) return 'Please provide your name for dine-in.';
     if (type === 'delivery') {
       const d = this.form.delivery;
-      if (!d.fullAddress.trim() || !d.city.trim() || !d.pincode.trim()) {
-        return 'Please provide the full address, city and pincode for delivery.';
+      if (!d.fullAddress.trim() || !d.area.trim() || !d.city.trim() || !/^[1-9][0-9]{5}$/.test(d.pincode.trim())) {
+        return 'Please provide the full address, area, city and a valid 6-digit pincode for delivery.';
       }
     }
     return null;
   }
 
   placeOrder() {
+    if (this.placing() || !this.canPlace()) return;
     if (this.cart.isEmpty()) {
       this.toast.error('Your cart is empty.');
       return;
@@ -202,6 +244,7 @@ export class Checkout {
     // even if the user toggles the control while the request is in flight.
     const method = this.paymentMethod();
     const payload: CreateOrderPayload = {
+      expectedQuote: this.quote()!,
       items: this.cart.payload(),
       orderType: type,
       paymentMethod: method,
@@ -223,6 +266,12 @@ export class Checkout {
       },
       error: (err: HttpErrorResponse) => {
         this.placing.set(false);
+        if (err.error?.code === 'PRICE_CHANGED' && err.error.quote) {
+          this.acceptQuote(err.error.quote, this.requestKey());
+          this.priceNotice.set(err.error.message);
+          this.needsPriceConfirmation.set(true);
+          return;
+        }
         this.errorMsg.set(err.error?.message || 'Could not place your order. Please try again.');
       },
     });

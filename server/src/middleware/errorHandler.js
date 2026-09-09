@@ -22,12 +22,13 @@ function errorHandler(err, req, res, next) {
 
   const statusCode = error.statusCode || 500;
   if (statusCode >= 500) {
-    console.error('[error]', err);
+    console.error('[error]', { requestId: req.requestId, method: req.method, path: req.path }, err);
   }
 
   res.status(statusCode).json({
     success: false,
-    message: error.message || 'Internal server error',
+    requestId: req.requestId,
+    message: statusCode >= 500 && env.isProd ? 'Something went wrong. Please try again.' : error.message || 'Internal server error',
     ...(error.details ? { details: error.details } : {}),
     ...(!env.isProd && statusCode >= 500 ? { stack: err.stack } : {}),
   });

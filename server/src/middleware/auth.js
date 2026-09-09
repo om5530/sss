@@ -1,6 +1,7 @@
 const ApiError = require('../utils/ApiError');
 const { verifyToken } = require('../services/token.service');
 const User = require('../models/User');
+const { checkAdminSession } = require('../services/admin-session.service');
 
 async function requireAuth(req, res, next) {
   try {
@@ -17,7 +18,12 @@ async function requireAuth(req, res, next) {
     const payload = verifyToken(token);
     const user = await User.findById(payload.sub);
     if (!user) throw ApiError.unauthorized('Account no longer exists');
+    if (user.active === false) throw ApiError.forbidden('Please contact the café for help with your account.');
+    if ((payload.version ?? 0) !== (user.sessionVersion ?? 0)) {
+      throw ApiError.unauthorized('This session has been signed out. Please sign in again.');
+    }
 
+    if (user.role === 'admin') req.adminSession = await checkAdminSession(token, user, payload);
     req.user = user;
     next();
   } catch (err) {
@@ -44,7 +50,11 @@ async function optionalAuth(req, res, next) {
     if (token) {
       const payload = verifyToken(token);
       const user = await User.findById(payload.sub);
-      if (user) req.user = user;
+      if (user?.active === false) return next(ApiError.forbidden('Please contact the café for help with your account.'));
+      if (user && (payload.version ?? 0) === (user.sessionVersion ?? 0)) {
+        if (user.role === 'admin') req.adminSession = await checkAdminSession(token, user, payload);
+        req.user = user;
+      }
     }
   } catch {
     // Ignore invalid/expired tokens — treat the caller as a guest.

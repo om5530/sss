@@ -5,6 +5,8 @@ const stripeService = require('../services/stripe.service');
 const razorpayService = require('../services/razorpay.service');
 const { isConfigured: googleConfigured } = require('../services/google.service');
 const { shopInfo } = require('../services/shop.service');
+const asyncHandler = require('../utils/asyncHandler');
+const { getStoreSettings } = require('../services/store-settings.service');
 
 const authRoutes = require('./auth.routes');
 const productRoutes = require('./product.routes');
@@ -14,6 +16,7 @@ const paymentRoutes = require('./payment.routes');
 const contactRoutes = require('./contact.routes');
 const cakeRoutes = require('./cake.routes');
 const adminRoutes = require('./admin.routes');
+const notifications = require('../controllers/notification.controller');
 
 const router = express.Router();
 
@@ -30,10 +33,14 @@ router.get('/health', (req, res) => {
 });
 
 // Opening hours + open-now — no DB needed, safe for banners and pickers.
-router.get('/shop', (req, res) => res.json({ success: true, shop: shopInfo() }));
+router.get('/shop', asyncHandler(async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({ success: true, shop: shopInfo(await getStoreSettings()) });
+}));
 
 // Everything below requires a live database connection.
 router.use(dbReady);
+router.get('/jobs/notifications', notifications.requireJobSecret, notifications.dispatch);
 router.use('/auth', authRoutes);
 router.use('/products', productRoutes);
 router.use('/cart', cartRoutes);

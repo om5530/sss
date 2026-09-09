@@ -58,7 +58,7 @@
                 <p>The name and email that ride along with every order.</p>
               </div>
             </div>
-            @if (!editing()) {
+            @if (!editing() && !user.identityReadOnly) {
               <button class="btn btn--ghost btn--sm" (click)="startEdit()">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
                   <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" stroke-linecap="round" stroke-linejoin="round" />
@@ -68,6 +68,9 @@
             }
           </div>
 
+          @if (user.identityReadOnly) {
+            <p class="muted">Your name and email are managed by Google.</p>
+          }
           @if (!editing()) {
             <dl class="details">
               <div class="details__row"><dt>Name</dt><dd>{{ user.name || '—' }}</dd></div>
@@ -109,7 +112,7 @@
               </div>
             </div>
             @if (!addingAddress()) {
-              <button class="btn btn--ghost btn--sm" (click)="addingAddress.set(true)">
+              <button class="btn btn--ghost btn--sm" (click)="startAddress()">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                   <path d="M12 5v14M5 12h14" stroke-linecap="round" />
                 </svg>
@@ -120,6 +123,7 @@
 
           @if (addingAddress()) {
             <div class="addr-form">
+              <h3>{{ editingAddressId() ? 'Edit address' : 'Add address' }}</h3>
               <div class="field">
                 <label class="label" for="afull">Full address</label>
                 <input id="afull" class="input" [(ngModel)]="newAddress.fullAddress" name="afull" placeholder="Flat / house, street" />
@@ -135,7 +139,7 @@
                 </div>
                 <div class="field">
                   <label class="label" for="apin">Pincode</label>
-                  <input id="apin" class="input" [(ngModel)]="newAddress.pincode" name="apin" />
+                  <input id="apin" class="input" [(ngModel)]="newAddress.pincode" name="apin" inputmode="numeric" maxlength="6" />
                 </div>
               </div>
               <div class="field">
@@ -147,9 +151,10 @@
                 Set as default
               </label>
               <div class="actions">
-                <button class="btn btn--primary" (click)="saveAddress()">Save address</button>
-                <button class="btn btn--ghost" (click)="addingAddress.set(false)">Cancel</button>
+                <button class="btn btn--primary" (click)="saveAddress()" [disabled]="savingAddress()">{{ savingAddress() ? 'Saving…' : 'Save address' }}</button>
+                <button class="btn btn--ghost" (click)="addingAddress.set(false)" [disabled]="savingAddress()">Cancel</button>
               </div>
+              @if (addressError()) { <p class="error-text" role="alert">{{ addressError() }}</p> }
             </div>
           }
 
@@ -175,7 +180,8 @@
                     </div>
                     <p>{{ addr.fullAddress }}, {{ addr.area }}, {{ addr.city }} {{ addr.pincode }}</p>
                   </div>
-                  <button class="addr__del" (click)="deleteAddress(addr._id)" aria-label="Delete">
+                  <button class="btn btn--ghost btn--sm" (click)="startAddress(addr)" [disabled]="savingAddress()" [attr.aria-label]="'Edit address at ' + addr.fullAddress">Edit</button>
+                  <button class="addr__del" (click)="deleteAddress(addr._id)" [disabled]="savingAddress()" aria-label="Delete">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
                       <path d="M3.5 6h17M8 6V4.5A1.5 1.5 0 0 1 9.5 3h5A1.5 1.5 0 0 1 16 4.5V6m2.5 0-.7 13.1a2 2 0 0 1-2 1.9H8.2a2 2 0 0 1-2-1.9L5.5 6M10 10.5v6M14 10.5v6" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
@@ -191,7 +197,7 @@
                 </svg>
               </span>
               <p>No saved addresses yet. Keep one on file and checkout becomes a single warm tap.</p>
-              <button class="btn btn--primary btn--sm" (click)="addingAddress.set(true)">Add your first address</button>
+              <button class="btn btn--primary btn--sm" (click)="startAddress()">Add your first address</button>
             </div>
           }
         </section>
@@ -207,7 +213,7 @@
               </span>
               <div>
                 <h2>Session</h2>
-                <p><span class="session-dot" aria-hidden="true"></span>Signed in on this device.</p>
+                <p><span class="session-dot" aria-hidden="true"></span>Signing out ends your sessions on all devices.</p>
               </div>
             </div>
             <button class="btn btn--sm signout" (click)="logout()">
