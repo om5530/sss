@@ -589,4 +589,20 @@ test('contact and cake submissions validate their input', async () => {
     dateNeeded: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
   });
   assert.equal(minCake.status, 201);
+  const custom = await json('POST', '/custom-requests', {
+    name: 'Custom customer', phone: '+919876543210', orderItems: 'Assorted brownie gift boxes', quantity: '5 boxes of 6',
+    dateNeeded: new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10),
+  });
+  assert.equal(custom.status, 201);
+  const customResult = await custom.json();
+  const saved = await require('../src/models/CakeRequest').findById(customResult.request._id);
+  assert.equal(saved.orderItems, 'Assorted brownie gift boxes');
+  assert.equal(saved.quantity, '5 boxes of 6');
+  assert.equal(saved.flavour, '');
+  const listed = await (await json('GET', '/admin/cake-requests', undefined, adminToken)).json();
+  assert.ok(listed.requests.some((r) => r._id === String(saved._id) && r.quantity === '5 boxes of 6'));
+  assert.equal((await json('POST', '/custom-requests', {
+    name: 'Custom customer', phone: '+919876543210', orderItems: 'Brownies',
+    dateNeeded: new Date(Date.now() + 3 * 86400000).toISOString(),
+  })).status, 400);
 });

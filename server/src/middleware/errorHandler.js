@@ -2,7 +2,7 @@ const ApiError = require('../utils/ApiError');
 const env = require('../config/env');
 
 function notFound(req, res, next) {
-  next(ApiError.notFound(`Route not found: ${req.method} ${req.originalUrl}`));
+  next(ApiError.notFound(`Route not found: ${req.method} ${req.path}`));
 }
 
 // eslint-disable-next-line no-unused-vars
@@ -21,16 +21,19 @@ function errorHandler(err, req, res, next) {
   }
 
   const statusCode = error.statusCode || 500;
+  // Database/provider errors can embed the searched name, email or phone.
+  const privateSearch = req.path === '/api/admin/customers/search' || req.path === '/api/admin/customers';
   if (statusCode >= 500) {
-    console.error('[error]', { requestId: req.requestId, method: req.method, path: req.path }, err);
+    console.error('[error]', { requestId: req.requestId, method: req.method, path: req.path },
+      privateSearch ? 'Customer search failed' : err);
   }
 
   res.status(statusCode).json({
     success: false,
     requestId: req.requestId,
-    message: statusCode >= 500 && env.isProd ? 'Something went wrong. Please try again.' : error.message || 'Internal server error',
-    ...(error.details ? { details: error.details } : {}),
-    ...(!env.isProd && statusCode >= 500 ? { stack: err.stack } : {}),
+    message: statusCode >= 500 && (env.isProd || privateSearch) ? 'Something went wrong. Please try again.' : error.message || 'Internal server error',
+    ...(error.details && !(privateSearch && statusCode >= 500) ? { details: error.details } : {}),
+    ...(!env.isProd && !privateSearch && statusCode >= 500 ? { stack: err.stack } : {}),
   });
 }
 

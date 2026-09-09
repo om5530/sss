@@ -7,9 +7,11 @@ export interface CakeRequestPayload {
   name: string;
   phone: string;
   email?: string;
-  occasion: string;
-  servings: number;
-  flavour: string;
+  orderItems: string;
+  quantity: string;
+  occasion?: string;
+  servings?: number;
+  flavour?: string;
   messageOnCake?: string;
   /** ISO date (yyyy-mm-dd is fine) — at least a day out. */
   dateNeeded: string;
@@ -24,7 +26,7 @@ export class CakeService {
 
   /** Sends a custom-cake brief; staff triage + quote it in the admin panel. */
   submit(payload: CakeRequestPayload) {
-    return this.http.post<{ success: boolean }>(`${this.base}/cake-requests`, payload);
+    return this.http.post<{ success: boolean }>(`${this.base}/custom-requests`, payload);
   }
 
   /** Uploads a reference photo (≤5 MB, JPEG/PNG/WebP) → public URL. */
@@ -32,7 +34,7 @@ export class CakeService {
     const form = new FormData();
     form.append('image', file);
     return this.http
-      .post<{ url: string }>(`${this.base}/cake-requests/reference-image`, form)
+      .post<{ url: string }>(`${this.base}/custom-requests/reference-image`, form)
       .pipe(map((r) => r.url));
   }
 }

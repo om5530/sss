@@ -47,6 +47,59 @@ test('reports rank the full catalogue and resolve renamed categories without cha
   assert.deepEqual(quantity.byCategory, revenue.byCategory);
   assert.equal((await json('GET', '/admin/reports/products', undefined, customerToken)).status, 403);
 });
+test('customer search uses a private body, preserves pagination and requires admin access', async () => {
+  const User = require('../src/models/User');
+  const customer = await User.create({ name: 'Private Search Alpha', email: 'private-search@example.test', phone: '+919876543210' });
+  await User.create({ name: 'Private Search Beta' });
+  for (const q of ['Search Alpha', 'private-search@example.test', '+919876543210']) {
+    const response = await json('POST', '/admin/customers/search', { q });
+    assert.equal(response.status, 200);
+    assert.equal(new URL(response.url).search, '');
+    assert.equal(response.headers.get('cache-control'), 'no-store');
+    const result = await response.json();
+    assert.equal(result.total, 1);
+    assert.equal(result.customers[0]._id, String(customer._id));
+    assert.equal(result.customers[0].orderCount, 0);
+  }
+  const first = await (await json('POST', '/admin/customers/search', { q: 'Private Search', page: 1, limit: 1 })).json();
+  const second = await (await json('POST', '/admin/customers/search', { q: 'Private Search', page: 2, limit: 1 })).json();
+  assert.equal(first.total, 2);
+  assert.equal(first.pages, 2);
+  assert.notEqual(first.customers[0]._id, second.customers[0]._id);
+  assert.equal((await json('GET', '/admin/customers?page=1')).status, 200);
+  assert.equal((await json('POST', '/admin/customers/search', { q: 'Private Search' }, customerToken)).status, 403);
+  assert.equal((await json('POST', '/admin/customers/search', {}, null)).status, 401);
+  for (const filters of [{ q: { $ne: null } }, { q: 'x'.repeat(201) }, { page: -1 }, { limit: 'invalid' }]) {
+    assert.equal((await json('POST', '/admin/customers/search', filters)).status, 400);
+  }
+});
+
+test('customer searches do not leak through access logs or failure diagnostics', async (t) => {
+  const marker = 'sensitive-search@example.test';
+  const output = [];
+  const write = process.stdout.write.bind(process.stdout);
+  t.mock.method(process.stdout, 'write', (...args) => {
+    output.push(String(args[0]));
+    return write(...args);
+  });
+  t.mock.method(console, 'error', (...args) => output.push(JSON.stringify(args)));
+  const legacy = await json('GET', '/admin/customers?q=' + encodeURIComponent(marker));
+  assert.equal(legacy.status, 400);
+  assert.ok(!(await legacy.text()).includes(marker));
+  assert.equal((await json('POST', '/admin/customers/search', { q: marker })).status, 200);
+  const User = require('../src/models/User');
+  t.mock.method(User, 'aggregate', () => { throw new Error('Query failed: ' + marker); });
+  const failure = await json('POST', '/admin/customers/search', { q: marker });
+  assert.equal(failure.status, 500);
+  const body = await failure.json();
+  assert.ok(body.requestId);
+  assert.equal(body.stack, undefined);
+  assert.ok(!JSON.stringify(body).includes(marker));
+  assert.ok(output.some((line) => line.includes(body.requestId)));
+  assert.ok(!output.join('\n').includes(marker));
+  assert.ok(!output.join('\n').includes(encodeURIComponent(marker)));
+});
+
 test('unread enquiry counts include only new messages and are admin-only', async () => {
   const ContactMessage = require('../src/models/ContactMessage');
   const message = await ContactMessage.create({ name: 'Sender', email: 'sender@example.test', message: 'Question' });

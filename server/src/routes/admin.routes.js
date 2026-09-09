@@ -47,6 +47,7 @@ router.patch('/products/:id', ctrl.validators.updateProduct, validate, ctrl.upda
 router.patch('/products/:id/archive', ctrl.archiveProduct);
 
 router.get('/customers', ctrl.listCustomers);
+router.post('/customers/search', ctrl.listCustomers);
 router.get('/customers/:id', ctrl.getCustomer);
 router.patch('/customers/:id/status', ctrl.setCustomerActive);
 

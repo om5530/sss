@@ -538,6 +538,7 @@
 .tcard figcaption { display: flex; align-items: center; gap: 0.8rem; }
 .tcard figcaption img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid var(--sand); }
 .tcard figcaption span { display: grid; }
+.tcard__avatar { width: 48px; height: 48px; flex-shrink: 0; place-items: center; border-radius: 50%; background: var(--sand); color: var(--choco); font-weight: 600; }
 .tcard strong { font-size: 0.94rem; color: var(--choco); }
 .tcard small { font-size: 0.78rem; color: var(--muted); }
 .tcard__stars { margin-left: auto; color: var(--gold); font-size: 0.85rem; letter-spacing: 0.1em; }

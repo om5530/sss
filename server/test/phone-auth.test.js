@@ -19,6 +19,6 @@ test('production and unsupported providers cannot send or verify mock OTPs', asy
     await assert.rejects(otp.verifyOtp('+919999000123', '123456'), /secure phone/);
     env.isProd = false;
     env.otp.provider = 'unimplemented-provider';
-    await assert.rejects(otp.createOtp('+919999000123'), /secure phone/);
+    await assert.rejects(otp.createOtp('+919999000123'), /secure phone|Unsupported/);
   } finally { env.isProd = previous.isProd; env.otp.provider = previous.provider; env.otp.exposeDevOtp = previous.exposeDevOtp; }
 });

@@ -33,7 +33,8 @@ export class CustomCakes {
     phone: '',
     email: '',
     occasion: '',
-    servings: null as number | null,
+    orderItems: '',
+    quantity: '',
     flavour: '',
     messageOnCake: '',
     dateNeeded: '',
@@ -74,8 +75,8 @@ export class CustomCakes {
 
   submit() {
     const f = this.form;
-    if (!f.name.trim() || !f.phone.trim() || !f.occasion || !f.servings || !f.flavour || !f.dateNeeded) {
-      this.toast.error('Please fill the essentials — name, phone, occasion, servings, flavour and date.');
+    if (!f.name.trim() || !f.phone.trim() || !f.orderItems.trim() || !f.quantity.trim() || !f.dateNeeded) {
+      this.toast.error('Please add your name, phone, order details, quantity and date.');
       return;
     }
     if (this.sending()) return;
@@ -87,7 +88,8 @@ export class CustomCakes {
         phone: f.phone.trim(),
         email: f.email.trim() || undefined,
         occasion: f.occasion,
-        servings: Number(f.servings),
+        orderItems: f.orderItems.trim(),
+        quantity: f.quantity.trim(),
         flavour: f.flavour,
         messageOnCake: f.messageOnCake.trim() || undefined,
         dateNeeded: f.dateNeeded,

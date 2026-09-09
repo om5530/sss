@@ -410,8 +410,24 @@ const archiveProduct = asyncHandler(async (req, res) => {
 /* ============ Customers (AS-6.x) ============ */
 
 const listCustomers = asyncHandler(async (req, res) => {
-  const { q } = req.query;
-  const { page, limit, skip } = parsePagination(req.query);
+  // Search terms belong in the JSON body, never a bookmarkable request URL.
+  if ('q' in req.query || (req.method === 'POST' && Object.keys(req.query).length)) {
+    throw ApiError.badRequest('Send customer search filters in the POST /admin/customers/search JSON body.');
+  }
+  const filters = req.method === 'POST' ? req.body : req.query;
+  if (!filters || typeof filters !== 'object' || Array.isArray(filters)) {
+    throw ApiError.badRequest('Invalid customer search filters.');
+  }
+  const { q } = filters;
+  if (q !== undefined && (typeof q !== 'string' || q.length > 200)) {
+    throw ApiError.badRequest('Search must be text of at most 200 characters.');
+  }
+  for (const field of ['page', 'limit']) {
+    if (filters[field] !== undefined && (!/^\d+$/.test(String(filters[field])) || !Number.isSafeInteger(Number(filters[field])) || Number(filters[field]) < 1)) {
+      throw ApiError.badRequest('Page and limit must be positive integers.');
+    }
+  }
+  const { page, limit, skip } = parsePagination(filters);
 
   const match = {};
   if (q && q.trim()) {

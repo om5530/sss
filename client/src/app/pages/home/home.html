@@ -286,15 +286,13 @@
     <div class="testimonials__grid" appReveal="group">
       @for (t of testimonials; track t.name) {
         <figure class="tcard" [appTilt]="5">
-          <span class="tcard__mark" aria-hidden="true">“</span>
+          <small class="muted">Sample review · preview only</small>
           <blockquote>{{ t.quote }}</blockquote>
           <figcaption>
-            <img [src]="t.avatar" [alt]="t.name" width="48" height="48" loading="lazy" />
+            <span class="tcard__avatar" aria-hidden="true">{{ t.initials }}</span>
             <span>
               <strong>{{ t.name }}</strong>
-              <small>{{ t.role }}</small>
             </span>
-            <span class="tcard__stars" aria-label="5 out of 5 stars">★★★★★</span>
           </figcaption>
         </figure>
       }
@@ -374,7 +372,7 @@
     <p appReveal>Your next favourite bake is about 25 minutes away.</p>
     <div class="cta-final__actions" appReveal>
       <a routerLink="/menu" class="btn btn--gold btn--lg" appMagnetic>Start your order</a>
-      <a routerLink="/contact" class="btn btn--ghost-dark btn--lg" appMagnetic>Plan a custom cake</a>
+      <a routerLink="/custom-orders" class="btn btn--ghost-dark btn--lg" appMagnetic>Plan a custom order</a>
     </div>
   </div>
 </section>

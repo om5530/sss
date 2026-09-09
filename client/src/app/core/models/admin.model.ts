@@ -156,6 +156,8 @@ export interface Coupon {
 export type CakeRequestStatus = 'new' | 'quoted' | 'accepted' | 'declined' | 'closed';
 
 export interface CakeRequest {
+  orderItems?: string;
+  quantity?: string;
   _id: string;
   user?: CustomerRef | null;
   name: string;

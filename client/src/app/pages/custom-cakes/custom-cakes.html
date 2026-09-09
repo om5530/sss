@@ -1,8 +1,8 @@
 <header class="page-hero grain">
   <div class="container">
     <span class="eyebrow">Made for your moment</span>
-    <h1>Custom <em class="serif-italic">cakes</em></h1>
-    <p>Tell us the occasion — we’ll bake the centrepiece. Briefs get a call back with a quote, usually the same day.</p>
+    <h1>Custom <em class="serif-italic">orders</em></h1>
+    <p>Brownies, cakes, hampers, snacks or something of your own — tell us what you have in mind. We’ll get in touch to discuss availability and a quote.</p>
   </div>
 </header>
 
@@ -13,13 +13,17 @@
         <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>
       </span>
       <h2>Brief received!</h2>
-      <p class="muted">Our bakers are reading it now — expect a call on the number you left, usually within the day, with a quote and any questions.</p>
+      <p class="muted">We’ll review your request and contact you with availability, a quote and any questions. Your order is confirmed once the details are agreed.</p>
       <div class="cakes__done-cta">
         <a routerLink="/menu" class="btn btn--primary">Browse the menu meanwhile</a>
       </div>
     </div>
   } @else {
     <form class="card cakes__form" (ngSubmit)="submit()" appReveal>
+      <div class="field">
+        <label class="label" for="ck-items">What would you like to order?</label>
+        <input id="ck-items" class="input" maxlength="200" [(ngModel)]="form.orderItems" name="orderItems" required placeholder="e.g. assorted brownie boxes, a snack platter or a gift hamper" />
+      </div>
       <div class="row">
         <div class="field">
           <label class="label" for="ck-name">Your name</label>
@@ -38,25 +42,22 @@
 
       <div class="row">
         <div class="field">
-          <label class="label" for="ck-occasion">Occasion</label>
-          <select id="ck-occasion" class="select" [(ngModel)]="form.occasion" name="occasion" required>
+          <label class="label" for="ck-occasion">Occasion (optional)</label>
+          <select id="ck-occasion" class="select" [(ngModel)]="form.occasion" name="occasion">
             <option value="" disabled>Choose…</option>
             @for (o of occasions; track o) { <option [value]="o">{{ o }}</option> }
           </select>
         </div>
         <div class="field">
-          <label class="label" for="ck-servings">Serves about</label>
-          <input id="ck-servings" class="input" type="number" min="1" max="500" [(ngModel)]="form.servings" name="servings" required placeholder="e.g. 12" />
+          <label class="label" for="ck-servings">Quantity or number of people</label>
+          <input id="ck-servings" class="input" maxlength="100" [(ngModel)]="form.quantity" name="quantity" required placeholder="e.g. 24 brownies, 5 boxes or 20 people" />
         </div>
       </div>
 
       <div class="row">
         <div class="field">
-          <label class="label" for="ck-flavour">Flavour</label>
-          <select id="ck-flavour" class="select" [(ngModel)]="form.flavour" name="flavour" required>
-            <option value="" disabled>Choose…</option>
-            @for (f of flavours; track f) { <option [value]="f">{{ f }}</option> }
-          </select>
+          <label class="label" for="ck-flavour">Flavour or preferences (optional)</label>
+          <input id="ck-flavour" class="input" maxlength="80" [(ngModel)]="form.flavour" name="flavour" placeholder="e.g. eggless, chocolate or savoury" />
         </div>
         <div class="field">
           <label class="label" for="ck-date">Needed by</label>
@@ -65,12 +66,12 @@
       </div>
 
       <div class="field">
-        <label class="label" for="ck-message">Message on the cake <span class="muted">(optional)</span></label>
+        <label class="label" for="ck-message">Personalised message <span class="muted">(optional)</span></label>
         <input id="ck-message" class="input" maxlength="120" [(ngModel)]="form.messageOnCake" name="messageOnCake" placeholder="Happy 30th, Priya!" />
       </div>
 
       <div class="field">
-        <label class="label" for="ck-details">Tell us everything <span class="muted">(theme, colours, allergies…)</span></label>
+        <label class="label" for="ck-details">Anything else? <span class="muted">(budget, packaging, allergies, theme…)</span></label>
         <textarea id="ck-details" class="textarea" rows="4" maxlength="2000" [(ngModel)]="form.details" name="details"></textarea>
       </div>
 
@@ -82,7 +83,7 @@
             <input type="file" accept="image/jpeg,image/png,image/webp" style="display: none" (change)="onReferenceChosen($event)" [disabled]="uploading()" />
           </label>
           @if (form.referenceImage) {
-            <img [src]="form.referenceImage" alt="Reference cake" class="cakes__ref" width="72" height="72" />
+            <img [src]="form.referenceImage" alt="Custom order reference" class="cakes__ref" width="72" height="72" />
           }
         </div>
       </div>
@@ -90,7 +91,7 @@
       <button class="btn btn--accent btn--block btn--lg" type="submit" [disabled]="sending()">
         {{ sending() ? 'Sending your brief…' : 'Send the brief' }}
       </button>
-      <p class="cakes__note muted">Custom cakes need at least a day’s notice — bigger builds appreciate more.</p>
+      <p class="cakes__note muted">Please give us at least a day’s notice. Large or detailed orders may need more time.</p>
     </form>
   }
 </div>

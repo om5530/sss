@@ -8,7 +8,7 @@ const { notifyCakeRequest } = require('../services/notify.service');
 /* ============ Public ============ */
 
 const submitRequest = asyncHandler(async (req, res) => {
-  const { name, phone, email, occasion, servings, flavour, messageOnCake, dateNeeded, details, referenceImage } = req.body;
+  const { name, phone, email, orderItems, quantity, occasion, servings, flavour, messageOnCake, dateNeeded, details, referenceImage } = req.body;
 
   const when = new Date(dateNeeded);
   // At least a day's notice — compared at UTC calendar-day granularity, because
@@ -17,7 +17,7 @@ const submitRequest = asyncHandler(async (req, res) => {
   const cutoff = new Date(Date.now() + 24 * 60 * 60 * 1000);
   cutoff.setUTCHours(0, 0, 0, 0);
   if (Number.isNaN(when.getTime()) || when < cutoff) {
-    throw ApiError.badRequest('Custom cakes need at least a day’s notice — pick a later date');
+    throw ApiError.badRequest('Custom orders need at least a day’s notice — pick a later date');
   }
 
   const request = await CakeRequest.create({
@@ -25,6 +25,8 @@ const submitRequest = asyncHandler(async (req, res) => {
     name,
     phone,
     email: email || '',
+    orderItems,
+    quantity,
     occasion,
     servings,
     flavour,
@@ -67,7 +69,7 @@ const listRequests = asyncHandler(async (req, res) => {
 
 const updateRequest = asyncHandler(async (req, res) => {
   const request = await CakeRequest.findById(req.params.id);
-  if (!request) throw ApiError.notFound('Cake request not found');
+  if (!request) throw ApiError.notFound('Custom order request not found');
 
   const { status, quoteAmount, quoteNote } = req.body;
   const previous = request.status;
@@ -82,7 +84,7 @@ const updateRequest = asyncHandler(async (req, res) => {
       action: 'cake.status',
       entity: 'cake-request',
       entityId: request._id,
-      summary: `Cake request from ${request.name} (${request.occasion}): ${previous} → ${status}${request.quote.amount ? ` · quoted ₹${request.quote.amount}` : ''}`,
+      summary: `Custom order from ${request.name} (${request.orderItems || request.occasion}): ${previous} → ${status}${request.quote.amount ? ` · quoted ₹${request.quote.amount}` : ''}`,
       before: { status: previous },
       after: { status },
     });
@@ -96,10 +98,13 @@ const validators = {
     body('name').trim().notEmpty().withMessage('Please tell us your name').isLength({ max: 100 }),
     body('phone').trim().notEmpty().withMessage('We need a phone number to call you back').isLength({ max: 20 }),
     body('email').optional({ values: 'falsy' }).trim().isEmail().withMessage('Please enter a valid email').isLength({ max: 254 }),
-    body('occasion').trim().notEmpty().withMessage('What’s the occasion?').isLength({ max: 60 }),
-    body('servings').isInt({ min: 1, max: 500 }).withMessage('How many people should it serve?'),
-    body('flavour').trim().notEmpty().withMessage('Pick a flavour (or say “baker’s choice”)').isLength({ max: 80 }),
-    body('messageOnCake').optional({ values: 'falsy' }).trim().isLength({ max: 120 }).withMessage('Cake messages fit 120 characters'),
+    body('orderItems').optional().isString().bail().trim().notEmpty().isLength({ max: 200 }),
+    body('quantity').optional().isString().bail().trim().notEmpty().isLength({ max: 100 }),
+    body().custom((value) => Boolean(value.orderItems && value.quantity) || Boolean(value.occasion && value.servings && value.flavour)).withMessage('Tell us what you would like to order and the quantity.'),
+    body('occasion').optional({ values: 'falsy' }).trim().isLength({ max: 60 }),
+    body('servings').optional().isInt({ min: 1, max: 500 }).withMessage('Servings must be between 1 and 500'),
+    body('flavour').optional({ values: 'falsy' }).trim().isLength({ max: 80 }),
+    body('messageOnCake').optional({ values: 'falsy' }).trim().isLength({ max: 120 }).withMessage('Personalised messages fit 120 characters'),
     body('dateNeeded').notEmpty().withMessage('When do you need it?').isISO8601().withMessage('Pick a valid date'),
     body('details').optional({ values: 'falsy' }).trim().isLength({ max: 2000 }),
     body('referenceImage').optional({ values: 'falsy' }).trim().isLength({ max: 500 }),

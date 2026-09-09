@@ -16,7 +16,8 @@ export const routes: Routes = [
   { path: 'profile', canActivate: [authGuard], loadComponent: () => import('./pages/profile/profile').then((m) => m.Profile), title: 'Profile — The Golden Batch' },
   // Staff area — lazy-loaded so storefront visitors never download admin code (AS-1.2).
   { path: 'admin', canActivate: [adminGuard], loadChildren: () => import('./pages/admin/admin.routes').then((m) => m.ADMIN_ROUTES) },
-  { path: 'custom-cakes', loadComponent: () => import('./pages/custom-cakes/custom-cakes').then((m) => m.CustomCakes), title: 'Custom Cakes — The Golden Batch', data: { description: 'Custom birthday, anniversary and wedding cakes made to order in Mumbai. Send a brief, get a quote the same day.' } },
+  { path: 'custom-cakes', redirectTo: 'custom-orders', pathMatch: 'full' },
+  { path: 'custom-orders', loadComponent: () => import('./pages/custom-cakes/custom-cakes').then((m) => m.CustomCakes), title: 'Custom Orders — The Golden Batch', data: { description: 'Request custom brownies, cakes, hampers, snacks and bulk orders in Pune. Tell us your requirements for a quote.' } },
   { path: 'about', loadComponent: () => import('./pages/about/about').then((m) => m.About), title: 'About — The Golden Batch', data: { description: 'The story behind The Golden Batch — small-batch baking, honest ingredients, and a café that feels like home.' } },
   { path: 'contact', loadComponent: () => import('./pages/contact/contact').then((m) => m.Contact), title: 'Contact — The Golden Batch', data: { description: 'Questions, custom cakes or catering — visit us in Dahisar East, call, or send a message. A human reads every one.' } },
   { path: '**', loadComponent: () => import('./pages/not-found/not-found').then((m) => m.NotFound), title: 'Not found — The Golden Batch' },

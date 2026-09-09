@@ -85,24 +85,11 @@ export class Home implements OnDestroy {
   ];
 
   protected readonly testimonials = [
-    {
-      quote: 'The fudge brownie is genuinely the best in the city — that crackle top, the molten centre. I’ve ordered every single week since they opened.',
-      name: 'Ananya Sharma',
-      role: 'Orders every Friday',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=112&q=80&auto=format&fit=crop&crop=faces',
-    },
-    {
-      quote: 'Ordered a birthday cake at 4 p.m., picked it up at 7 — still warm, iced by hand, and the live tracker meant zero anxious phone calls.',
-      name: 'Rohan Mehta',
-      role: 'Birthday-cake regular',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=112&q=80&auto=format&fit=crop&crop=faces',
-    },
-    {
-      quote: 'As a vegetarian household the clear veg and eggless tags are everything. The wood-fired margherita rivals any pizzeria we’ve tried.',
-      name: 'Priya Nair',
-      role: 'Family dinners, sorted',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=112&q=80&auto=format&fit=crop&crop=faces',
-    },
+    { name: 'Omkar Baacha', initials: 'OB', quote: 'The classic fudge brownie is my pick — rich chocolate, a soft centre and just the right amount of sweetness.' },
+    { name: 'Aarchita Menghani', initials: 'AM', quote: 'Loved the salted caramel brownie. That little salty finish makes it such a lovely treat with coffee.' },
+    { name: 'Uday Mukherjee', initials: 'UM', quote: 'The chocolate chip cookies have those crisp edges and a soft middle I always look for. Perfect for a tea break.' },
+    { name: 'Praveen Rathod', initials: 'PR', quote: 'The walnut brownie is a great choice if you like a little crunch with your chocolate. A simple treat done well.' },
+    { name: 'Ebrahim Tohfafarosh', initials: 'ET', quote: 'The double chocolate cookies are a treat for a chocolate lover. I would happily add a box to my next order.' },
   ];
 
   protected readonly faqs = [
@@ -111,7 +98,7 @@ export class Home implements OnDestroy {
     { q: 'Do you have eggless and vegetarian options?', a: 'Plenty. Every item carries a clear veg, eggless or non-veg tag, and most of our signature bakes come in an eggless version.' },
     { q: 'How do online payments work?', a: 'Cards and UPI are processed securely — your card details never touch our servers. You can also pay at the counter for dine-in and takeaway.' },
     { q: 'Can I track my order live?', a: 'Every order gets a live status timeline — placed, confirmed, preparing, ready, completed — on your orders page, updated in real time.' },
-    { q: 'Do you take custom cake orders?', a: 'We love them. Reach out via the contact page (or call us) at least 24 hours ahead and we’ll bake something made just for the occasion.' },
+    { q: 'Do you take custom orders?', a: 'Yes — brownies, cakes, hampers, snacks and more. Send a request through Custom Orders at least a day ahead, and we’ll discuss availability and a quote.' },
   ];
 
   protected readonly galleryTop: string[];

@@ -23,7 +23,7 @@ export const ADMIN_ROUTES: Routes = [
       { path: 'customers/:id', loadComponent: () => import('./customer-detail/admin-customer-detail').then((m) => m.AdminCustomerDetail), title: 'Customer — SSS Admin' },
       { path: 'payments', loadComponent: () => import('./payments/admin-payments').then((m) => m.AdminPayments), title: 'Payments — SSS Admin' },
       { path: 'enquiries', loadComponent: () => import('./enquiries/admin-enquiries').then((m) => m.AdminEnquiries), title: 'Enquiries — SSS Admin' },
-      { path: 'cake-requests', loadComponent: () => import('./cake-requests/admin-cake-requests').then((m) => m.AdminCakeRequests), title: 'Cake requests — SSS Admin' },
+      { path: 'cake-requests', loadComponent: () => import('./cake-requests/admin-cake-requests').then((m) => m.AdminCakeRequests), title: 'Custom orders — SSS Admin' },
       { path: 'coupons', loadComponent: () => import('./coupons/admin-coupons').then((m) => m.AdminCoupons), title: 'Coupons — SSS Admin' },
       { path: 'reports', loadComponent: () => import('./reports/admin-reports').then((m) => m.AdminReports), title: 'Reports — SSS Admin' },
       { path: 'activity', loadComponent: () => import('./activity/admin-activity').then((m) => m.AdminActivity), title: 'Activity — SSS Admin' },

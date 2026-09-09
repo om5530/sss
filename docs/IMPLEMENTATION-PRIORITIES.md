@@ -18,6 +18,12 @@ Real phone login: Firebase integration now uses runtime web configuration, recen
 | 4 | Report category labels, revenue/quantity ranking, enquiry unread badge | Implemented. Other reporting refinements remain open. |
 | 5 | Editable homepage content, testimonials and FAQs | Open. |
 
+## Customer search privacy — 2026-09-09
+
+- AS-6.1 customer search now sends name/phone/email terms in the JSON body of `POST /admin/customers/search`. Pagination and admin-only/no-store responses are preserved. Legacy URL searches are rejected; unfiltered GET listing remains available.
+- Application access logs omit query strings; unexpected customer-search errors retain a correlation ID without logging raw errors that could contain the search value. Historical and external infrastructure logs are outside this change.
+- New integration checks cover name/email/phone matching, pagination, invalid filters, authorization, cache policy, legacy requests and error/log redaction. Angular production build passes. Full backend suite: 36 pass, 1 unrelated existing OTP guard test fails because the current test-mode implementation disables that guard.
+
 ## Store settings batch — 2026-09-09
 
 - New quotes read database tax/delivery settings immediately. Existing orders retain their stored pricing; order validation reads the same settings snapshot for opening hours and pricing.

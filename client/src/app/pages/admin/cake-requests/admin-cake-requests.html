@@ -4,7 +4,7 @@
       <span class="eyebrow eyebrow--bare">
         {{ total() }} requests @if (newCount()) { · {{ newCount() }} new }
       </span>
-      <h1>Cake requests</h1>
+      <h1>Custom order requests</h1>
     </div>
   </div>
 
@@ -45,7 +45,11 @@
                 @if (r.email) { <div style="font-size: 0.78rem"><a href="mailto:{{ r.email }}" style="text-decoration: underline">{{ r.email }}</a></div> }
               </td>
               <td style="max-width: 380px">
-                <strong>{{ r.occasion }}</strong> · serves ~{{ r.servings }} · {{ r.flavour }}
+                <strong>{{ r.orderItems || "Custom cake" }}</strong>
+                @if (r.quantity) { <div>Quantity: {{ r.quantity }}</div> }
+                @if (r.occasion) { <div>{{ r.occasion }}</div> }
+                @if (r.servings) { <div>Serves ~{{ r.servings }}</div> }
+                @if (r.flavour) { <div>{{ r.flavour }}</div> }
                 @if (r.messageOnCake) { <div class="muted" style="font-size: 0.82rem">“{{ r.messageOnCake }}”</div> }
                 @if (r.details) { <div style="font-size: 0.82rem; white-space: pre-line">{{ r.details }}</div> }
                 @if (r.referenceImage) {
@@ -98,7 +102,7 @@
               </tr>
             }
           } @empty {
-            <tr><td colspan="7"><div class="adm-empty">No cake requests yet — briefs from the Custom Cakes page land here.</div></td></tr>
+            <tr><td colspan="7"><div class="adm-empty">No custom order requests yet — briefs from the Custom Orders page land here.</div></td></tr>
           }
         </tbody>
       </table>

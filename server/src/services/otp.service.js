@@ -52,7 +52,12 @@ async function deliverOtp(phone, code) {
 }
 
 function assertMockAllowed() {
-  // Mock mode enabled for test deployment
+  if (env.isProd && !env.otp.exposeDevOtp) {
+    throw ApiError.badRequest('Mock OTP is disabled in production. Authenticate via secure phone OTP.');
+  }
+  if (env.otp.provider !== 'mock') {
+    throw ApiError.badRequest(`Unsupported OTP provider "${env.otp.provider}". Use "mock".`);
+  }
 }
 
 async function verifyOtp(phone, code) {

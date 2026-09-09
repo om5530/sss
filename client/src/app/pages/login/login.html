@@ -41,8 +41,7 @@
       <div class="auth__head">
         <span class="eyebrow eyebrow--bare">Members’ entrance</span>
         <h1>Welcome back</h1>
-        <p class="muted">Sign in to place your order and track it.</p>
-        <p class="muted">By requesting a code, you agree to receive a sign-in SMS. Google processes your phone number for verification and abuse prevention.</p>
+        <p class="muted">Sign in to continue.</p>
       </div>
 
       @if (step() === 'phone') {
@@ -75,6 +74,7 @@
               </svg>
             }
           </button>
+          <small class="muted">We’ll text you a sign-in code.</small>
         </form>
       } @else {
         <form class="auth__form auth__form--code" (ngSubmit)="verifyOtp()">

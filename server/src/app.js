@@ -27,7 +27,9 @@ if (env.isProd) app.set('trust proxy', 1);
 
 app.use(helmet());
 app.use(cors({ origin: env.clientUrl, credentials: true }));
-if (!env.isProd) app.use(morgan('dev'));
+// Query strings can contain customer PII from older clients. Never log them.
+morgan.token('safe-path', (req) => req.originalUrl.split('?')[0]);
+if (!env.isProd) app.use(morgan(':method :safe-path :status :response-time ms'));
 app.use(cookieParser());
 
 // Payment webhooks must receive the raw body (signatures are computed over

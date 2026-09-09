@@ -111,6 +111,10 @@ Dine-in requires a name; takeaway requires a name and valid phone; delivery requ
 ```
 # Admin security, categories and notification delivery (2026-09-09)
 
+Customer search uses `POST /admin/customers/search` with JSON `{ "q": "search text", "page": 1, "limit": 20 }`. All fields are optional; search is limited to 200 characters and pagination must use positive integers. Responses remain admin-only, paginated and `Cache-Control: no-store`. `GET /admin/customers` remains available for unfiltered listing/pagination, but URL search parameters are rejected. Deploy client and server together; older admin pages must refresh.
+
+Application access logs omit query strings. Customer-search server failures log a request ID and generic diagnostic without raw database errors or search values. This does not remove historical logs or control external proxy/database logging; external request-body capture must remain disabled for this endpoint.
+
 All admin routes require an active admin account/session. Admin idle timeout defaults to 30 minutes (`ADMIN_IDLE_MINUTES`). `GET /auth/me` includes `idleExpiresAt` for admins and does not renew activity. `POST /auth/activity` renews a still-active admin session; expired sessions return 401 and require sign-in.
 
 - `PATCH /admin/customers/:id/status`: `{ active: boolean, reason?: string }`. Deactivation requires a nonblank reason (max 500 characters). Customer accounts only; preserves orders and revokes old tokens on both deactivation and reactivation. Inactive sign-in/authenticated access returns 403.

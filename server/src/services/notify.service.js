@@ -103,12 +103,12 @@ function notifyCakeRequest(request) {
   return sendEmail({
     key: `cake-request/${request._id}`,
     to: env.notify.shopEmail,
-    subject: `Custom cake request — ${request.occasion} on ${request.dateNeeded ? new Date(request.dateNeeded).toDateString() : 'TBD'}`,
+    subject: `Custom order request — ${request.occasion} on ${request.dateNeeded ? new Date(request.dateNeeded).toDateString() : 'TBD'}`,
     html: wrap(
-      'Custom cake request',
+      'Custom order request',
       `<p><strong>${esc(request.name)}</strong> · ${esc(request.phone)}${request.email ? ` · ${esc(request.email)}` : ''}</p>
-       <p>${esc(request.occasion)} · serves ~${esc(request.servings)} · ${esc(request.flavour)}</p>
-       ${request.messageOnCake ? `<p>On the cake: “${esc(request.messageOnCake)}”</p>` : ''}
+       <p>${esc(request.orderItems || request.occasion || "Custom cake")} · ${esc(request.quantity || request.servings || "")} · ${esc(request.flavour || "")}</p>
+       ${request.messageOnCake ? `<p>Personalised message: “${esc(request.messageOnCake)}”</p>` : ''}
        <p style="white-space: pre-line;">${esc(request.details || '')}</p>
        ${request.referenceImage ? `<p>Reference: ${esc(request.referenceImage)}</p>` : ''}`,
     ),

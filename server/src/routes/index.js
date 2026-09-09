@@ -48,6 +48,7 @@ router.use('/orders', orderRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/contact', contactRoutes);
 router.use('/cake-requests', cakeRoutes);
+router.use('/custom-requests', cakeRoutes);
 router.use('/admin', adminRoutes);
 
 module.exports = router;

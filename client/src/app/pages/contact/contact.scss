@@ -26,6 +26,11 @@
 
 /* ---- Info cards ---- */
 .contact__info { display: grid; gap: 1rem; }
+a.info-card {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
 .info-card {
   display: flex;
   gap: 1.1rem;

@@ -152,7 +152,7 @@ export class AdminService {
   /* ---- Customers ---- */
 
   customers(filters: { q?: string; page?: number } = {}) {
-    return this.http.get<CustomerListResponse>(`${this.base}/customers`, { params: toParams(filters) });
+    return this.http.post<CustomerListResponse>(`${this.base}/customers/search`, filters);
   }
 
   customer(id: string) {
