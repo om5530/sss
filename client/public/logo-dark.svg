@@ -21,13 +21,13 @@
     <path d="M 50.00 6.00 A 11 11 0 0 1 69.09 10.36 A 11 11 0 0 1 84.40 22.57 A 11 11 0 0 1 92.90 40.21 A 11 11 0 0 1 92.90 59.79 A 11 11 0 0 1 84.40 77.43 A 11 11 0 0 1 69.09 89.64 A 11 11 0 0 1 50.00 94.00 A 11 11 0 0 1 30.91 89.64 A 11 11 0 0 1 15.60 77.43 A 11 11 0 0 1 7.10 59.79 A 11 11 0 0 1 7.10 40.21 A 11 11 0 0 1 15.60 22.57 A 11 11 0 0 1 30.91 10.36 A 11 11 0 0 1 50.00 6.00 Z"
           fill="url(#sssd-esp)" stroke="url(#sssd-rim)" stroke-width="2"/>
     <circle cx="50" cy="50" r="37.5" fill="none" stroke="url(#sssd-rim)" stroke-opacity="0.4" stroke-width="1"/>
-    <path d="M62 35.5 C59.4 30 49.9 28.4 44.1 32.8 C38.3 37.2 40 44.7 48 48.1 C56.7 51.8 60.9 57 58.3 62.9 C55.4 69.6 44.3 70.1 39.6 63.3"
-          fill="none" stroke="url(#sssd-pipe)" stroke-width="8" stroke-linecap="round"/>
-    <circle cx="62" cy="35.5" r="5.2" fill="url(#sssd-pipe)"/>
-    <circle cx="39.6" cy="63.3" r="5.2" fill="url(#sssd-pipe)"/>
-    <circle cx="39.6" cy="63.3" r="2.7" fill="#d94f78"/>
+    <path d="M 61 35 C 53 28 38 31 35 48 C 32 65 42 70 59 66 C 63 65 64 57 64 51 L 49 51"
+          fill="none" stroke="url(#sssd-pipe)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="61" cy="35" r="5.2" fill="url(#sssd-pipe)"/>
+    <circle cx="49" cy="51" r="5.2" fill="url(#sssd-pipe)"/>
+    <circle cx="49" cy="51" r="2.7" fill="#d94f78"/>
   </g>
   <!-- wordmark -->
-  <text x="150" y="68" font-family="Fraunces, Georgia, 'Times New Roman', serif" font-size="40" font-weight="800" fill="#f7ecdc">the golden batch</text>
+  <text x="150" y="68" font-family="Fraunces, Georgia, 'Times New Roman', serif" font-size="40" font-weight="800" fill="#f7ecdc">The Golden Batch</text>
   <text x="152" y="98" font-family="Manrope, Poppins, system-ui, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="700" letter-spacing="4.5" fill="#dfa757">BAKERY &amp; CAFÉ</text>
 </svg>
