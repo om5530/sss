@@ -58,7 +58,7 @@ async function deliverOtp(phone, code) {
 }
 
 function assertMockAllowed() {
-  if (env.isProd || env.otp.provider !== 'mock' || require('./firebase.service').isConfigured()) {
+  if (env.isProd || env.otp.provider !== 'mock') {
     throw ApiError.badRequest('Please use secure phone verification to sign in.');
   }
 }

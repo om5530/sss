@@ -2,28 +2,23 @@ const admin = require('firebase-admin');
 const env = require('../config/env');
 const ApiError = require('../utils/ApiError');
 
-// Initialise the Admin SDK only when a full service account is configured.
-// Left unconfigured, phone login is simply disabled (mirrors Google login).
-const configured = Boolean(
-  env.firebase.projectId && env.firebase.clientEmail && env.firebase.privateKey,
-);
-
-const app = configured
-  ? admin.initializeApp({
+function getFirebaseApp() {
+  const projectId = env.firebase.projectId || 'ssss-ade3d';
+  if (admin.apps.length) return admin.apps[0];
+  if (env.firebase.clientEmail && env.firebase.privateKey) {
+    return admin.initializeApp({
       credential: admin.credential.cert({
-        projectId: env.firebase.projectId,
+        projectId,
         clientEmail: env.firebase.clientEmail,
         privateKey: env.firebase.privateKey,
       }),
-    })
-  : null;
+    });
+  }
+  return admin.initializeApp({ projectId });
+}
 
 async function verifyFirebaseIdToken(idToken) {
-  if (!app) {
-    throw ApiError.badRequest(
-      'Phone login is not configured. Set FIREBASE_PROJECT_ID / FIREBASE_CLIENT_EMAIL / FIREBASE_PRIVATE_KEY in server/.env.',
-    );
-  }
+  const app = getFirebaseApp();
 
   let decoded;
   try {
@@ -45,4 +40,4 @@ function verifiedPhone(decoded) {
   return { firebaseUid: decoded.uid, phone: decoded.phone_number };
 }
 
-module.exports = { verifyFirebaseIdToken, verifiedPhone, isConfigured: () => Boolean(app) };
+module.exports = { verifyFirebaseIdToken, verifiedPhone, isConfigured: () => Boolean(process.env.FIREBASE_PROJECT_ID || (env.firebase.clientEmail && env.firebase.privateKey)) };
