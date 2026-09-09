@@ -16,6 +16,7 @@ const paymentRoutes = require('./payment.routes');
 const contactRoutes = require('./contact.routes');
 const cakeRoutes = require('./cake.routes');
 const adminRoutes = require('./admin.routes');
+const bakeryRoutes = require('./bakery.routes');
 const notifications = require('../controllers/notification.controller');
 
 const router = express.Router();
@@ -50,5 +51,6 @@ router.use('/contact', contactRoutes);
 router.use('/cake-requests', cakeRoutes);
 router.use('/custom-requests', cakeRoutes);
 router.use('/admin', adminRoutes);
+router.use('/admin/bakery', bakeryRoutes);
 
 module.exports = router;

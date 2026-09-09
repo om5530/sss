@@ -1,0 +1,207 @@
+<div class="materials-shell">
+  <!-- Header -->
+  <header class="mat-head">
+    <div>
+      <h1 class="mat-title">📦 Materials & Purchasing Formats</h1>
+      <p class="mat-sub">Raw ingredients, packaging, labour rates and equipment. Enter pack prices—the system calculates per-gram costs automatically.</p>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn btn--accent" (click)="startNewMaterial()">
+        + Add New Material
+      </button>
+    </div>
+  </header>
+
+  <!-- Filter & Search Bar -->
+  <div class="mat-controls">
+    <div class="type-tabs">
+      @for (t of types; track t.value) {
+        <button
+          type="button"
+          class="type-tab-btn"
+          [class.active]="selectedType() === t.value"
+          (click)="setType(t.value)"
+        >
+          {{ t.label }}
+        </button>
+      }
+    </div>
+
+    <div class="search-box">
+      <input
+        class="input input--sm"
+        placeholder="Search materials..."
+        [(ngModel)]="searchQuery"
+        (keyup.enter)="fetchMaterials()"
+      />
+    </div>
+  </div>
+
+  <!-- Materials Data Table -->
+  <div class="card table-card">
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Material Name</th>
+            <th>Type / Category</th>
+            <th>Purchase Pack Format</th>
+            <th class="num">Effective Unit Cost</th>
+            <th class="num">Kitchen Stock</th>
+            <th>Supplier</th>
+            <th style="width: 90px"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (m of materials(); track m._id) {
+            <tr>
+              <td>
+                <strong>{{ m.name }}</strong>
+                @if (m.code) {
+                  <small class="code-pill">{{ m.code }}</small>
+                }
+              </td>
+              <td>
+                <span class="tag-type {{ m.type }}">{{ m.type }}</span>
+                <small class="text-muted block">{{ m.category }}</small>
+              </td>
+              <td>
+                <span class="pack-badge">
+                  {{ m.packQuantity }} {{ m.packUom }} @ {{ m.purchasePrice | currency:'INR':'symbol':'1.0-2' }}
+                </span>
+              </td>
+              <td class="num font-mono highlight-cost">
+                {{ m.effectiveUnitCost | currency:'INR':'symbol':'1.2-4' }} / {{ m.baseUom }}
+              </td>
+              <td class="num font-mono">
+                <span [class.text-danger]="m.currentStock <= m.minimumStock">
+                  {{ m.currentStock | number:'1.0-2' }} {{ m.baseUom }}
+                </span>
+                @if (m.currentStock <= m.minimumStock) {
+                  <small class="text-danger block">⚠️ Low Stock</small>
+                }
+              </td>
+              <td>{{ m.supplierName || '—' }}</td>
+              <td class="num">
+                <button type="button" class="btn btn--outline btn--sm" (click)="editMaterial(m)" title="Edit">
+                  ✏️
+                </button>
+                <button type="button" class="btn btn--ghost btn--danger btn--sm" (click)="deleteMaterial(m._id)" title="Archive">
+                  ✕
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="empty-state">No materials found in this category. Click "+ Add New Material" to create one.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: ADD / EDIT MATERIAL
+       ========================================================================= -->
+  @if (editingMaterial(); as form) {
+    <div class="modal-backdrop">
+      <div class="modal card">
+        <div class="modal-head">
+          <h3>{{ form._id ? 'Edit: ' + form.name : 'Add New Material' }}</h3>
+          <button type="button" class="btn btn--ghost" (click)="cancelEdit()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="field" style="flex: 2">
+              <label class="label">Material Name</label>
+              <input class="input" [(ngModel)]="form.name" placeholder="e.g. Cocoa Powder (Pure)" />
+            </div>
+
+            <div class="field" style="flex: 1">
+              <label class="label">Type</label>
+              <select class="select" [(ngModel)]="form.type">
+                <option value="ingredient">Ingredient</option>
+                <option value="packaging">Packaging</option>
+                <option value="resource">Equipment / Oven</option>
+                <option value="labour">Labour Staff</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="field">
+              <label class="label">Category</label>
+              <input class="input" [(ngModel)]="form.category" placeholder="e.g. Dairy, Flours, Boxes" />
+            </div>
+
+            <div class="field">
+              <label class="label">Base Unit of Measure (UOM)</label>
+              <select class="select" [(ngModel)]="form.baseUom">
+                <option value="g">Grams (g)</option>
+                <option value="kg">Kilograms (kg)</option>
+                <option value="ml">Millilitres (ml)</option>
+                <option value="L">Litres (L)</option>
+                <option value="piece">Pieces (piece)</option>
+                <option value="minute">Minutes (min)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Purchase Pack & Auto Calculation -->
+          <div class="pack-calc-box">
+            <h4>How do you buy it? (Purchase Pack)</h4>
+            <p class="box-sub">Never calculate price per gram manually—enter the pack size & total price you paid.</p>
+
+            <div class="form-row">
+              <div class="field">
+                <label class="label">Pack Quantity</label>
+                <input class="input font-mono" type="number" step="any" min="0.001" [(ngModel)]="form.packQuantity" />
+              </div>
+
+              <div class="field">
+                <label class="label">Pack Unit</label>
+                <input class="input" [(ngModel)]="form.packUom" placeholder="e.g. g, kg, L, piece" />
+              </div>
+
+              <div class="field">
+                <label class="label">Pack Purchase Price (₹)</label>
+                <input class="input font-mono" type="number" step="any" min="0" [(ngModel)]="form.purchasePrice" />
+              </div>
+            </div>
+
+            <div class="auto-calc-preview">
+              <span>Automatic Effective Cost:</span>
+              <strong class="font-mono text-gold">
+                {{ getCalculatedPreview() | currency:'INR':'symbol':'1.2-4' }} / {{ form.baseUom }}
+              </strong>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="field">
+              <label class="label">Current Kitchen Stock</label>
+              <input class="input font-mono" type="number" min="0" [(ngModel)]="form.currentStock" />
+            </div>
+
+            <div class="field">
+              <label class="label">Minimum Alert Stock</label>
+              <input class="input font-mono" type="number" min="0" [(ngModel)]="form.minimumStock" />
+            </div>
+
+            <div class="field">
+              <label class="label">Supplier Name</label>
+              <input class="input" [(ngModel)]="form.supplierName" placeholder="e.g. Amul Depot" />
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-foot">
+          <button type="button" class="btn btn--outline" (click)="cancelEdit()">Cancel</button>
+          <button type="button" class="btn btn--accent" (click)="saveMaterial()">Save Material</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

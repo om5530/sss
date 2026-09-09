@@ -1,0 +1,119 @@
+<div class="waste-shell">
+  <!-- Header -->
+  <header class="waste-head">
+    <div>
+      <h1 class="waste-title">🗑️ Kitchen Waste & Loss Tracker</h1>
+      <p class="waste-sub">Log spoiled, burnt or dropped ingredients in 2 clicks. Track true monetary cost lost.</p>
+    </div>
+
+    <!-- Quick Loss KPIs -->
+    <div class="kpi-banner">
+      <div class="kpi-mini">
+        <span class="label">Waste Today</span>
+        <strong class="val text-danger">{{ todayCost() | currency:'INR':'symbol':'1.0-2' }}</strong>
+      </div>
+      <div class="kpi-mini">
+        <span class="label">Waste This Month</span>
+        <strong class="val">{{ monthCost() | currency:'INR':'symbol':'1.0-2' }}</strong>
+      </div>
+    </div>
+  </header>
+
+  <div class="waste-layout">
+    <!-- Quick Log Form -->
+    <section class="card form-card">
+      <h3>Quick Waste Logger</h3>
+      <p class="card-sub">Automatically deducts from kitchen stock and logs cost.</p>
+
+      <div class="field">
+        <label class="label">Item Wasted</label>
+        <select
+          class="select"
+          [ngModel]="selectedMaterialId()"
+          (ngModelChange)="selectedMaterialId.set($event)"
+        >
+          @for (m of materials(); track m._id) {
+            <option [value]="m._id">{{ m.name }} ({{ m.baseUom }})</option>
+          }
+        </select>
+      </div>
+
+      <div class="form-row">
+        <div class="field" style="flex: 1">
+          <label class="label">Quantity</label>
+          <input
+            type="number"
+            class="input font-mono"
+            min="0.1"
+            [ngModel]="quantity()"
+            (ngModelChange)="quantity.set($event)"
+          />
+        </div>
+
+        <div class="field" style="flex: 1">
+          <label class="label">Reason</label>
+          <select class="select" [ngModel]="reason()" (ngModelChange)="reason.set($event)">
+            @for (r of reasons; track r) {
+              <option [value]="r">{{ r }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label">Notes (Optional)</label>
+        <input class="input" placeholder="e.g. Overbaked in oven tray #2" [ngModel]="notes()" (ngModelChange)="notes.set($event)" />
+      </div>
+
+      <div class="cost-callout">
+        <span>Estimated Monetary Loss:</span>
+        <strong class="cost-loss">{{ getCostLostPreview() | currency:'INR':'symbol':'1.2-2' }}</strong>
+      </div>
+
+      <button type="button" class="btn btn--accent btn--block" (click)="logWaste()">
+        Log Waste Entry
+      </button>
+    </section>
+
+    <!-- Waste History Log -->
+    <section class="card history-card">
+      <h3>Recent Waste Log</h3>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Material</th>
+              <th class="num">Quantity</th>
+              <th>Reason</th>
+              <th class="num">Cost Lost</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (log of wasteLogs(); track log._id) {
+              <tr>
+                <td class="text-muted font-mono">{{ log.date | date:'shortDate' }}</td>
+                <td>
+                  <strong>{{ log.materialName }}</strong>
+                  @if (log.notes) {
+                    <small class="text-muted block">{{ log.notes }}</small>
+                  }
+                </td>
+                <td class="num font-mono">{{ log.quantity }} {{ log.uom }}</td>
+                <td><span class="badge badge--warning">{{ log.reason }}</span></td>
+                <td class="num font-mono font-bold text-danger">
+                  {{ log.totalCostLost | currency:'INR':'symbol':'1.2-2' }}
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="empty-state">No waste logged yet. Great job running a zero-waste kitchen!</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>

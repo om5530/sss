@@ -18,6 +18,48 @@
         </svg>
         Dashboard
       </a>
+
+      <!-- Bakery Manufacturing & Costing Collapsible Group -->
+      <div class="adm-side__dropdown">
+        <button
+          type="button"
+          class="adm-side__dropdown-header"
+          [class.open]="bakeryOpen()"
+          (click)="bakeryOpen.set(!bakeryOpen())"
+          aria-label="Toggle Bakery Operations Menu"
+        >
+          <span class="title-wrap">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke-linejoin="round"/>
+            </svg>
+            Bakery Operations
+          </span>
+          <svg class="chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+
+        @if (bakeryOpen()) {
+          <div class="adm-side__sub-menu">
+            <a routerLink="/admin/bakery/calculator" routerLinkActive="active" class="adm-side__sub-link">
+              <span>⚡ Calculator</span>
+            </a>
+            <a routerLink="/admin/bakery/recipes" routerLinkActive="active" class="adm-side__sub-link">
+              <span>📜 Recipes</span>
+            </a>
+            <a routerLink="/admin/bakery/materials" routerLinkActive="active" class="adm-side__sub-link">
+              <span>📦 Materials</span>
+            </a>
+            <a routerLink="/admin/bakery/inventory" routerLinkActive="active" class="adm-side__sub-link">
+              <span>📊 Stock & Shortages</span>
+            </a>
+            <a routerLink="/admin/bakery/waste" routerLinkActive="active" class="adm-side__sub-link">
+              <span>🗑️ Waste Log</span>
+            </a>
+          </div>
+        }
+      </div>
+
       <a routerLink="/admin/queue" routerLinkActive="active" class="adm-side__link">
         <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
           <circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" stroke-linecap="round" stroke-linejoin="round" />

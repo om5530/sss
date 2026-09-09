@@ -27,6 +27,12 @@ export const ADMIN_ROUTES: Routes = [
       { path: 'coupons', loadComponent: () => import('./coupons/admin-coupons').then((m) => m.AdminCoupons), title: 'Coupons — SSS Admin' },
       { path: 'reports', loadComponent: () => import('./reports/admin-reports').then((m) => m.AdminReports), title: 'Reports — SSS Admin' },
       { path: 'activity', loadComponent: () => import('./activity/admin-activity').then((m) => m.AdminActivity), title: 'Activity — SSS Admin' },
+      // Bakery Manufacturing & Costing Operations
+      { path: 'bakery/calculator', loadComponent: () => import('./bakery/calculator/admin-bakery-calculator').then((m) => m.AdminBakeryCalculator), title: '⚡ Calculator — Bakery Operations' },
+      { path: 'bakery/recipes', loadComponent: () => import('./bakery/recipes/admin-bakery-recipes').then((m) => m.AdminBakeryRecipes), title: '📜 Recipes — Bakery Operations' },
+      { path: 'bakery/materials', loadComponent: () => import('./bakery/materials/admin-bakery-materials').then((m) => m.AdminBakeryMaterials), title: '📦 Materials — Bakery Operations' },
+      { path: 'bakery/inventory', loadComponent: () => import('./bakery/inventory/admin-bakery-inventory').then((m) => m.AdminBakeryInventory), title: '📊 Stock & Shortages — Bakery Operations' },
+      { path: 'bakery/waste', loadComponent: () => import('./bakery/waste/admin-bakery-waste').then((m) => m.AdminBakeryWaste), title: '🗑️ Waste Tracker — Bakery Operations' },
     ],
   },
 ];

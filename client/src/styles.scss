@@ -439,6 +439,72 @@ button { font-family: inherit; cursor: pointer; }
 .adm-side__link:hover { color: var(--d-text); background: rgba(247, 236, 220, 0.06); }
 .adm-side__link.active { color: var(--gold-bright); background: rgba(242, 197, 128, 0.1); }
 
+/* Collapsible Bakery Operations Dropdown */
+.adm-side__dropdown {
+  margin: 0.5rem 0;
+}
+.adm-side__dropdown-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  background: rgba(223, 167, 87, 0.1);
+  border: 1px solid rgba(223, 167, 87, 0.25);
+  color: var(--gold-bright);
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+.adm-side__dropdown-header:hover {
+  background: rgba(223, 167, 87, 0.18);
+  border-color: rgba(223, 167, 87, 0.4);
+}
+.adm-side__dropdown-header .title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.adm-side__dropdown-header .chevron {
+  transition: transform 0.25s ease;
+  flex: none;
+}
+.adm-side__dropdown-header.open .chevron {
+  transform: rotate(180deg);
+}
+.adm-side__sub-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-top: 0.4rem;
+  margin-left: 0.4rem;
+  padding-left: 0.6rem;
+  border-left: 2px solid rgba(223, 167, 87, 0.3);
+}
+.adm-side__sub-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 8px;
+  color: var(--d-muted);
+  font-size: 0.84rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+.adm-side__sub-link:hover {
+  color: var(--d-text);
+  background: rgba(247, 236, 220, 0.08);
+}
+.adm-side__sub-link.active {
+  color: var(--gold-bright);
+  background: rgba(242, 197, 128, 0.14);
+  font-weight: 700;
+}
+
 .adm-side__foot { display: flex; flex-direction: column; gap: 0.2rem; padding-top: 0.8rem; border-top: 1px solid var(--d-line); }
 
 /* ---- Main column ---- */

@@ -1,0 +1,121 @@
+.waste-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.waste-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.waste-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  color: var(--choco);
+  margin: 0;
+}
+
+.waste-sub {
+  color: var(--muted);
+  font-size: 0.95rem;
+  margin: 0.25rem 0 0;
+}
+
+.kpi-banner {
+  display: flex;
+  gap: 1rem;
+}
+
+.kpi-mini {
+  background: var(--white);
+  border: 1px solid var(--line);
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+
+  .label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .val {
+    font-size: 1.4rem;
+    font-family: var(--font-display);
+  }
+}
+
+.waste-layout {
+  display: grid;
+  grid-template-columns: minmax(300px, 380px) 1fr;
+  gap: 1.5rem;
+  align-items: start;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.8rem;
+}
+
+.label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--choco);
+  text-transform: uppercase;
+}
+
+.cost-callout {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(211, 47, 47, 0.08);
+  border: 1px solid rgba(211, 47, 47, 0.2);
+  padding: 0.8rem 1rem;
+  border-radius: var(--radius);
+  margin: 1.2rem 0;
+  font-size: 0.9rem;
+}
+
+.cost-loss {
+  font-size: 1.3rem;
+  color: #c62828;
+  font-family: var(--font-display);
+}
+
+.badge--warning {
+  background: #fff8e1;
+  color: #f57f17;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.text-danger { color: #c62828; }
+.block { display: block; }
+.font-mono { font-family: monospace; }
+.empty-state { text-align: center; padding: 2rem; color: var(--muted); }

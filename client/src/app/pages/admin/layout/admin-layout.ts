@@ -15,6 +15,7 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class AdminLayout {
   protected readonly unreadEnquiries = signal<number | null>(null);
+  protected readonly bakeryOpen = signal<boolean>(true);
   protected auth = inject(AuthService);
   private router = inject(Router);
   private session = inject(AdminSessionService);
