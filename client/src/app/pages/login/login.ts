@@ -159,27 +159,33 @@ export class Login {
   }
 
   private firebaseError(err: unknown): string {
-    const code = (err as { code?: string })?.code ?? '';
+    const errorObj = err as { code?: string; message?: string };
+    const code = errorObj?.code ?? '';
+    const message = errorObj?.message ?? '';
+    console.error('Firebase Auth Error:', code, message, err);
+
     switch (code) {
       case 'auth/invalid-phone-number':
-        return 'That phone number looks invalid. Include the country code.';
+        return 'That phone number looks invalid. Include country code (e.g. +91 99212 79128).';
+      case 'auth/operation-not-allowed':
+        return 'Phone sign-in is disabled in Firebase. Enable "Phone" under Firebase Console -> Authentication -> Sign-in method.';
+      case 'auth/unauthorized-domain':
+        return 'Domain not authorized in Firebase. Add sweet-savory-savor.vercel.app under Firebase Console -> Authentication -> Settings -> Authorized domains.';
       case 'auth/too-many-requests':
       case 'auth/quota-exceeded':
-        return 'Too many attempts. Please wait a while and try again.';
+        return 'Too many SMS attempts. Please wait a while before trying again.';
       case 'auth/invalid-verification-code':
-        return 'Incorrect code. Please check and try again.';
+        return 'Incorrect code. Please check the SMS and try again.';
       case 'auth/code-expired':
-        return 'That code expired. Request a new one.';
+        return 'That verification code expired. Request a new one.';
       case 'auth/captcha-check-failed':
       case 'auth/missing-app-credential':
-        return 'Verification check failed. Reload the page and try again.';
-      case 'auth/unauthorized-domain':
       case 'auth/invalid-app-credential':
-        return 'Phone verification is unavailable on this website. Please contact the café.';
+        return 'Domain verification check failed. Add sweet-savory-savor.vercel.app to Firebase Console -> Authorized domains.';
       case 'auth/network-request-failed':
-        return 'Could not load phone verification. Check your connection and try again.';
+        return 'Could not reach phone verification servers. Check your internet connection.';
       default:
-        return 'Could not complete phone verification. Please try again.';
+        return message || 'Could not complete phone verification. Please check Firebase domain authorization.';
     }
   }
 
