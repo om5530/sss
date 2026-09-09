@@ -25,7 +25,7 @@ export class Profile {
   protected readonly savingAddress = signal(false);
   protected readonly addressError = signal('');
 
-  protected profileForm = { name: '', email: '' };
+  protected profileForm = { name: '', email: '', phone: '' };
   protected newAddress: Address = { fullAddress: '', area: '', city: '', pincode: '', landmark: '', isDefault: false };
 
   /** Presentation only — picks the work/home glyph on address cards. */
@@ -36,18 +36,46 @@ export class Profile {
 
   startEdit() {
     const user = this.auth.user();
-    this.profileForm = { name: user?.name ?? '', email: user?.email ?? '' };
+    this.profileForm = {
+      name: user?.name ?? '',
+      email: user?.email ?? '',
+      phone: user?.phone ?? '',
+    };
     this.editing.set(true);
   }
 
   saveProfile() {
-    if (this.auth.user()?.identityReadOnly || this.savingProfile()) return;
-    if (!this.profileForm.name.trim() || (this.profileForm.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.profileForm.email.trim()))) {
-      this.toast.error('Enter your name and a valid email address.');
+    if (this.savingProfile()) return;
+    const user = this.auth.user();
+
+    if (!user?.identityReadOnly) {
+      if (!this.profileForm.name.trim()) {
+        this.toast.error('Please enter your name.');
+        return;
+      }
+      if (this.profileForm.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.profileForm.email.trim())) {
+        this.toast.error('Please enter a valid email address.');
+        return;
+      }
+    }
+
+    if (this.profileForm.phone.trim() && !/^\+?[0-9\s()-]{7,20}$/.test(this.profileForm.phone.trim())) {
+      this.toast.error('Enter a valid phone number (e.g. +91 98765 43210).');
       return;
     }
+
     this.savingProfile.set(true);
-    this.auth.updateProfile(this.profileForm).subscribe({
+
+    const payload: { name?: string; email?: string; phone?: string } = {
+      phone: this.profileForm.phone.trim(),
+    };
+
+    if (!user?.identityReadOnly) {
+      payload.name = this.profileForm.name.trim();
+      payload.email = this.profileForm.email.trim();
+    }
+
+    this.auth.updateProfile(payload).subscribe({
       next: () => {
         this.savingProfile.set(false);
         this.editing.set(false);

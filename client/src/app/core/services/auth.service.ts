@@ -51,7 +51,7 @@ export class AuthService {
       .pipe(tap((res) => this.setSession(res)));
   }
 
-  updateProfile(data: { name?: string; email?: string }) {
+  updateProfile(data: { name?: string; email?: string; phone?: string }) {
     return this.http
       .patch<{ user: User }>(`${this.base}/auth/me`, data)
       .pipe(tap((res) => this.user.set(res.user)));

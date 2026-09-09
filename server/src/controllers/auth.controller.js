@@ -113,13 +113,45 @@ const activity = asyncHandler(async (req, res) => {
 });
 
 const updateProfile = asyncHandler(async (req, res) => {
-  const { name, email } = req.body;
-  if (req.user.googleId && ((name !== undefined && name !== req.user.name) ||
-      (email !== undefined && email !== req.user.email))) {
-    throw ApiError.badRequest('Your name and email are managed by Google.');
+  const { name, email, phone } = req.body;
+
+  // If user signed in with Google, name and email cannot be changed
+  if (req.user.googleId) {
+    if ((name !== undefined && name !== req.user.name) ||
+        (email !== undefined && email !== req.user.email)) {
+      throw ApiError.badRequest('Your name and email are managed by Google.');
+    }
+  } else {
+    // Phone user: can update name and email
+    if (name !== undefined) {
+      const trimmedName = name.trim();
+      if (!trimmedName) throw ApiError.badRequest('Name cannot be empty.');
+      req.user.name = trimmedName;
+    }
+    if (email !== undefined) {
+      const trimmedEmail = email.trim().toLowerCase();
+      if (trimmedEmail && trimmedEmail !== req.user.email) {
+        const existing = await User.findOne({ email: trimmedEmail, _id: { $ne: req.user._id } });
+        if (existing) throw ApiError.badRequest('That email address is already registered to another account.');
+        req.user.email = trimmedEmail;
+      } else if (!trimmedEmail) {
+        req.user.email = undefined;
+      }
+    }
   }
-  if (name !== undefined) req.user.name = name;
-  if (email !== undefined) req.user.email = email || undefined;
+
+  // Both Google and Phone users can update phone number
+  if (phone !== undefined) {
+    const trimmedPhone = phone.trim();
+    if (trimmedPhone && trimmedPhone !== req.user.phone) {
+      const existing = await User.findOne({ phone: trimmedPhone, _id: { $ne: req.user._id } });
+      if (existing) throw ApiError.badRequest('That phone number is already registered to another account.');
+      req.user.phone = trimmedPhone;
+    } else if (!trimmedPhone) {
+      req.user.phone = undefined;
+    }
+  }
+
   await req.user.save();
   res.json({ success: true, user: sanitizeUser(req.user) });
 });
@@ -169,6 +201,7 @@ const validators = {
   profile: [
     body('name').optional().isString().bail().trim().isLength({ min: 1, max: 100 }).withMessage('Enter your name (up to 100 characters)'),
     body('email').optional().isString().bail().trim().if((value) => value !== '').isEmail().withMessage('Enter a valid email address').bail().toLowerCase(),
+    body('phone').optional().isString().bail().trim().if((value) => value !== '').matches(/^\+?[0-9\s()-]{7,20}$/).withMessage('Enter a valid phone number'),
   ],
   requestOtp: [
     body('phone').trim().matches(/^\+?[0-9]{7,15}$/).withMessage('Enter a valid phone number'),
