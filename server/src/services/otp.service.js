@@ -58,7 +58,8 @@ async function deliverOtp(phone, code) {
 }
 
 function assertMockAllowed() {
-  if (env.otp.provider !== 'mock' && !env.otp.exposeDevOtp) {
+  const allowed = !env.isProd || env.otp.exposeDevOtp;
+  if (!allowed || (env.otp.provider !== 'mock' && !env.otp.exposeDevOtp)) {
     throw ApiError.badRequest('Please use secure phone verification to sign in.');
   }
 }

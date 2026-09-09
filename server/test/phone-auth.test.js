@@ -11,13 +11,14 @@ test('verified Firebase claims require recent phone authentication', () => {
 });
 test('production and unsupported providers cannot send or verify mock OTPs', async () => {
   const otp = require('../src/services/otp.service');
-  const previous = { isProd: env.isProd, provider: env.otp.provider };
+  const previous = { isProd: env.isProd, provider: env.otp.provider, exposeDevOtp: env.otp.exposeDevOtp };
   try {
     env.isProd = true;
+    env.otp.exposeDevOtp = false;
     await assert.rejects(otp.createOtp('+919999000123'), /secure phone/);
     await assert.rejects(otp.verifyOtp('+919999000123', '123456'), /secure phone/);
     env.isProd = false;
     env.otp.provider = 'unimplemented-provider';
     await assert.rejects(otp.createOtp('+919999000123'), /secure phone/);
-  } finally { env.isProd = previous.isProd; env.otp.provider = previous.provider; }
+  } finally { env.isProd = previous.isProd; env.otp.provider = previous.provider; env.otp.exposeDevOtp = previous.exposeDevOtp; }
 });
