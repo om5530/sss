@@ -1,4 +1,4 @@
-# Sweet Savory Savor — Bakery & Café Online Ordering Platform
+# The Golden Batch — Bakery & Café Online Ordering Platform
 
 A full-stack **MEAN** (MongoDB · Express · Angular · Node.js) application for a modern bakery
 and café: browse a kiosk-style menu, build a cart, sign in, choose dine-in / takeaway / delivery,

@@ -43,7 +43,7 @@ const env = {
   },
   notify: {
     resendApiKey: process.env.RESEND_API_KEY || '',
-    from: process.env.NOTIFY_FROM || 'Sweet Savory Savor <onboarding@resend.dev>',
+    from: process.env.NOTIFY_FROM || 'The Golden Batch <onboarding@resend.dev>',
     shopEmail: process.env.SHOP_EMAIL || '',
   },
   stripe: {

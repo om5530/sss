@@ -1,7 +1,7 @@
 const env = require('../config/env');
 const User = require('../models/User');
 
-const BRAND = 'Sweet Savory Savor';
+const BRAND = 'The Golden Batch';
 
 /** Best-effort lookup of the customer email for an order (guests have none). */
 async function emailForOrder(order) {

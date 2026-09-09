@@ -1,4 +1,4 @@
-# Sweet Savory Savor
+# The Golden Batch
 User-agent: *
 Allow: /
 Disallow: /admin

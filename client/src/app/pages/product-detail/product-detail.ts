@@ -49,7 +49,7 @@ export class ProductDetail {
           this.loading.set(false);
           // Share-ready meta: real name, description and photo for link previews.
           this.seo.set({
-            title: `${product.name} — Sweet Savory Savor`,
+            title: `${product.name} — The Golden Batch`,
             description: product.description || undefined,
             image: product.image || undefined,
           });

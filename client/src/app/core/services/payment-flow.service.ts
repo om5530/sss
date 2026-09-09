@@ -94,7 +94,7 @@ export class PaymentFlowService {
         order_id: intent.razorpayOrderId!,
         amount: intent.amount,
         currency: intent.currency,
-        name: 'Sweet Savory Savor',
+        name: 'The Golden Batch',
         description: intent.orderNumber ? `Order ${intent.orderNumber}` : 'Bakery order',
         prefill,
         theme: { color: '#d94f78' },

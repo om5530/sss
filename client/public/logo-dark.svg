@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 580 140" role="img" aria-label="Sweet Savory Savor — bakery and café">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 580 140" role="img" aria-label="The Golden Batch — bakery and café">
   <!-- lockup for dark surfaces (espresso canvas) -->
   <defs>
     <radialGradient id="sssd-esp" cx="36%" cy="28%" r="85%">
@@ -28,6 +28,6 @@
     <circle cx="39.6" cy="63.3" r="2.7" fill="#d94f78"/>
   </g>
   <!-- wordmark -->
-  <text x="150" y="68" font-family="Fraunces, Georgia, 'Times New Roman', serif" font-size="40" font-weight="800" fill="#f7ecdc">sweet savory savor</text>
+  <text x="150" y="68" font-family="Fraunces, Georgia, 'Times New Roman', serif" font-size="40" font-weight="800" fill="#f7ecdc">the golden batch</text>
   <text x="152" y="98" font-family="Manrope, Poppins, system-ui, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="700" letter-spacing="4.5" fill="#dfa757">BAKERY &amp; CAFÉ</text>
 </svg>
