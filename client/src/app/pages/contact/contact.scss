@@ -26,6 +26,8 @@
 
 /* ---- Info cards ---- */
 .contact__info { display: grid; gap: 1rem; }
+.contact__info, .info-card > div { min-width: 0; }
+.info-card > div { overflow-wrap: anywhere; }
 a.info-card {
   text-decoration: none;
   color: inherit;

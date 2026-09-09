@@ -282,7 +282,7 @@
 .auth__divider::after { background: linear-gradient(90deg, var(--line), transparent); }
 
 /* Google SDK renders into this container — keep element + sizing intact. */
-.auth__google { display: grid; place-items: center; min-height: 44px; }
+.auth__google { display: grid; place-items: center; min-height: 44px; min-width: 0; width: 100%; }
 .auth__google-disabled { gap: 0.5rem; }
 .auth__hint { text-align: center; font-size: 0.78rem; margin: 0.8rem 0 0; }
 
@@ -306,7 +306,7 @@
 
 /* Stack: photo becomes a short cinematic top band. */
 @media (max-width: 900px) {
-  .auth { grid-template-columns: 1fr; }
+  .auth { grid-template-columns: minmax(0, 1fr); }
   .auth__visual { min-height: clamp(230px, 36vw, 320px); }
   .auth__visual-inner {
     justify-content: space-between;

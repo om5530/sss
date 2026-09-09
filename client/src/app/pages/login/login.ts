@@ -211,7 +211,17 @@ export class Login {
         callback: (resp: { credential: string }) => this.onGoogleCredential(resp.credential),
       });
       const el = document.getElementById('googleBtn');
-      if (el) w.google?.accounts.id.renderButton(el, { theme: 'outline', size: 'large', shape: 'pill', width: 320 });
+      if (el && !this.destroyRef.destroyed) {
+        let lastWidth = 0;
+        const resize = new ResizeObserver(() => {
+          const width = Math.floor(Math.min(320, el.clientWidth));
+          if (width <= 0 || width === lastWidth) return;
+          lastWidth = width;
+          w.google?.accounts.id.renderButton(el, { theme: 'outline', size: 'large', shape: 'pill', width });
+        });
+        resize.observe(el);
+        this.destroyRef.onDestroy(() => resize.disconnect());
+      }
     };
 
     if (w.google?.accounts?.id) return render();

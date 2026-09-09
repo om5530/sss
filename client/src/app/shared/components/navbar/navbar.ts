@@ -53,10 +53,10 @@ export class Navbar {
     this.scrolled.set(window.scrollY > 24);
   }
 
-  /** The sheet only exists ≤860px — growing past that while open would strand the lock. */
+  /** Close the sheet when switching to desktop navigation to release the scroll lock. */
   @HostListener('window:resize')
   onResize() {
-    if (window.innerWidth > 860) this.closeMenu();
+    if (window.innerWidth > 1200) this.closeMenu();
   }
 
   toggleMenu() {

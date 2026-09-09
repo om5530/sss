@@ -505,7 +505,8 @@ button { font-family: inherit; cursor: pointer; }
 .adm-card + .adm-card { margin-top: 1rem; }
 .adm-card h3 { font-size: 1.05rem; margin-bottom: 0.7rem; }
 
-.adm-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem; align-items: start; }
+.adm-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 1rem; align-items: start; }
+.adm-cols > *, .adm-grid > *, .adm-card, .adm-kv dd { min-width: 0; overflow-wrap: anywhere; }
 
 /* ---- Filters ---- */
 
@@ -781,6 +782,25 @@ button { font-family: inherit; cursor: pointer; }
 }
 
 /* ============ Scrollbar ============ */
+
+/* Keep forms and actions usable on narrow screens and touch devices. */
+.field { min-width: 0; }
+@media (pointer: coarse) {
+  .btn, .nav__cart, .nav__profile, .adm-side__link { min-height: 44px; }
+  input, select, textarea { font-size: 16px !important; }
+}
+@media (max-width: 600px) {
+  .adm-cols { grid-template-columns: minmax(0, 1fr) !important; }
+  .adm-head { flex-wrap: wrap; }
+  .adm-head__actions, .adm-filters { min-width: 0; flex-wrap: wrap; }
+  .adm-filters .input, .adm-filters .select { min-width: 0; max-width: 100%; }
+  .adm-kv { grid-template-columns: minmax(75px, .7fr) minmax(0, 1fr); }
+  .adm-hbar { grid-template-columns: minmax(65px, 1fr) minmax(0, 1fr) auto; gap: .4rem; }
+  .btn { max-width: 100%; white-space: normal; text-align: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(root), ::view-transition-old(root), ::view-transition-new(root) { animation: none !important; }
+}
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: var(--cream-2); }

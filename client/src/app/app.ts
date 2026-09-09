@@ -3,6 +3,7 @@ import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Navbar } from './shared/components/navbar/navbar';
 import { Footer } from './shared/components/footer/footer';
+import { AppInstall } from './shared/components/app-install/app-install';
 import { ToastContainer } from './shared/components/toast/toast-container';
 import { AnalyticsService } from './core/services/analytics.service';
 import { MotionService } from './core/services/motion.service';
@@ -10,7 +11,7 @@ import { SeoService } from './core/services/seo.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, Navbar, Footer, ToastContainer],
+  imports: [RouterOutlet, Navbar, Footer, ToastContainer, AppInstall],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })

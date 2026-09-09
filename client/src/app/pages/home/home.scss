@@ -7,6 +7,8 @@
 
 /* ---------------- 1 · HERO ---------------- */
 
+:host { display: block; overflow-x: clip; }
+
 .hero {
   position: relative;
   overflow: hidden;

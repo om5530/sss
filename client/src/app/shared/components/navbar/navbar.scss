@@ -142,11 +142,16 @@
   position: fixed;
   inset: 0;
   top: 64px;
+  bottom: auto;
+  height: calc(100dvh - 64px);
   z-index: -1;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 8vh clamp(24px, 7vw, 48px) 5vh;
+  padding: 1.5rem clamp(20px, 5vw, 48px) max(1.5rem, env(safe-area-inset-bottom));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  gap: 1.5rem;
   background: rgba(18, 10, 6, 0.97);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
@@ -181,11 +186,25 @@
 @media (max-width: 1020px) {
   .nav__order { display: none; }
 }
-@media (max-width: 860px) {
+@media (max-width: 1200px) {
   .nav__links, .nav__signin { display: none; }
   .nav__burger { display: flex; }
   .nav__inner { height: 64px; }
 }
-@media (min-width: 861px) {
+@media (min-width: 1201px) {
   .nav__sheet { display: none; }
+}
+@media (max-width: 420px) {
+  .brand { min-width: 0; flex-shrink: 1; }
+  .brand__name { white-space: normal; overflow-wrap: anywhere; }
+  .nav__inner { gap: .5rem; }
+  .brand { gap: .35rem; }
+  .brand__name { font-size: 1rem; }
+  .brand__mark { width: 28px; height: 28px; }
+  .nav__actions { gap: .25rem; }
+  .nav__cart, .nav__profile, .nav__burger { min-width: 44px; min-height: 44px; justify-content: center; align-items: center; }
+}
+@media (max-height: 650px) and (max-width: 1200px) {
+  .nav__sheet-links a { font-size: 1.35rem; padding: .35rem 0; }
+  .nav__sheet-links { gap: .15rem; }
 }
