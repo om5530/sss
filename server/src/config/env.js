@@ -23,10 +23,10 @@ const env = {
     clientId: process.env.GOOGLE_CLIENT_ID || '',
   },
   firebase: {
-    apiKey: process.env.FIREBASE_WEB_API_KEY || '',
-    authDomain: process.env.FIREBASE_AUTH_DOMAIN || '',
-    appId: process.env.FIREBASE_WEB_APP_ID || '',
-    projectId: process.env.FIREBASE_PROJECT_ID || '',
+    apiKey: (process.env.FIREBASE_WEB_API_KEY || '').replace('tNLP', 'tNlP') || 'AIzaSyC_Apc-tNlP6fxefBi-FGSfyc17Z0mcCOE',
+    authDomain: process.env.FIREBASE_AUTH_DOMAIN || 'ssss-ade3d.firebaseapp.com',
+    appId: process.env.FIREBASE_WEB_APP_ID || '1:446405901962:web:a365bc2c68f90353a3b773',
+    projectId: process.env.FIREBASE_PROJECT_ID || 'ssss-ade3d',
     clientEmail: process.env.FIREBASE_CLIENT_EMAIL || '',
     // Env stores the PEM with literal "\n"; restore real newlines for the SDK.
     privateKey: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
