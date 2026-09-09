@@ -5,7 +5,7 @@ export const environment = {
   // (e.g. 'https://api.your-domain.com/api').
   apiUrl: '/api',
   // Google OAuth Web Client ID — same value as the server's GOOGLE_CLIENT_ID.
-  googleClientId: '',
+  googleClientId: '446405901962-v80qvjniu6r6cptauve5kt4f06lb340a.apps.googleusercontent.com',
   // GA4 measurement id (G-XXXXXXX) — blank disables analytics entirely.
   gaMeasurementId: '',
   // Firebase web config (SAFE to commit — public identifiers, not secrets).
