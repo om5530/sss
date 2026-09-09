@@ -34,6 +34,26 @@ function issueSession(res, user) {
   return token;
 }
 
+const CUTE_ADJECTIVES = [
+  'Glazed', 'Honeyed', 'Golden', 'Fudgy', 'Velvet',
+  'Toasted', 'Sugared', 'Berry', 'Butter', 'Crispy',
+  'Warm', 'Caramel', 'Cinnamon', 'Vanilla', 'Almond',
+  'Pecan', 'Maple', 'Fluffy', 'Sweet', 'Hazelnut',
+];
+
+const CUTE_NOUNS = [
+  'Croissant', 'Muffin', 'Cupcake', 'Brioche', 'Brownie',
+  'Cookie', 'Tart', 'Donut', 'Scone', 'Macaron',
+  'Eclair', 'Pancake', 'Waffle', 'Pie', 'Danish',
+  'Strudel', 'Puff', 'Shortcake', 'Bake', 'Bun',
+];
+
+function generateCuteName() {
+  const adj = CUTE_ADJECTIVES[Math.floor(Math.random() * CUTE_ADJECTIVES.length)];
+  const noun = CUTE_NOUNS[Math.floor(Math.random() * CUTE_NOUNS.length)];
+  return `${adj} ${noun}`;
+}
+
 const googleLogin = asyncHandler(async (req, res) => {
   const { idToken } = req.body;
   if (!idToken) throw ApiError.badRequest('idToken is required');
@@ -70,10 +90,11 @@ const firebasePhoneLogin = asyncHandler(async (req, res) => {
 
   let user = await User.findOne({ $or: [{ firebaseUid }, { phone }] });
   if (!user) {
-    user = await User.create({ phone, firebaseUid });
-  } else if (!user.firebaseUid) {
-    user.firebaseUid = firebaseUid;
+    user = await User.create({ phone, firebaseUid, name: generateCuteName() });
+  } else {
+    if (!user.firebaseUid) user.firebaseUid = firebaseUid;
     if (!user.phone) user.phone = phone;
+    if (!user.name) user.name = generateCuteName();
   }
   user.lastLoginAt = new Date();
   await user.save();
@@ -94,7 +115,11 @@ const verifyOtpLogin = asyncHandler(async (req, res) => {
   if (!result.ok) throw ApiError.badRequest(result.reason);
 
   let user = await User.findOne({ phone });
-  if (!user) user = await User.create({ phone });
+  if (!user) {
+    user = await User.create({ phone, name: generateCuteName() });
+  } else if (!user.name) {
+    user.name = generateCuteName();
+  }
   user.lastLoginAt = new Date();
   await user.save();
 
