@@ -165,6 +165,9 @@ export class Login {
     console.error('Firebase Auth Error:', code, message, err);
 
     switch (code) {
+      case 'auth/api-key-not-valid':
+      case 'auth/invalid-api-key':
+        return 'Firebase API Key is invalid or restricted. Please check your Web API Key in Firebase Console -> Project Settings -> General.';
       case 'auth/invalid-phone-number':
         return 'That phone number looks invalid. Include country code (e.g. +91 99212 79128).';
       case 'auth/operation-not-allowed':
