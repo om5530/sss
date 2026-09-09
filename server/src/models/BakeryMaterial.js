@@ -43,6 +43,32 @@ const bakeryMaterialSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+bakeryMaterialSchema.pre('validate', function (next) {
+  if (this.get('baseUnit') && !this.baseUom) this.baseUom = this.get('baseUnit');
+  if (this.get('packUnit') && !this.packUom) this.packUom = this.get('packUnit');
+  next();
+});
+
+bakeryMaterialSchema.pre('save', function (next) {
+  if (
+    this.isModified('packQuantity') ||
+    this.isModified('purchasePrice') ||
+    this.isModified('packUom') ||
+    this.isModified('baseUom') ||
+    !this.effectiveUnitCost
+  ) {
+    const costEngine = require('../services/bakeryCost.service');
+    this.effectiveUnitCost = costEngine.calculateEffectiveUnitCost(
+      this.packQuantity,
+      this.packUom,
+      this.purchasePrice,
+      this.baseUom,
+      this.densityGramPerMl,
+    );
+  }
+  next();
+});
+
 bakeryMaterialSchema.index({ type: 1, category: 1 });
 bakeryMaterialSchema.index({ name: 'text', code: 'text' });
 

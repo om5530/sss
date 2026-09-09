@@ -188,15 +188,28 @@ function evaluateRecipeCost(recipe, materialMap = new Map(), subRecipeMap = new 
  */
 function scaleRecipeForQuantity(recipe, targetUnits, materialMap = new Map(), subRecipeMap = new Map()) {
   const target = Math.max(0.001, Number(targetUnits) || 1);
-  const baseUnits = Number(recipe.baseBatchUnits) > 0 ? Number(recipe.baseBatchUnits) : 1;
+  const baseUnits = Number(recipe.baseBatchUnits) > 0
+    ? Number(recipe.baseBatchUnits)
+    : (Number(recipe.yieldQuantity) > 0 ? Number(recipe.yieldQuantity) : 1);
   const factor = target / baseUnits;
 
   let ingredientCost = 0;
   let packagingCost = 0;
   let labourCost = 0;
   let resourceCost = 0;
+  let rawComponents = recipe.components || [];
+  if (rawComponents.length === 0 && Array.isArray(recipe.materials)) {
+    rawComponents = recipe.materials.map((m) => ({
+      materialId: m.materialId || m.material,
+      quantity: m.quantity,
+      uom: m.uom || 'g',
+      name: m.name,
+      scalingMethod: m.scalingMethod || 'linear',
+      itemType: m.itemType || 'ingredient',
+    }));
+  }
 
-  const scaledComponents = (recipe.components || []).map((comp) => {
+  const scaledComponents = rawComponents.map((comp) => {
     let scaledQty = 0;
     let unitCost = 0;
     let totalCost = 0;
@@ -281,6 +294,18 @@ function scaleRecipeForQuantity(recipe, targetUnits, materialMap = new Map(), su
       totalCost,
     };
   });
+
+  if (recipe.labourMinutes && !rawComponents.some((c) => c.itemType === 'labour')) {
+    const hourlyRate = Number(recipe.labourHourlyRate) || 120;
+    const lMins = (Number(recipe.labourMinutes) || 0) * factor;
+    const lTotal = (lMins / 60) * hourlyRate;
+    labourCost += lTotal;
+  }
+  if (recipe.ovenCycleCost && !rawComponents.some((c) => c.itemType === 'resource')) {
+    const cycleRate = Number(recipe.ovenCycleCost) || 30;
+    const cycles = Number(recipe.ovenCycles || 1) * Math.ceil(factor);
+    resourceCost += cycles * cycleRate;
+  }
 
   const totalCost = ingredientCost + packagingCost + labourCost + resourceCost;
   const costPerUnit = totalCost / target;

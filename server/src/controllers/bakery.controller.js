@@ -72,20 +72,33 @@ exports.createMaterial = async (req, res, next) => {
 exports.updateMaterial = async (req, res, next) => {
   try {
     const data = req.body;
-    // Recalculate effective unit cost
-    if (data.packQuantity !== undefined || data.purchasePrice !== undefined || data.packUom !== undefined || data.baseUom !== undefined) {
+    const existing = await BakeryMaterial.findById(req.params.id);
+    if (!existing) throw ApiError.notFound('Material not found');
+
+    // Recalculate effective unit cost if any pricing/pack field is provided
+    if (
+      data.packQuantity !== undefined ||
+      data.purchasePrice !== undefined ||
+      data.packUom !== undefined ||
+      data.baseUom !== undefined ||
+      data.densityGramPerMl !== undefined
+    ) {
+      const packQty = data.packQuantity !== undefined ? data.packQuantity : existing.packQuantity;
+      const packUom = data.packUom !== undefined ? data.packUom : existing.packUom;
+      const purchasePrice = data.purchasePrice !== undefined ? data.purchasePrice : existing.purchasePrice;
+      const baseUom = data.baseUom !== undefined ? data.baseUom : existing.baseUom;
+      const density = data.densityGramPerMl !== undefined ? data.densityGramPerMl : existing.densityGramPerMl;
+
       data.effectiveUnitCost = costEngine.calculateEffectiveUnitCost(
-        data.packQuantity,
-        data.packUom,
-        data.purchasePrice,
-        data.baseUom,
-        data.densityGramPerMl,
+        packQty,
+        packUom,
+        purchasePrice,
+        baseUom,
+        density,
       );
     }
 
     const material = await BakeryMaterial.findByIdAndUpdate(req.params.id, data, { new: true });
-    if (!material) throw ApiError.notFound('Material not found');
-
     res.json({ success: true, material });
   } catch (err) {
     next(err);
@@ -213,15 +226,20 @@ exports.deleteRecipe = async (req, res, next) => {
 // Single recipe instant scaling (e.g. 7 Butter Cakes)
 exports.simulateRecipe = async (req, res, next) => {
   try {
-    const { recipeId, quantity, targetMarkup } = req.body;
-    if (!recipeId) throw ApiError.badRequest('Recipe ID required');
+    const { recipeId, recipeData, quantity, targetMarkup, markupPercent } = req.body;
+    let recipe;
 
-    const recipe = await BakeryRecipe.findById(recipeId);
-    if (!recipe) throw ApiError.notFound('Recipe not found');
-
-    if (targetMarkup !== undefined) {
-      recipe.targetMarkupPercent = Number(targetMarkup);
+    if (recipeId) {
+      recipe = await BakeryRecipe.findById(recipeId);
+      if (!recipe) throw ApiError.notFound('Recipe not found');
+    } else if (recipeData) {
+      recipe = recipeData;
+    } else {
+      throw ApiError.badRequest('Either recipeId or recipeData is required');
     }
+
+    const markup = markupPercent !== undefined ? Number(markupPercent) : (targetMarkup !== undefined ? Number(targetMarkup) : (recipe.targetMarkupPercent || 50));
+    recipe.targetMarkupPercent = markup;
 
     const materialMap = await getMaterialMap();
     const subRecipeMap = await getSubRecipeMap();
@@ -380,7 +398,19 @@ exports.getWasteLogs = async (req, res, next) => {
 
 exports.logWaste = async (req, res, next) => {
   try {
-    const { materialId, quantity, reason, notes } = req.body;
+    const materialId = req.body.materialId || req.body.material;
+    const quantity = Number(req.body.quantity) || 0;
+    const notes = req.body.notes || '';
+    let reason = req.body.reason || 'Spoilage';
+
+    // Normalize reason to valid enum title case
+    const validReasons = [
+      'Spoilage', 'Dropped', 'Burnt', 'Overbaked', 'Expired',
+      'Trim', 'Damaged', 'Incorrect Recipe', 'Unsold', 'Other'
+    ];
+    const matchedReason = validReasons.find(r => r.toLowerCase() === String(reason).toLowerCase());
+    if (matchedReason) reason = matchedReason;
+
     let materialName = req.body.materialName || 'Custom Item';
     let uom = req.body.uom || 'g';
     let unitCost = Number(req.body.unitCost) || 0;
@@ -393,23 +423,23 @@ exports.logWaste = async (req, res, next) => {
         unitCost = mat.effectiveUnitCost;
 
         // Optionally deduct from on-hand stock
-        mat.currentStock = Math.max(0, mat.currentStock - (Number(quantity) || 0));
+        mat.currentStock = Math.max(0, mat.currentStock - quantity);
         await mat.save();
       }
     }
 
-    const totalCostLost = (Number(quantity) || 0) * unitCost;
+    const totalCostLost = Math.round(quantity * unitCost * 100) / 100;
 
     const waste = await BakeryWaste.create({
       materialId: materialId || null,
       materialName,
-      quantity: Number(quantity) || 0,
+      quantity,
       uom,
       unitCost,
       totalCostLost,
-      reason: reason || 'Spoilage',
-      notes: notes || '',
-      date: new Date(),
+      reason,
+      notes,
+      date: req.body.date ? new Date(req.body.date) : new Date(),
     });
 
     res.status(201).json({ success: true, waste });

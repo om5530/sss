@@ -85,6 +85,15 @@ const bakeryRecipeSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+bakeryRecipeSchema.pre('validate', function (next) {
+  if (this.yieldQuantity && (!this.baseBatchUnits || this.baseBatchUnits === 1)) {
+    this.baseBatchUnits = this.yieldQuantity;
+  } else if (this.baseBatchUnits && (!this.yieldQuantity || this.yieldQuantity === 1)) {
+    this.yieldQuantity = this.baseBatchUnits;
+  }
+  next();
+});
+
 bakeryRecipeSchema.index({ name: 1, category: 1 });
 bakeryRecipeSchema.index({ isSubRecipe: 1 });
 

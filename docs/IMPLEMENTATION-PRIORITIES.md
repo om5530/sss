@@ -1,5 +1,7 @@
 # Implementation priorities
 
+The full bakery requirements audit is tracked in [BAKERY-REQUIREMENTS-AUDIT.md](BAKERY-REQUIREMENTS-AUDIT.md).
+
 Reviewed against both story documents and the implementation on 2026-09-09.
 
 Real phone login: Firebase integration now uses runtime web configuration, recent phone-token verification and production mock blocking. Provider credentials and live activation are still required; see [phone OTP setup](PHONE-OTP-SETUP.md). No live SMS has been sent.
