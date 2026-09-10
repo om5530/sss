@@ -14,6 +14,61 @@
     }
   </header>
 
+  <!-- Inventory Controls: Search & Category Filter Pills -->
+  <div class="inv-controls">
+    <div class="inv-search">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input
+        type="search"
+        class="input inv-search-input"
+        placeholder="Search materials or supplier..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        aria-label="Search inventory"
+      />
+      @if (searchQuery()) {
+        <button type="button" class="clear-search-btn" (click)="searchQuery.set('')" aria-label="Clear search">✕</button>
+      }
+    </div>
+    <div class="filter-pills" role="tablist" aria-label="Filter inventory by category">
+      <button
+        type="button"
+        class="filter-pill"
+        [class.active]="filterType() === 'all'"
+        (click)="filterType.set('all')"
+      >
+        All ({{ materials().length }})
+      </button>
+      <button
+        type="button"
+        class="filter-pill filter-pill--low"
+        [class.active]="filterType() === 'low'"
+        (click)="filterType.set('low')"
+      >
+        ⚠️ Low stock ({{ lowStockCount() }})
+      </button>
+      <button
+        type="button"
+        class="filter-pill"
+        [class.active]="filterType() === 'ingredient'"
+        (click)="filterType.set('ingredient')"
+      >
+        Ingredients
+      </button>
+      <button
+        type="button"
+        class="filter-pill"
+        [class.active]="filterType() === 'packaging'"
+        (click)="filterType.set('packaging')"
+      >
+        Packaging
+      </button>
+    </div>
+  </div>
+
   <!-- Inventory Table -->
   <div class="card table-card">
     <div class="table-wrap">
@@ -32,7 +87,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (m of materials(); track m._id) {
+          @for (m of filteredMaterials(); track m._id) {
             <tr [class.low-stock-row]="low(m)">
               <td>
                 <strong>{{ m.name }}</strong>
@@ -47,9 +102,12 @@
               <td class="num font-mono font-bold">
                 <input
                   type="number"
+                  inputmode="decimal"
+                  step="any"
                   class="stock-inline-input"
                   [ngModel]="m.currentStock"
                   (change)="setStock(m, $any($event.target).value)"
+                  aria-label="Current stock quantity"
                 />
                 <span class="uom-suffix">{{ m.baseUom }}</span>
               </td>
@@ -82,6 +140,16 @@
                     -1
                   </button>
                 </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="9" class="empty-state">
+                @if (searchQuery() || filterType() !== 'all') {
+                  No materials found matching your current search or filter.
+                } @else {
+                  No inventory items found.
+                }
               </td>
             </tr>
           }

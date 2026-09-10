@@ -47,6 +47,8 @@
           <label class="label">Quantity</label>
           <input
             type="number"
+            inputmode="decimal"
+            step="any"
             class="input font-mono"
             min="0.1"
             [ngModel]="quantity()"
@@ -163,7 +165,7 @@
         </select></label
       ><label class="field"
         ><span class="label">Quantity</span
-        ><input class="input" name="qty" [(ngModel)]="finished.quantity" required /></label
+        ><input type="number" inputmode="decimal" step="any" min="0.01" class="input font-mono" name="qty" [(ngModel)]="finished.quantity" required /></label
       ><label class="field"
         ><span class="label">Reason</span
         ><select class="select" name="reason" [(ngModel)]="finished.reason">

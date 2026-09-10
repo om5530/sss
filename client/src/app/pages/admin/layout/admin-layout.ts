@@ -20,6 +20,9 @@ export class AdminLayout {
   protected readonly bakeryOpen = signal<boolean>(true);
   protected readonly mobileNavOpen = signal(false);
   protected readonly isOffline = signal(!navigator.onLine);
+  protected readonly wakeLockSupported = typeof navigator !== 'undefined' && 'wakeLock' in navigator;
+  protected readonly isScreenAwake = signal(false);
+  private wakeLockSentinel: any = null;
   protected auth = inject(AuthService);
   private router = inject(Router);
   private session = inject(AdminSessionService);
@@ -54,10 +57,56 @@ export class AdminLayout {
       window.removeEventListener('online', onOnline);
       window.removeEventListener('offline', onOffline);
     });
+
+    // Screen Wake Lock auto-reacquire on tab focus
+    const onVisibilityChange = async () => {
+      if (document.visibilityState === 'visible' && this.isScreenAwake() && !this.wakeLockSentinel) {
+        await this.requestWakeLock();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    destroy.onDestroy(() => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      this.releaseWakeLock();
+    });
+  }
+
+  async toggleWakeLock() {
+    if (!this.wakeLockSupported) return;
+    if (this.isScreenAwake()) {
+      await this.releaseWakeLock();
+    } else {
+      await this.requestWakeLock();
+    }
+  }
+
+  private async requestWakeLock() {
+    try {
+      this.wakeLockSentinel = await (navigator as any).wakeLock.request('screen');
+      this.isScreenAwake.set(true);
+      this.wakeLockSentinel.addEventListener('release', () => {
+        this.isScreenAwake.set(false);
+        this.wakeLockSentinel = null;
+      });
+    } catch {
+      this.isScreenAwake.set(false);
+      this.wakeLockSentinel = null;
+    }
+  }
+
+  private async releaseWakeLock() {
+    if (this.wakeLockSentinel) {
+      try {
+        await this.wakeLockSentinel.release();
+      } catch {}
+      this.wakeLockSentinel = null;
+    }
+    this.isScreenAwake.set(false);
   }
 
   async signOut() {
     this.session.keepDraft();
+    this.releaseWakeLock();
     if (!await this.auth.logout()) return;
     this.router.navigateByUrl('/');
   }

@@ -143,7 +143,7 @@
 
         <div class="field">
           <label class="label">Yield Quantity</label>
-          <input class="input" type="number" min="1" [(ngModel)]="form.yieldQuantity" />
+          <input class="input" type="number" inputmode="decimal" min="1" step="any" [(ngModel)]="form.yieldQuantity" />
         </div>
 
         <div class="field">
@@ -153,28 +153,30 @@
 
         <div class="field">
           <label class="label">Target Markup %</label>
-          <input class="input" type="number" min="0" [(ngModel)]="form.targetMarkupPercent" />
+          <input class="input" type="number" inputmode="decimal" min="0" step="any" [(ngModel)]="form.targetMarkupPercent" />
         </div>
         <label class="field"
           ><span class="label">Finished batch weight (g)</span
-          ><input class="input" type="number" min="0" [(ngModel)]="form.finishedWeightGrams"
+          ><input class="input" type="number" inputmode="decimal" min="0" step="any" [(ngModel)]="form.finishedWeightGrams"
         /></label>
         <label class="field"
           ><span class="label">Overhead per batch (₹)</span
-          ><input class="input" type="number" min="0" [(ngModel)]="form.overheadPerBatch"
+          ><input class="input" type="number" inputmode="decimal" min="0" step="any" [(ngModel)]="form.overheadPerBatch"
         /></label>
         <label class="field"
           ><span class="label">Expected process loss (%)</span
           ><input
             class="input"
             type="number"
+            inputmode="decimal"
             min="0"
             max="99.99"
+            step="any"
             [(ngModel)]="form.expectedLossPercent"
         /></label>
         <label class="field"
           ><span class="label">Actual selling price / unit (₹)</span
-          ><input class="input" type="number" min="0" [(ngModel)]="form.manualSellingPrice"
+          ><input class="input" type="number" inputmode="decimal" min="0" step="any" [(ngModel)]="form.manualSellingPrice"
         /></label>
         <label class="field"
           ><span class="label">Internal notes</span

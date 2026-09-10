@@ -209,6 +209,7 @@
                 <input
                   class="input font-mono"
                   type="number"
+                  inputmode="decimal"
                   step="any"
                   min="0.001"
                   [(ngModel)]="form.packQuantity"
@@ -229,6 +230,7 @@
                 <input
                   class="input font-mono"
                   type="number"
+                  inputmode="decimal"
                   step="any"
                   min="0"
                   [(ngModel)]="form.purchasePrice"
@@ -254,6 +256,7 @@
               ><input
                 class="input"
                 type="number"
+                inputmode="decimal"
                 min="0.01"
                 step="any"
                 [(ngModel)]="form.densityGramPerMl"
@@ -267,6 +270,8 @@
               <input
                 class="input font-mono"
                 type="number"
+                inputmode="decimal"
+                step="any"
                 min="0"
                 [(ngModel)]="form.currentStock"
                 [disabled]="!!form._id"
@@ -281,6 +286,8 @@
               <input
                 class="input font-mono"
                 type="number"
+                inputmode="decimal"
+                step="any"
                 min="0"
                 [(ngModel)]="form.minimumStock"
               />

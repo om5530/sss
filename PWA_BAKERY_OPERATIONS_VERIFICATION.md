@@ -20,6 +20,34 @@
 - **Admin Inactivity Window:** Configured `ADMIN_IDLE_MINUTES=40320` (28 days) in `server/src/config/env.js` and `.env` to prevent operational kitchen and mobile PWA sessions from abruptly timing out.
 - **Integration Test Suite:** All 63 backend tests passed with the updated dynamic session duration.
 
+### Operational PWA Enhancements (Keypad Dialpad, Instant Inventory Filters & Screen Wake Lock)
+
+1. **Numeric Virtual Keypad Enforcement (`inputmode="decimal"`):**
+   - Added `inputmode="decimal"` and `step="any"` to numeric inputs across:
+     - **Inventory (`admin-bakery-inventory.html`):** Inline current stock adjustment input.
+     - **Materials (`admin-bakery-materials.html`):** Pack quantity, purchase price, density (g/ml), initial stock, and minimum threshold stock.
+     - **Recipes (`admin-bakery-recipes.html`):** Yield quantity, target markup %, finished batch weight, overhead cost, expected process loss %, and manual selling price.
+     - **Waste Logging (`admin-bakery-waste.html`):** Raw ingredient quantity and finished product batch quantity.
+   - Prevents mobile browsers (iOS Safari, Android Chrome) from displaying the full QWERTY keyboard, directly presenting the touch-friendly numeric dialpad for fast single-tap number entry.
+
+2. **Instant Search & Category Filter Pills on Inventory (`admin-bakery-inventory.ts/html/scss`):**
+   - Added reactive `searchQuery` and `filterType` signals coupled with an Angular `computed` signal (`filteredMaterials`).
+   - Multi-field search across: Material name, item code, supplier name, and brand.
+   - Quick-toggle filter pills:
+     - `All (count)`: Shows total registered inventory items.
+     - `⚠️ Low stock (count)`: Instant red alert filter showing only items currently at or below minimum threshold.
+     - `Ingredients`: Filters to raw ingredients only.
+     - `Packaging`: Filters to packaging materials (boxes, ribbons, liners) only.
+   - Integrated quick-clear (`✕`) button and contextual empty state (`.empty-state`) when no items match the query.
+
+3. **Kitchen Screen Wake Lock API (`admin-layout.ts/html`, `styles.scss`):**
+   - Uses the W3C Screen Wake Lock API (`navigator.wakeLock.request('screen')`) to prevent kitchen tablet/phone displays from going to sleep while bakers are actively following recipes or tracking batch production.
+   - Dual interface controls:
+     - **Mobile Top Header:** Touch-friendly wake lock toggle pill (`.adm-wakelock-pill`) next to the navigation menu button.
+     - **Sidebar Navigation Footer:** Persistent wake lock button (`.adm-side__wakelock`) with live status indicator (`.awake-indicator` pulse).
+   - Lifecycle resiliency: Automatically re-acquires the lock on `visibilitychange` (when switching back from another app/tab) and cleanly releases sentinel locks on page destroy or logout (`signOut`).
+   - Graceful fallback: Automatically hides toggle buttons if the host device or browser does not support `navigator.wakeLock`.
+
 ### Fresh verification
 
 - Angular production build passed (18.17 seconds), with the existing unrelated `qrcode` CommonJS warning.

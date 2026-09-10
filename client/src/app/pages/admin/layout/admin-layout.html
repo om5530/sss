@@ -8,7 +8,26 @@
       </span>
     </a>
 
-    <button class="adm-menu-toggle" type="button" [attr.aria-expanded]="mobileNavOpen()" aria-controls="admin-navigation" (click)="mobileNavOpen.set(!mobileNavOpen())">{{mobileNavOpen() ? 'Close menu' : 'Menu'}}</button>
+    <div class="adm-side__top-actions">
+      @if (wakeLockSupported) {
+        <button
+          type="button"
+          class="adm-wakelock-pill"
+          [class.active]="isScreenAwake()"
+          (click)="toggleWakeLock()"
+          [attr.aria-pressed]="isScreenAwake()"
+          [title]="isScreenAwake() ? 'Screen wake lock active — screen will stay on' : 'Keep screen awake while baking'"
+          aria-label="Keep screen awake"
+        >
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+          </svg>
+          <span>{{ isScreenAwake() ? 'Awake' : 'Stay awake' }}</span>
+        </button>
+      }
+      <button class="adm-menu-toggle" type="button" [attr.aria-expanded]="mobileNavOpen()" aria-controls="admin-navigation" (click)="mobileNavOpen.set(!mobileNavOpen())">{{mobileNavOpen() ? 'Close menu' : 'Menu'}}</button>
+    </div>
     <nav id="admin-navigation" class="adm-side__nav" aria-label="Admin" data-lenis-prevent tabindex="0">
 
       <!-- Bakery Operations — primary PWA use case, placed first -->
@@ -160,6 +179,27 @@
     </nav>
 
     <div class="adm-side__foot">
+      @if (wakeLockSupported) {
+        <button
+          type="button"
+          class="adm-side__link adm-side__wakelock"
+          [class.active]="isScreenAwake()"
+          (click)="toggleWakeLock()"
+          [attr.aria-pressed]="isScreenAwake()"
+          style="background: none; border: none; width: 100%; text-align: left"
+          [title]="isScreenAwake() ? 'Screen wake lock active — screen will stay on' : 'Keep screen awake while baking'"
+          aria-label="Keep screen awake while baking"
+        >
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+          </svg>
+          <span>{{ isScreenAwake() ? 'Screen: Awake' : 'Stay awake' }}</span>
+          @if (isScreenAwake()) {
+            <span class="awake-indicator" aria-hidden="true"></span>
+          }
+        </button>
+      }
       <a routerLink="/" class="adm-side__link" aria-label="View store">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
           <path d="M3 10.5 12 3l9 7.5M5.5 9v11h13V9" stroke-linecap="round" stroke-linejoin="round" />

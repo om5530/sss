@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule, CurrencyPipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BakeryService } from '../../../../core/services/bakery.service';
@@ -19,6 +19,25 @@ export class AdminBakeryInventory implements OnInit {
   materials = signal<BakeryMaterial[]>([]);
   lowStockCount = signal<number>(0);
   loading = signal<boolean>(false);
+  searchQuery = signal<string>('');
+  filterType = signal<'all' | 'low' | 'ingredient' | 'packaging'>('all');
+
+  filteredMaterials = computed(() => {
+    const q = this.searchQuery().trim().toLowerCase();
+    const filter = this.filterType();
+    return this.materials().filter((m) => {
+      if (filter === 'low' && !this.low(m)) return false;
+      if (filter === 'ingredient' && m.type !== 'ingredient') return false;
+      if (filter === 'packaging' && m.type !== 'packaging') return false;
+      if (!q) return true;
+      return (
+        (m.name && m.name.toLowerCase().includes(q)) ||
+        (m.code && m.code.toLowerCase().includes(q)) ||
+        (m.supplierName && m.supplierName.toLowerCase().includes(q)) ||
+        (m.brand && m.brand.toLowerCase().includes(q))
+      );
+    });
+  });
 
   ngOnInit() {
     this.fetchInventory();

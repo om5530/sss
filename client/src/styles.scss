@@ -862,6 +862,71 @@ button { font-family: inherit; cursor: pointer; }
 .adm-install .btn { min-height:44px; font-size:.8rem; padding:6px 10px; }
 .adm-install p { flex-basis:100%; margin:0; font-size:.85rem; }
 
+/* Screen Wake Lock controls for Kitchen Mode */
+.adm-side__top-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.adm-wakelock-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0.35rem 0.6rem;
+  min-height: 38px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--d-line);
+  border-radius: 7px;
+  color: var(--d-text);
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  svg { color: var(--d-muted); }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+  }
+
+  &.active {
+    background: rgba(223, 167, 87, 0.18);
+    border-color: var(--gold);
+    color: var(--gold-bright);
+
+    svg { color: var(--gold-bright); }
+  }
+}
+
+.adm-side__wakelock {
+  position: relative;
+
+  &.active {
+    color: var(--gold-bright) !important;
+
+    svg { color: var(--gold-bright) !important; }
+  }
+
+  .awake-indicator {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4caf50;
+    margin-left: auto;
+    box-shadow: 0 0 6px #4caf50;
+    animation: pulseAwake 2s infinite;
+  }
+}
+
+@keyframes pulseAwake {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.7; }
+}
+
 /* Phones and tablets share a labelled, collapsible operations menu. */
 @media (max-width: 960px) {
   .adm-shell { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }

@@ -36,6 +36,95 @@
   font-size: 0.8rem;
 }
 
+.inv-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.inv-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: min(100%, 280px);
+
+  svg {
+    position: absolute;
+    left: 9px;
+    color: var(--muted);
+    pointer-events: none;
+  }
+
+  .inv-search-input {
+    padding-left: 28px;
+    padding-right: 24px;
+    height: 34px;
+    min-height: 34px;
+    font-size: 0.8rem;
+  }
+
+  .clear-search-btn {
+    position: absolute;
+    right: 6px;
+    background: none;
+    border: none;
+    font-size: 0.75rem;
+    color: var(--muted);
+    padding: 2px 5px;
+    cursor: pointer;
+    border-radius: 4px;
+
+    &:hover {
+      color: var(--ink);
+      background: var(--cream-2);
+    }
+  }
+}
+
+.filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.filter-pill {
+  border: 1px solid var(--line);
+  background: var(--white);
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    border-color: var(--gold);
+    color: var(--cocoa);
+  }
+
+  &.active {
+    background: var(--cocoa);
+    color: white;
+    border-color: var(--cocoa);
+  }
+
+  &--low.active {
+    background: #c62828;
+    border-color: #c62828;
+    color: white;
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 1.5rem !important;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
 .table-card {
   padding: 0;
   overflow: hidden;
