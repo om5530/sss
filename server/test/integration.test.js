@@ -449,6 +449,7 @@ test('customer deactivation rejects existing credentials, requires a reason and 
 });
 
 test('admin idle expiry is server-enforced and polling never renews it', async () => {
+  const env = require('../src/config/env');
   const { signToken } = require('../src/services/token.service');
   const AdminSession = require('../src/models/AdminSession');
   const user = await User.create({ name: 'Idle admin', role: 'admin' });
@@ -460,7 +461,7 @@ test('admin idle expiry is server-enforced and polling never renews it', async (
   assert.equal((await AdminSession.findById(session._id)).lastActiveAt.getTime(), before);
   assert.equal((await json('POST', '/auth/activity', {}, token)).status, 200);
   assert.ok((await AdminSession.findById(session._id)).lastActiveAt.getTime() >= before);
-  await AdminSession.updateOne({ _id: session._id }, { lastActiveAt: new Date(Date.now() - 31 * 60_000) });
+  await AdminSession.updateOne({ _id: session._id }, { lastActiveAt: new Date(Date.now() - (env.admin.idleMinutes + 1) * 60_000) });
   assert.equal((await json('GET', '/admin/orders', undefined, token)).status, 401);
   assert.equal((await json('POST', '/auth/activity', {}, token)).status, 401);
   // A fresh sign-in has its own session even when issued in the same second.

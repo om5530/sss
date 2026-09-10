@@ -16,9 +16,9 @@ const env = {
   mongoUri: process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/bakery_cafe',
   jwt: {
     secret: process.env.JWT_SECRET || 'dev-secret-change-me',
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+    expiresIn: process.env.JWT_EXPIRES_IN || '28d',
   },
-  admin: { idleMinutes: Math.max(1, toNumber(process.env.ADMIN_IDLE_MINUTES, 30)) },
+  admin: { idleMinutes: Math.max(1, toNumber(process.env.ADMIN_IDLE_MINUTES, 40320)) },
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID || '',
   },

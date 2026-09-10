@@ -29,7 +29,7 @@ function issueSession(res, user) {
     httpOnly: true,
     sameSite: 'lax',
     secure: env.isProd,
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    maxAge: 28 * 24 * 60 * 60 * 1000,
   });
   return token;
 }

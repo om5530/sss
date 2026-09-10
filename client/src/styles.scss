@@ -893,7 +893,7 @@ button { font-family: inherit; cursor: pointer; }
 .field { min-width: 0; }
 @media (pointer: coarse) {
   .btn, .nav__cart, .nav__profile { min-height: 44px; }
-  .adm-main .btn, .adm-side__link { min-height: 40px; }
+  .adm-main .btn, .adm-side__link, .adm-side__sub-link, .adm-side__dropdown-header { min-height: 44px; }
   input, select, textarea { font-size: 16px !important; }
 }
 /* Standalone PWA safe-area insets for notched devices */
