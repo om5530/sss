@@ -1,7 +1,7 @@
 <div class="adm-shell">
   <aside class="adm-side" [class.adm-side--open]="mobileNavOpen()">
     <a routerLink="/admin" class="adm-side__brand">
-      <img src="logo-mark.svg" alt="" width="30" height="30" />
+      <img src="logo-mark.svg" alt="" width="26" height="26" />
       <span>
         The Golden Batch
         <small>Admin console</small>
@@ -10,17 +10,8 @@
 
     <button class="adm-menu-toggle" type="button" [attr.aria-expanded]="mobileNavOpen()" aria-controls="admin-navigation" (click)="mobileNavOpen.set(!mobileNavOpen())">{{mobileNavOpen() ? 'Close menu' : 'Menu'}}</button>
     <nav id="admin-navigation" class="adm-side__nav" aria-label="Admin" data-lenis-prevent tabindex="0">
-      <a routerLink="/admin/categories" routerLinkActive="active" class="adm-side__link">Categories</a>
-      <a routerLink="/admin/notifications" routerLinkActive="active" class="adm-side__link">Email delivery</a>
-      <a routerLink="/admin/settings" routerLinkActive="active" class="adm-side__link">Store settings</a>
-      <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="adm-side__link">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-          <path d="M4 13h6V4H4v9Zm10 7h6v-9h-6v9ZM4 20h6v-4H4v4Zm10-12h6V4h-6v4Z" stroke-linejoin="round" />
-        </svg>
-        Dashboard
-      </a>
 
-      <!-- Bakery Manufacturing & Costing Collapsible Group -->
+      <!-- Bakery Operations — primary PWA use case, placed first -->
       <div class="adm-side__dropdown">
         <button
           type="button"
@@ -43,68 +34,80 @@
 
         @if (bakeryOpen()) {
           <div class="adm-side__sub-menu">
-            <a routerLink="/admin/bakery/dashboard" routerLinkActive="active" class="adm-side__sub-link">Overview</a>
-            <a routerLink="/admin/bakery/calculator" routerLinkActive="active" class="adm-side__sub-link">
-              <span>Calculator</span>
-            </a>
-            <a routerLink="/admin/bakery/recipes" routerLinkActive="active" class="adm-side__sub-link">
-              <span>Recipes</span>
-            </a>
-            <a routerLink="/admin/bakery/materials" routerLinkActive="active" class="adm-side__sub-link">
+            <a routerLink="/admin/bakery/dashboard" routerLinkActive="active" class="adm-side__sub-link" aria-label="Overview">Overview</a>
+            <a routerLink="/admin/bakery/materials" routerLinkActive="active" class="adm-side__sub-link" aria-label="Materials">
               <span>Materials</span>
             </a>
-            <a routerLink="/admin/bakery/inventory" routerLinkActive="active" class="adm-side__sub-link">
+            <a routerLink="/admin/bakery/recipes" routerLinkActive="active" class="adm-side__sub-link" aria-label="Recipes">
+              <span>Recipes</span>
+            </a>
+            <a routerLink="/admin/bakery/calculator" routerLinkActive="active" class="adm-side__sub-link" aria-label="Calculator">
+              <span>Calculator</span>
+            </a>
+            <a routerLink="/admin/bakery/production" routerLinkActive="active" class="adm-side__sub-link" aria-label="Production">Production</a>
+            <a routerLink="/admin/bakery/inventory" routerLinkActive="active" class="adm-side__sub-link" aria-label="Inventory">
               <span>Inventory</span>
             </a>
-            <a routerLink="/admin/bakery/waste" routerLinkActive="active" class="adm-side__sub-link">
+            <a routerLink="/admin/bakery/purchasing" routerLinkActive="active" class="adm-side__sub-link" aria-label="Purchasing">Purchasing</a>
+            <a routerLink="/admin/bakery/waste" routerLinkActive="active" class="adm-side__sub-link" aria-label="Waste">
               <span>Waste</span>
             </a>
-            <a routerLink="/admin/bakery/production" routerLinkActive="active" class="adm-side__sub-link">Production</a>
-            <a routerLink="/admin/bakery/purchasing" routerLinkActive="active" class="adm-side__sub-link">Purchasing</a>
-            <a routerLink="/admin/bakery/reports" routerLinkActive="active" class="adm-side__sub-link">Operations reports</a>
-            <a routerLink="/admin/bakery/migration" routerLinkActive="active" class="adm-side__sub-link">Import materials</a>
+            <a routerLink="/admin/bakery/reports" routerLinkActive="active" class="adm-side__sub-link" aria-label="Operations reports">Ops reports</a>
+            <a routerLink="/admin/bakery/migration" routerLinkActive="active" class="adm-side__sub-link" aria-label="Import materials">Import</a>
           </div>
         }
       </div>
 
-      <a routerLink="/admin/queue" routerLinkActive="active" class="adm-side__link">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+      <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="adm-side__link" aria-label="Dashboard">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path d="M4 13h6V4H4v9Zm10 7h6v-9h-6v9ZM4 20h6v-4H4v4Zm10-12h6V4h-6v4Z" stroke-linejoin="round" />
+        </svg>
+        Dashboard
+      </a>
+      <a routerLink="/admin/queue" routerLinkActive="active" class="adm-side__link" aria-label="Live queue">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
           <circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
         Live queue
       </a>
-      <a routerLink="/admin/prep" routerLinkActive="active" class="adm-side__link">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+      <a routerLink="/admin/prep" routerLinkActive="active" class="adm-side__link" aria-label="Prep sheet">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
           <path d="M8 3.5h8v4H8v-4Z" stroke-linejoin="round" /><path d="M5 7.5h14V20a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7.5Z" stroke-linejoin="round" /><path d="M9 12h6M9 16h4" stroke-linecap="round" />
         </svg>
         Prep sheet
       </a>
-      <a routerLink="/admin/orders" routerLinkActive="active" class="adm-side__link">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+      <a routerLink="/admin/orders" routerLinkActive="active" class="adm-side__link" aria-label="Orders">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
           <path d="M6 3h12v18l-2-1.4L14 21l-2-1.4L10 21l-2-1.4L6 21V3Z" stroke-linejoin="round" /><path d="M9 8h6M9 12h6" stroke-linecap="round" />
         </svg>
         Orders
       </a>
-      <a routerLink="/admin/products" routerLinkActive="active" class="adm-side__link">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+      <a routerLink="/admin/products" routerLinkActive="active" class="adm-side__link" aria-label="Products">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
           <path d="M4 8.5 12 4l8 4.5v7L12 20l-8-4.5v-7Z" stroke-linejoin="round" /><path d="M4 8.5 12 13l8-4.5M12 13v7" stroke-linejoin="round" />
         </svg>
         Products
       </a>
-      <a routerLink="/admin/customers" routerLinkActive="active" class="adm-side__link">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+      <a routerLink="/admin/categories" routerLinkActive="active" class="adm-side__link" aria-label="Categories">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" />
+        </svg>
+        Categories
+      </a>
+      <a routerLink="/admin/customers" routerLinkActive="active" class="adm-side__link" aria-label="Customers">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
           <circle cx="9" cy="8.5" r="3.2" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0M15.5 12a3.2 3.2 0 1 0-2.2-5.5M15 15.6c2.8.4 5 1.8 5.5 3.4" stroke-linecap="round" />
         </svg>
         Customers
       </a>
-      <a routerLink="/admin/payments" routerLinkActive="active" class="adm-side__link">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+      <a routerLink="/admin/payments" routerLinkActive="active" class="adm-side__link" aria-label="Payments">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
           <rect x="3" y="6" width="18" height="13" rx="2.5" /><path d="M3 10.5h18" />
         </svg>
         Payments
       </a>
-      <a routerLink="/admin/enquiries" routerLinkActive="active" class="adm-side__link">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+      <a routerLink="/admin/enquiries" routerLinkActive="active" class="adm-side__link" aria-label="Enquiries">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
           <rect x="3" y="5" width="18" height="14" rx="2.5" /><path d="m4 7 8 6 8-6" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
         Enquiries
@@ -112,47 +115,59 @@
           <span class="adm-badge adm-badge--pending" [attr.aria-label]="count + ' unread enquiries'">{{ count }}</span>
         }
       </a>
-      <a routerLink="/admin/cake-requests" routerLinkActive="active" class="adm-side__link">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+      <a routerLink="/admin/cake-requests" routerLinkActive="active" class="adm-side__link" aria-label="Custom orders">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
           <path d="M4 20h16M5 20v-6.5A2.5 2.5 0 0 1 7.5 11h9a2.5 2.5 0 0 1 2.5 2.5V20" stroke-linecap="round" stroke-linejoin="round" /><path d="M12 11V8.5" stroke-linecap="round" /><path d="M12 8.5a1.6 1.6 0 0 0 1.6-1.6c0-.9-1.6-2.9-1.6-2.9s-1.6 2-1.6 2.9A1.6 1.6 0 0 0 12 8.5Z" stroke-linejoin="round" /><path d="M5 15.5c1.2 1 2.3 1 3.5 0s2.3-1 3.5 0 2.3 1 3.5 0 2.3-1 3.5 0" stroke-linecap="round" />
         </svg>
         Custom orders
       </a>
-      <a routerLink="/admin/coupons" routerLinkActive="active" class="adm-side__link">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+      <a routerLink="/admin/coupons" routerLinkActive="active" class="adm-side__link" aria-label="Coupons">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
           <path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h11A2.5 2.5 0 0 1 20 8.5v1a2.5 2.5 0 0 0 0 5v1a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 15.5v-1a2.5 2.5 0 0 0 0-5v-1Z" stroke-linejoin="round" /><path d="M10 9.5 14 14.5M10 14.5h.01M14 9.5h.01" stroke-linecap="round" />
         </svg>
         Coupons
       </a>
-      <a routerLink="/admin/reports" routerLinkActive="active" class="adm-side__link">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+      <a routerLink="/admin/reports" routerLinkActive="active" class="adm-side__link" aria-label="Reports">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
           <path d="M4 20V10M10 20V4m6 16v-7m4 7H4" stroke-linecap="round" />
         </svg>
         Reports
       </a>
-      <a routerLink="/admin/qr" routerLinkActive="active" class="adm-side__link">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+      <a routerLink="/admin/qr" routerLinkActive="active" class="adm-side__link" aria-label="Table QRs">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
           <rect x="3.5" y="3.5" width="7" height="7" rx="1.2" /><rect x="13.5" y="3.5" width="7" height="7" rx="1.2" /><rect x="3.5" y="13.5" width="7" height="7" rx="1.2" /><path d="M13.5 13.5h3v3h-3zM17.5 17.5h3v3h-3z" stroke-linejoin="round" />
         </svg>
         Table QRs
       </a>
-      <a routerLink="/admin/activity" routerLinkActive="active" class="adm-side__link">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+      <a routerLink="/admin/notifications" routerLinkActive="active" class="adm-side__link" aria-label="Email delivery">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Email delivery
+      </a>
+      <a routerLink="/admin/activity" routerLinkActive="active" class="adm-side__link" aria-label="Activity">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
           <path d="M3 12h4l2.5-6 4 12L16 12h5" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
         Activity
       </a>
+      <a routerLink="/admin/settings" routerLinkActive="active" class="adm-side__link" aria-label="Store settings">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke-linejoin="round" />
+        </svg>
+        Settings
+      </a>
     </nav>
 
     <div class="adm-side__foot">
-      <a routerLink="/" class="adm-side__link">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+      <a routerLink="/" class="adm-side__link" aria-label="View store">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
           <path d="M3 10.5 12 3l9 7.5M5.5 9v11h13V9" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
         <span>View store</span>
       </a>
-      <button type="button" class="adm-side__link" (click)="signOut()" style="background: none; border: none; width: 100%; text-align: left">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+      <button type="button" class="adm-side__link" (click)="signOut()" style="background: none; border: none; width: 100%; text-align: left" aria-label="Sign out">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
           <path d="M15 4H6v16h9m-4-8h10m-3.5-3.5L21 12l-3.5 3.5" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
         <span>Sign out</span>
@@ -161,6 +176,21 @@
   </aside>
 
   <main class="adm-main">
+    @if (install.visible()) {
+      <div class="adm-install no-print">
+        <button type="button" class="btn btn--outline" (click)="install.install()" [disabled]="install.busy()" [attr.aria-expanded]="install.instructions()">Install Operations app</button>
+        <button type="button" class="btn btn--outline" (click)="install.dismiss()">Not now</button>
+        @if (install.instructions()) {
+          <p role="status">Open your browser menu (Share in Safari), choose Add to Home Screen, then confirm. Live data and saving changes require internet.</p>
+        }
+      </div>
+    }
+    @if (isOffline()) {
+      <div class="adm-offline-bar" role="alert">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Offline — reconnect to load live data or save changes. Changes are not queued.
+      </div>
+    }
     <router-outlet />
   </main>
 </div>

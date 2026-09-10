@@ -21,8 +21,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Manrope:wght@400..800&display=swap" rel="stylesheet">
   <!-- Hero video poster is the first paint — preload it so the hero fills fast. -->
   <link rel="preload" as="image" fetchpriority="high" href="/baking-flour-poster.jpg">
-  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="manifest" href="manifest.webmanifest" id="pwa-manifest">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <!-- Swap to admin manifest when installing from /admin so the PWA launches into ops -->
+  <script>
+    if (location.pathname.startsWith('/admin')) {
+      document.getElementById('pwa-manifest').href = 'admin-manifest.webmanifest';
+      var m = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+      if (m) m.content = 'GB Ops';
+    }
+  </script>
   <!-- Local-business structured data for search results. Street address joins at launch. -->
   <script type="application/ld+json">
   {

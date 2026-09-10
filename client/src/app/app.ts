@@ -33,7 +33,14 @@ export class App {
     this.analytics.start();
 
     this.router.events.pipe(takeUntilDestroyed()).subscribe((e) => {
-      if (e instanceof NavigationEnd) this.adminArea.set(e.urlAfterRedirects.startsWith('/admin'));
+      if (e instanceof NavigationEnd) {
+        const admin = /^\/admin(?:\/|[?#]|$)/.test(e.urlAfterRedirects);
+        this.adminArea.set(admin);
+        const manifest = document.querySelector<HTMLLinkElement>('#pwa-manifest');
+        if (manifest) manifest.href = admin ? '/admin-manifest.webmanifest' : '/manifest.webmanifest';
+        const title = document.querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-title"]');
+        if (title) title.content = admin ? 'GB Ops' : 'The Golden Batch';
+      }
     });
   }
 }

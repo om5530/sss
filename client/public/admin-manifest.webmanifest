@@ -1,0 +1,17 @@
+{
+  "name": "Golden Batch — Operations",
+  "short_name": "GB Ops",
+  "description": "Bakery operations: ingredients, recipes, production, costing, inventory and purchasing.",
+  "start_url": "/admin",
+  "id": "/admin",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#faf4ea",
+  "theme_color": "#120a06",
+  "orientation": "any",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

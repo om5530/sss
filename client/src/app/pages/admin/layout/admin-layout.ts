@@ -7,6 +7,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { AppInstallService } from '../../../core/services/app-install.service';
 
 @Component({
   selector: 'app-admin-layout',
@@ -14,9 +15,11 @@ import { AuthService } from '../../../core/services/auth.service';
   templateUrl: './admin-layout.html',
 })
 export class AdminLayout {
+  protected readonly install = inject(AppInstallService);
   protected readonly unreadEnquiries = signal<number | null>(null);
   protected readonly bakeryOpen = signal<boolean>(true);
   protected readonly mobileNavOpen = signal(false);
+  protected readonly isOffline = signal(!navigator.onLine);
   protected auth = inject(AuthService);
   private router = inject(Router);
   private session = inject(AdminSessionService);
@@ -41,6 +44,16 @@ export class AdminLayout {
     dispatch();
     const dispatchTimer = window.setInterval(dispatch, 30_000);
     destroy.onDestroy(() => clearInterval(dispatchTimer));
+
+    // Offline/online tracking for the connectivity banner
+    const onOnline = () => this.isOffline.set(false);
+    const onOffline = () => this.isOffline.set(true);
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+    destroy.onDestroy(() => {
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
+    });
   }
 
   async signOut() {
