@@ -1,5 +1,5 @@
 <div class="adm-shell">
-  <aside class="adm-side">
+  <aside class="adm-side" [class.adm-side--open]="mobileNavOpen()">
     <a routerLink="/admin" class="adm-side__brand">
       <img src="logo-mark.svg" alt="" width="30" height="30" />
       <span>
@@ -8,7 +8,8 @@
       </span>
     </a>
 
-    <nav class="adm-side__nav" aria-label="Admin">
+    <button class="adm-menu-toggle" type="button" [attr.aria-expanded]="mobileNavOpen()" aria-controls="admin-navigation" (click)="mobileNavOpen.set(!mobileNavOpen())">{{mobileNavOpen() ? 'Close menu' : 'Menu'}}</button>
+    <nav id="admin-navigation" class="adm-side__nav" aria-label="Admin" data-lenis-prevent tabindex="0">
       <a routerLink="/admin/categories" routerLinkActive="active" class="adm-side__link">Categories</a>
       <a routerLink="/admin/notifications" routerLinkActive="active" class="adm-side__link">Email delivery</a>
       <a routerLink="/admin/settings" routerLinkActive="active" class="adm-side__link">Store settings</a>
@@ -27,6 +28,7 @@
           [class.open]="bakeryOpen()"
           (click)="bakeryOpen.set(!bakeryOpen())"
           aria-label="Toggle Bakery Operations Menu"
+          [attr.aria-expanded]="bakeryOpen()"
         >
           <span class="title-wrap">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
@@ -41,21 +43,26 @@
 
         @if (bakeryOpen()) {
           <div class="adm-side__sub-menu">
+            <a routerLink="/admin/bakery/dashboard" routerLinkActive="active" class="adm-side__sub-link">Overview</a>
             <a routerLink="/admin/bakery/calculator" routerLinkActive="active" class="adm-side__sub-link">
-              <span>⚡ Calculator</span>
+              <span>Calculator</span>
             </a>
             <a routerLink="/admin/bakery/recipes" routerLinkActive="active" class="adm-side__sub-link">
-              <span>📜 Recipes</span>
+              <span>Recipes</span>
             </a>
             <a routerLink="/admin/bakery/materials" routerLinkActive="active" class="adm-side__sub-link">
-              <span>📦 Materials</span>
+              <span>Materials</span>
             </a>
             <a routerLink="/admin/bakery/inventory" routerLinkActive="active" class="adm-side__sub-link">
-              <span>📊 Stock & Shortages</span>
+              <span>Inventory</span>
             </a>
             <a routerLink="/admin/bakery/waste" routerLinkActive="active" class="adm-side__sub-link">
-              <span>🗑️ Waste Log</span>
+              <span>Waste</span>
             </a>
+            <a routerLink="/admin/bakery/production" routerLinkActive="active" class="adm-side__sub-link">Production</a>
+            <a routerLink="/admin/bakery/purchasing" routerLinkActive="active" class="adm-side__sub-link">Purchasing</a>
+            <a routerLink="/admin/bakery/reports" routerLinkActive="active" class="adm-side__sub-link">Operations reports</a>
+            <a routerLink="/admin/bakery/migration" routerLinkActive="active" class="adm-side__sub-link">Import materials</a>
           </div>
         }
       </div>

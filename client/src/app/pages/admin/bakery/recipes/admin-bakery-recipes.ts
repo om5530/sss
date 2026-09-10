@@ -1,4 +1,6 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, DestroyRef } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Subscription } from 'rxjs';
 import { CommonModule, CurrencyPipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -19,6 +21,60 @@ import { ToastService } from '../../../../core/services/toast.service';
 })
 export class AdminBakeryRecipes implements OnInit {
   private bakery = inject(BakeryService);
+  private http = inject(HttpClient);
+  previewResult = signal<any>(null);
+  previewError = signal('');
+  revisions = signal<any[]>([]);
+  private previewRequest?: Subscription;
+  private previewTimer?: ReturnType<typeof setTimeout>;
+  constructor() {
+    inject(DestroyRef).onDestroy(() => {
+      this.previewRequest?.unsubscribe();
+      clearTimeout(this.previewTimer);
+    });
+  }
+  preview() {
+    clearTimeout(this.previewTimer);
+    this.previewRequest?.unsubscribe();
+    this.previewResult.set(null);
+    this.previewError.set('');
+    this.previewTimer = setTimeout(() => {
+      this.previewRequest = this.http
+        .post<any>('/api/admin/bakery/simulate/draft', this.editingRecipe())
+        .subscribe({
+          next: (r) => this.previewResult.set(r.result),
+          error: (e) =>
+            this.previewError.set(e.error?.message || 'Complete the recipe to calculate'),
+        });
+    }, 300);
+  }
+  addOption() {
+    const r = this.editingRecipe();
+    if (r) {
+      r.options = [...(r.options || []), { name: 'New option', components: [] }];
+      this.editingRecipe.set({ ...r });
+    }
+  }
+  addOptionComponent(o: any) {
+    const m = this.materials()[0];
+    o.components.push({
+      componentType: 'material',
+      materialId: m?._id,
+      name: m?.name,
+      quantity: 1,
+      uom: m?.baseUom || 'g',
+      scalingMethod: 'linear',
+    });
+    this.preview();
+  }
+  history(r: BakeryRecipe) {
+    this.http
+      .get<any>('/api/admin/bakery/recipes/' + r._id + '/versions')
+      .subscribe({
+        next: (v) => this.revisions.set(v.revisions),
+        error: () => this.toast.error('Cannot load recipe history'),
+      });
+  }
   private toast = inject(ToastService);
   private router = inject(Router);
 
@@ -56,7 +112,7 @@ export class AdminBakeryRecipes implements OnInit {
   }
 
   openCalculator(recipe: BakeryRecipe) {
-    this.router.navigate(['/admin/bakery/calculator']);
+    this.router.navigate(['/admin/bakery/calculator'], { queryParams: { recipeId: recipe._id } });
   }
 
   startNewRecipe() {
@@ -85,10 +141,12 @@ export class AdminBakeryRecipes implements OnInit {
 
   editRecipe(recipe: BakeryRecipe) {
     this.editingRecipe.set(JSON.parse(JSON.stringify(recipe)));
+    this.preview();
   }
 
   cancelEdit() {
     this.editingRecipe.set(null);
+    this.previewResult.set(null);
   }
 
   addComponent() {

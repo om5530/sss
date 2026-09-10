@@ -37,23 +37,32 @@ export class AdminBakeryInventory implements OnInit {
   }
 
   quickAdjust(m: BakeryMaterial, amount: number) {
-    const newStock = Math.max(0, m.currentStock + amount);
-    this.bakery.updateStock(m._id, newStock).subscribe({
+    this.bakery.adjustStock(m._id, amount).subscribe({
       next: (res) => {
         m.currentStock = res.material.currentStock;
         this.toast.success(`Updated ${m.name} stock`);
+        this.fetchInventory();
       },
       error: () => this.toast.error('Failed to update stock'),
     });
   }
 
   setStock(m: BakeryMaterial, newStock: number) {
-    this.bakery.updateStock(m._id, Number(newStock)).subscribe({
+    this.bakery.updateStock(m._id, Number(newStock), m.currentStock).subscribe({
       next: (res) => {
         m.currentStock = res.material.currentStock;
         this.toast.success(`Stock set to ${m.currentStock} ${m.baseUom}`);
       },
-      error: () => this.toast.error('Failed to set stock'),
+      error: (e) => {
+        this.toast.error(e.error?.message || 'Failed to set stock');
+        this.fetchInventory();
+      },
     });
+  }
+  low(m: BakeryMaterial) {
+    return (
+      Number(m.available ?? m.currentStock) <=
+      (Number(m.reorderLevel) || Number(m.minimumStock) || 0)
+    );
   }
 }

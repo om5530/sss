@@ -13,10 +13,14 @@ export interface BakeryMaterial {
   purchasePrice: number;
   effectiveUnitCost: number;
   currentStock: number;
+  allocatedStock?: number;
+  available?: number;
   minimumStock: number;
   reorderLevel?: number;
   supplierName?: string;
   brand?: string;
+  description?: string;
+  image?: string;
   leadTimeDays?: number;
   notes?: string;
   isActive?: boolean;
@@ -26,12 +30,13 @@ export interface BakeryMaterial {
 
 export interface RecipeComponent {
   _id?: string;
-  componentType: 'material' | 'sub_recipe';
+  componentType: 'material' | 'sub_recipe' | 'other';
   materialId?: string | BakeryMaterial;
   subRecipeId?: string | BakeryRecipe;
   name: string;
   category?: string;
-  itemType: 'ingredient' | 'sub_recipe' | 'packaging' | 'resource' | 'labour';
+  itemType: 'ingredient' | 'sub_recipe' | 'packaging' | 'resource' | 'labour' | 'other';
+  workers?: number;
   quantity: number;
   uom: string;
   scalingMethod: 'linear' | 'stepped' | 'fixed';
@@ -42,6 +47,10 @@ export interface RecipeComponent {
 }
 
 export interface BakeryRecipe {
+  options?: { name: string; components: RecipeComponent[] }[];
+  overheadPerBatch?: number;
+  expectedLossPercent?: number;
+  costingError?: string;
   _id: string;
   name: string;
   code?: string;

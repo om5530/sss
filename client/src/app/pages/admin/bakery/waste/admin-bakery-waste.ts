@@ -1,6 +1,7 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { BakeryService } from '../../../../core/services/bakery.service';
 import { BakeryMaterial, BakeryWaste } from '../../../../core/models/bakery.model';
 import { ToastService } from '../../../../core/services/toast.service';
@@ -14,6 +15,28 @@ import { ToastService } from '../../../../core/services/toast.service';
 })
 export class AdminBakeryWaste implements OnInit {
   private bakery = inject(BakeryService);
+  private http = inject(HttpClient);
+  batches = signal<any[]>([]);
+  finished: any = { productionId: '', recipeId: '', quantity: '1', reason: 'Unsold' };
+  outputs() {
+    return this.batches().find((b) => b._id === this.finished.productionId)?.actual.outputs || [];
+  }
+  saving = signal(false);
+  logFinished() {
+    if (this.saving()) return;
+    this.saving.set(true);
+    this.http.post('/api/admin/bakery/waste', this.finished).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.toast.success('Finished product waste recorded');
+        this.fetchData();
+      },
+      error: (e: any) => {
+        this.saving.set(false);
+        this.toast.error(e.error?.message || 'Could not record waste');
+      },
+    });
+  }
   private toast = inject(ToastService);
 
   materials = signal<BakeryMaterial[]>([]);
@@ -46,12 +69,19 @@ export class AdminBakeryWaste implements OnInit {
   }
 
   fetchData() {
+    this.http
+      .get<any>('/api/admin/bakery/costing-sheets')
+      .subscribe({
+        next: (r) => this.batches.set(r.sheets.filter((s: any) => s.status === 'completed')),
+      });
     this.loading.set(true);
     this.bakery.getMaterials().subscribe({
       next: (res) => {
-        this.materials.set(res.materials);
-        if (res.materials.length > 0 && !this.selectedMaterialId()) {
-          this.selectedMaterialId.set(res.materials[0]._id);
+        this.materials.set(
+          res.materials.filter((m) => ['ingredient', 'packaging'].includes(m.type)),
+        );
+        if (this.materials().length > 0 && !this.selectedMaterialId()) {
+          this.selectedMaterialId.set(this.materials()[0]._id);
         }
       },
     });
@@ -71,13 +101,8 @@ export class AdminBakeryWaste implements OnInit {
     return this.materials().find((m) => m._id === this.selectedMaterialId());
   }
 
-  getCostLostPreview(): number {
-    const mat = this.getSelectedMaterial();
-    if (!mat) return 0;
-    return (Number(this.quantity()) || 0) * (Number(mat.effectiveUnitCost) || 0);
-  }
-
   logWaste() {
+    if (this.saving()) return;
     const mat = this.getSelectedMaterial();
     const qty = Number(this.quantity());
     if (!mat || qty <= 0) {
@@ -95,13 +120,18 @@ export class AdminBakeryWaste implements OnInit {
       notes: this.notes().trim(),
     };
 
+    this.saving.set(true);
     this.bakery.logWaste(payload).subscribe({
       next: () => {
-        this.toast.success(`Logged ₹${this.getCostLostPreview().toFixed(2)} waste`);
+        this.saving.set(false);
+        this.toast.success('Waste recorded. Its calculated cost is shown in the log.');
         this.notes.set('');
         this.fetchData();
       },
-      error: () => this.toast.error('Failed to log waste'),
+      error: (e) => {
+        this.saving.set(false);
+        this.toast.error(e.error?.message || 'Failed to log waste');
+      },
     });
   }
 }

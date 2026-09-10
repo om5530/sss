@@ -28,6 +28,7 @@ export const ADMIN_ROUTES: Routes = [
       { path: 'reports', loadComponent: () => import('./reports/admin-reports').then((m) => m.AdminReports), title: 'Reports — SSS Admin' },
       { path: 'activity', loadComponent: () => import('./activity/admin-activity').then((m) => m.AdminActivity), title: 'Activity — SSS Admin' },
       // Bakery Manufacturing & Costing Operations
+      ...['dashboard','production','purchasing','reports','migration'].map(view => ({ path: 'bakery/'+view, data: { bakeryView: view }, loadComponent: () => import('./bakery/operations/bakery-operations').then(m => m.BakeryOperations), title: 'Bakery operations — The Golden Batch' })),
       { path: 'bakery/calculator', loadComponent: () => import('./bakery/calculator/admin-bakery-calculator').then((m) => m.AdminBakeryCalculator), title: '⚡ Calculator — Bakery Operations' },
       { path: 'bakery/recipes', loadComponent: () => import('./bakery/recipes/admin-bakery-recipes').then((m) => m.AdminBakeryRecipes), title: '📜 Recipes — Bakery Operations' },
       { path: 'bakery/materials', loadComponent: () => import('./bakery/materials/admin-bakery-materials').then((m) => m.AdminBakeryMaterials), title: '📦 Materials — Bakery Operations' },

@@ -4,7 +4,7 @@ const recipeComponentSchema = new mongoose.Schema(
   {
     componentType: {
       type: String,
-      enum: ['material', 'sub_recipe'],
+      enum: ['material', 'sub_recipe', 'other'],
       default: 'material',
       required: true,
     },
@@ -24,10 +24,11 @@ const recipeComponentSchema = new mongoose.Schema(
     // Type classification for grouping: ingredient, packaging, labour, resource
     itemType: {
       type: String,
-      enum: ['ingredient', 'sub_recipe', 'packaging', 'resource', 'labour'],
+      enum: ['ingredient', 'sub_recipe', 'packaging', 'resource', 'labour', 'other'],
       default: 'ingredient',
     },
     quantity: { type: Number, required: true, min: 0 },
+    workers: { type: String, default: '1' },
     uom: { type: String, required: true, default: 'g' },
 
     // Scaling rules:
@@ -49,12 +50,18 @@ const recipeComponentSchema = new mongoose.Schema(
   { _id: true },
 );
 
+require('./bakeryDecimal')(recipeComponentSchema, ['quantity', 'unitCost', 'totalCost']);
 const bakeryRecipeSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     code: { type: String, trim: true, uppercase: true },
     category: { type: String, trim: true, default: 'Cakes' },
     version: { type: Number, default: 1 },
+    status: { type: String, enum: ['draft', 'active'], default: 'active' },
+    productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', default: null },
+    overheadPerBatch: { type: String, default: '0' },
+    expectedLossPercent: { type: String, default: '0' },
+    options: [{ name: String, components: [recipeComponentSchema] }],
     isSubRecipe: { type: Boolean, default: false },
 
     // Expected Output
@@ -94,6 +101,7 @@ bakeryRecipeSchema.pre('validate', function (next) {
   next();
 });
 
+require('./bakeryDecimal')(bakeryRecipeSchema, ['baseBatchUnits', 'yieldQuantity', 'finishedWeightGrams', 'ingredientCost', 'packagingCost', 'labourCost', 'resourceCost', 'totalBatchCost', 'costPerUnit', 'targetMarkupPercent', 'suggestedSellingPrice', 'manualSellingPrice']);
 bakeryRecipeSchema.index({ name: 1, category: 1 });
 bakeryRecipeSchema.index({ isSubRecipe: 1 });
 

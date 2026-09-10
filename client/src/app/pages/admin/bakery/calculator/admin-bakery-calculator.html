@@ -1,299 +1,281 @@
 <div class="calc-shell">
-  <!-- Header -->
   <header class="calc-head">
     <div>
-      <h1 class="calc-title">⚡ Batch & Cost Calculator</h1>
-      <p class="calc-sub">Instant cloud kitchen production scaling, recipe costing & grocery prep list.</p>
+      <div class="eyebrow">BAKERY OPERATIONS</div>
+      <h1 class="calc-title">Batch calculator</h1>
+      <p class="calc-sub">Your recipes, scaled to the quantity you need.</p>
     </div>
-    <div class="calc-tabs">
-      <button
-        type="button"
-        class="calc-tab-btn"
-        [class.active]="mode() === 'single'"
-        (click)="setMode('single')"
-      >
-        Single Recipe Scaling
-      </button>
-      <button
-        type="button"
-        class="calc-tab-btn"
-        [class.active]="mode() === 'multi'"
-        (click)="setMode('multi')"
-      >
-        Multi-Product Prep Planner
-      </button>
-    </div>
+    <a class="btn btn--outline" routerLink="/admin/bakery/production"
+      >Saved plans & costing sheets</a
+    >
   </header>
-
-  <!-- =========================================================================
-       MODE 1: SINGLE RECIPE INSTANT SCALING
-       ========================================================================= -->
-  @if (mode() === 'single') {
-    <div class="calc-grid">
-      <!-- Input Panel -->
-      <section class="card input-card">
-        <h3>1. Select Recipe & Quantity</h3>
-
-        <div class="form-row">
+  @if (error()) {
+    <p class="error-msg" role="alert">{{ error() }}</p>
+  }
+  @if (notice()) {
+    <p role="status">{{ notice() }}</p>
+  }
+  <div class="calc-grid">
+    <section class="card input-card no-print">
+      <h2>What are you making?</h2>
+      @for (item of items; track $index; let i = $index) {
+        <div class="plan-item-row">
           <div class="field">
-            <label class="label">Recipe</label>
-            <select
+            <label class="label" [for]="'recipe' + i">Recipe {{ i + 1 }}</label
+            ><select
               class="select"
-              [ngModel]="selectedRecipeId()"
-              (ngModelChange)="selectedRecipeId.set($event); onRecipeChange()"
+              [id]="'recipe' + i"
+              [(ngModel)]="item.recipeId"
+              (ngModelChange)="change(item)"
             >
               @for (r of recipes(); track r._id) {
-                <option [value]="r._id">{{ r.name }} (Base: {{ r.baseBatchUnits }} {{ r.yieldUom }})</option>
+                <option [value]="r._id">{{ r.name }}</option>
               }
             </select>
           </div>
-
-          <div class="field field--qty">
-            <label class="label">Quantity Needed</label>
-            <input
-              class="input"
-              type="number"
-              min="0.1"
-              step="any"
-              [ngModel]="quantity()"
-              (ngModelChange)="quantity.set($event); calculateSingle()"
-              placeholder="e.g. 7"
-            />
-          </div>
-        </div>
-
-        <div class="margin-slider-box">
-          <div class="slider-head">
-            <label class="label">Target Markup: <strong>{{ markupPercent() }}%</strong></label>
-            <span class="margin-badge">Gross Margin: ~{{ singleResult() ? (singleResult()!.marginPercent | number:'1.1-1') : '33.3' }}%</span>
-          </div>
-          <input
-            type="range"
-            class="range-slider"
-            min="0"
-            max="200"
-            step="5"
-            [ngModel]="markupPercent()"
-            (ngModelChange)="markupPercent.set($event); calculateSingle()"
-          />
-        </div>
-
-        @if (singleResult(); as res) {
-          <!-- Quick Financial KPI Summary -->
-          <div class="kpi-grid">
-            <div class="kpi-box">
-              <span class="kpi-label">Production Cost</span>
-              <strong class="kpi-val cost">{{ res.totalCost | currency:'INR':'symbol':'1.2-2' }}</strong>
-              <small class="kpi-sub">({{ res.costPerUnit | currency:'INR':'symbol':'1.2-2' }} / {{ res.yieldUom }})</small>
-            </div>
-            <div class="kpi-box highlight">
-              <span class="kpi-label">Suggested Price</span>
-              <strong class="kpi-val price">{{ res.suggestedSellingPrice | currency:'INR':'symbol':'1.2-2' }}</strong>
-              <small class="kpi-sub">at {{ markupPercent() }}% markup</small>
-            </div>
-            <div class="kpi-box success">
-              <span class="kpi-label">Estimated Profit</span>
-              <strong class="kpi-val profit">{{ res.profit | currency:'INR':'symbol':'1.2-2' }}</strong>
-              <small class="kpi-sub">Margin: {{ res.marginPercent | number:'1.1-1' }}%</small>
-            </div>
-          </div>
-        }
-      </section>
-
-      <!-- Scaled Bill of Materials -->
-      <section class="card breakdown-card">
-        <div class="card-head">
-          <h3>Scaled Ingredients & Resources</h3>
-          <button type="button" class="btn btn--outline btn--sm" (click)="printPrep()">
-            🖨️ Print Kitchen Sheet
-          </button>
-        </div>
-
-        @if (singleResult(); as res) {
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Component</th>
-                  <th>Category</th>
-                  <th class="num">Scaled Qty</th>
-                  <th class="num">Unit Cost</th>
-                  <th class="num">Subtotal</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (c of res.components; track $index) {
-                  <tr>
-                    <td>
-                      <strong>{{ c.name }}</strong>
-                      @if (c.cycles) {
-                        <span class="pill-stepped">({{ c.cycles }} oven cycles)</span>
-                      }
-                    </td>
-                    <td><span class="tag-type {{ c.itemType }}">{{ c.itemType }}</span></td>
-                    <td class="num font-mono">
-                      {{ c.quantity | number:'1.1-2' }} {{ c.uom }}
-                    </td>
-                    <td class="num font-mono text-muted">
-                      {{ c.unitCost | currency:'INR':'symbol':'1.2-3' }}
-                    </td>
-                    <td class="num font-mono font-bold">
-                      {{ c.totalCost | currency:'INR':'symbol':'1.2-2' }}
-                    </td>
-                  </tr>
+          <div class="form-row">
+            <label class="field"
+              ><span class="label">Quantity</span
+              ><input
+                class="input"
+                inputmode="decimal"
+                [(ngModel)]="item.quantity"
+                (ngModelChange)="calculate()" /></label
+            ><label class="field"
+              ><span class="label">Unit</span
+              ><select class="select" [(ngModel)]="item.uom" (ngModelChange)="calculate()">
+                <option value="">{{ recipe(item)?.yieldUom || 'units' }}</option>
+                @if (positive(recipe(item)?.finishedWeightGrams)) {
+                  <option value="g">g finished weight</option>
+                  <option value="kg">kg finished weight</option>
                 }
-              </tbody>
-              <tfoot>
-                <tr class="totals-row">
-                  <td colspan="4">Total Production Cost:</td>
-                  <td class="num">{{ res.totalCost | currency:'INR':'symbol':'1.2-2' }}</td>
-                </tr>
-              </tfoot>
-            </table>
+              </select></label
+            >
           </div>
-        } @else {
-          <div class="empty-hint">Select a recipe and quantity to calculate costs.</div>
-        }
-      </section>
-    </div>
-  }
-
-  <!-- =========================================================================
-       MODE 2: MULTI-PRODUCT KITCHEN PREP PLANNER
-       ========================================================================= -->
-  @if (mode() === 'multi') {
-    <div class="multi-container">
-      <section class="card">
-        <div class="card-head">
-          <div>
-            <h3>Add Products to Tomorrow's Bake</h3>
-            <p class="card-sub">Combine batches (e.g. 6 Cakes + 8 Brownie Batches) into one aggregated grocery list.</p>
-          </div>
-          <button type="button" class="btn btn--accent btn--sm" (click)="addMultiItem()">
-            + Add Another Recipe
-          </button>
-        </div>
-
-        <div class="multi-items-list">
-          @for (item of multiItems(); track $index; let idx = $index) {
-            <div class="multi-item-row">
-              <div class="field" style="flex: 2">
-                <label class="label">Recipe #{{ idx + 1 }}</label>
-                <select
-                  class="select"
-                  [ngModel]="item.recipeId"
-                  (ngModelChange)="updateMultiRecipe(idx, $event)"
+          @if (recipe(item)?.options?.length) {
+            <div>
+              <span class="label">Custom options</span>
+              @for (o of recipe(item).options; track o.name) {
+                <label class="option-choice"
+                  ><input
+                    type="checkbox"
+                    [checked]="item.options.includes(o.name)"
+                    (change)="option(item, o.name, $any($event.target).checked)"
+                  />
+                  {{ o.name }}</label
                 >
-                  <option value="" disabled>Choose Recipe…</option>
-                  @for (r of recipes(); track r._id) {
-                    <option [value]="r._id">{{ r.name }}</option>
-                  }
-                </select>
-              </div>
-
-              <div class="field" style="flex: 1">
-                <label class="label">Batches / Units</label>
-                <input
-                  class="input"
-                  type="number"
-                  min="1"
-                  [ngModel]="item.quantity"
-                  (ngModelChange)="updateMultiQuantity(idx, $event)"
-                />
-              </div>
-
-              <button
-                type="button"
-                class="btn btn--ghost btn--danger"
-                style="margin-top: 1.8rem"
-                [disabled]="multiItems().length <= 1"
-                (click)="removeMultiItem(idx)"
-                title="Remove Item"
-              >
-                ✕
-              </button>
+              }
             </div>
           }
+          @if (items.length > 1) {
+            <button class="btn btn--outline" (click)="remove(i)">Remove recipe</button>
+          }
         </div>
-      </section>
-
-      @if (multiResult(); as res) {
-        <!-- Aggregated Kitchen Grocery Requirements with Stock Check -->
-        <section class="card mt-4">
-          <div class="card-head">
-            <div>
-              <h3>Total Kitchen Ingredients & Shortages</h3>
-              <p class="card-sub">Combined grocery requirements against on-hand kitchen stock.</p>
+      }
+      @if (!recipes().length) {
+        <p>Add your first recipe to start calculating.</p>
+        <a class="btn btn--accent" routerLink="/admin/bakery/recipes">Create recipe</a>
+      } @else {
+        <button class="btn btn--outline" (click)="add()">+ Add another recipe</button>
+      }
+      <div class="margin-slider-box">
+        <h3>Suggested selling price</h3>
+        <div class="form-row">
+          <label class="field"
+            ><span class="label">Pricing method</span
+            ><select class="select" [(ngModel)]="pricingMode" (ngModelChange)="calculate()">
+              <option value="markup">Markup on cost</option>
+              <option value="margin">Target gross margin</option>
+            </select></label
+          ><label class="field"
+            ><span class="label">Percent</span
+            ><input
+              class="input"
+              inputmode="decimal"
+              [(ngModel)]="percent"
+              (ngModelChange)="calculate()"
+          /></label>
+        </div>
+      </div>
+      <details>
+        <summary>Save this calculation</summary>
+        <div class="field">
+          <label class="label" for="reference">Reference name</label
+          ><input
+            id="reference"
+            class="input"
+            [(ngModel)]="referenceName"
+            placeholder="Weekend brownies"
+          />
+        </div>
+        <div class="field">
+          <label class="label" for="person">Person (optional)</label
+          ><input id="person" class="input" [(ngModel)]="customerName" />
+        </div>
+        <div class="field">
+          <label class="label" for="required">Required date</label
+          ><input id="required" class="input" type="date" [(ngModel)]="requiredDate" />
+        </div>
+        <div class="field">
+          <label class="label" for="notes">Internal notes</label
+          ><textarea id="notes" class="input" [(ngModel)]="notes"></textarea>
+        </div>
+        <div class="actions-foot">
+          <button
+            class="btn btn--outline"
+            [disabled]="busy() || saving() || !result()"
+            (click)="save('costing_sheet')"
+          >
+            Save costing sheet</button
+          ><button
+            class="btn btn--accent"
+            [disabled]="busy() || saving() || !result()"
+            (click)="save('production_plan')"
+          >
+            Save production plan
+          </button>
+        </div>
+      </details>
+    </section>
+    <div class="results-panel">
+      @if (busy()) {
+        <p role="status">Calculating…</p>
+      }
+      @if (result(); as r) {
+        <section class="card">
+          <div class="kpi-grid">
+            <div class="kpi-box">
+              <span class="kpi-label">Production cost</span
+              ><strong class="kpi-val">{{ r.totalCost | currency: 'INR' }}</strong>
             </div>
-            <div class="btn-group">
-              <button type="button" class="btn btn--outline btn--sm" (click)="printPrep()">
-                🖨️ Print Kitchen Prep Sheet
-              </button>
-              <button type="button" class="btn btn--accent btn--sm" (click)="savePlan('production_plan')">
-                💾 Save Production Plan
-              </button>
+            <div class="kpi-box highlight">
+              <span class="kpi-label">Suggested price</span
+              ><strong class="kpi-val">{{ r.suggestedSellingPrice | currency: 'INR' }}</strong>
+            </div>
+            <div class="kpi-box">
+              <span class="kpi-label">Expected profit</span
+              ><strong class="kpi-val">{{ r.profit | currency: 'INR' }}</strong>
             </div>
           </div>
-
+          <p>
+            Markup {{ r.markupPercent | number: '1.1-2' }}% · Gross margin
+            {{ r.marginPercent | number: '1.1-2' }}%
+          </p>
+          <div class="cost-summary">
+            <p>
+              Ingredients <strong>{{ r.ingredientCost | currency: 'INR' }}</strong>
+            </p>
+            <p>
+              Packaging <strong>{{ r.packagingCost | currency: 'INR' }}</strong>
+            </p>
+            <p>
+              Labour <strong>{{ r.labourCost | currency: 'INR' }}</strong>
+            </p>
+            <p>
+              Resources <strong>{{ r.resourceCost | currency: 'INR' }}</strong>
+            </p>
+            <p>
+              Other direct costs <strong>{{ r.otherCost | currency: 'INR' }}</strong>
+            </p>
+            <p>
+              Overhead <strong>{{ r.overheadCost | currency: 'INR' }}</strong>
+            </p>
+          </div>
+        </section>
+        <section class="card">
+          <div class="card-head">
+            <h2>Kitchen preparation list</h2>
+            <button class="btn btn--outline no-print" (click)="print()">Print</button>
+          </div>
           <div class="table-wrap">
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>Ingredient</th>
-                  <th>Total Needed</th>
-                  <th>Kitchen Stock</th>
-                  <th>Shortage Status</th>
-                  <th>To Purchase</th>
-                  <th class="num">Cost</th>
+                  <th>Material</th>
+                  <th>Required</th>
+                  <th>Available</th>
+                  <th>Shortage</th>
+                  <th>Purchase</th>
                 </tr>
               </thead>
               <tbody>
-                @for (ing of res.ingredients; track ing.name) {
-                  <tr [class.row-shortage]="ing.shortage > 0">
-                    <td><strong>{{ ing.name }}</strong></td>
-                    <td class="num font-mono">{{ ing.quantity | number:'1.0-2' }} {{ ing.uom }}</td>
-                    <td class="num font-mono text-muted">{{ ing.currentStock | number:'1.0-2' }} {{ ing.uom }}</td>
+                @for (m of r.requirements; track m.materialId) {
+                  <tr>
                     <td>
-                      @if (ing.shortage > 0) {
-                        <span class="badge badge--danger">⚠️ Short by {{ ing.shortage | number:'1.0-2' }} {{ ing.uom }}</span>
+                      <strong>{{ m.name }}</strong
+                      ><small class="block">{{ m.itemType }}</small>
+                    </td>
+                    <td>{{ m.quantity | number: '1.0-3' }} {{ m.uom }}</td>
+                    <td>
+                      @if (m.itemType === 'ingredient' || m.itemType === 'packaging') {
+                        {{ m.available | number: '1.0-3' }} {{ m.uom }}
                       } @else {
-                        <span class="badge badge--success">✓ In Stock</span>
+                        —
                       }
                     </td>
                     <td>
-                      @if (ing.shortage > 0) {
-                        <strong>{{ ing.packsNeeded }}× {{ ing.packFormat }}</strong>
-                        @if (ing.supplierName) {
-                          <small class="text-muted block">from {{ ing.supplierName }}</small>
-                        }
+                      @if (m.itemType === 'ingredient' || m.itemType === 'packaging') {
+                        {{ m.shortage | number: '1.0-3' }} {{ m.uom }}
                       } @else {
-                        <span class="text-muted">—</span>
+                        —
                       }
                     </td>
-                    <td class="num font-mono font-bold">{{ ing.totalCost | currency:'INR':'symbol':'1.2-2' }}</td>
+                    <td>
+                      @if (
+                        (m.itemType === 'ingredient' || m.itemType === 'packaging') &&
+                        positive(m.shortage)
+                      ) {
+                        {{ m.packsNeeded }} × {{ m.packFormat
+                        }}<small class="block">{{ m.supplierName }}</small
+                        ><small class="block">{{ m.estimatedSpend | currency: 'INR' }}</small>
+                      } @else {
+                        —
+                      }
+                    </td>
                   </tr>
                 }
               </tbody>
             </table>
           </div>
-
-          <!-- Total Cost Roll-up -->
-          <div class="plan-summary-bar">
-            <div>
-              <span class="text-muted">Total Batch Cost:</span>
-              <strong class="total-big">{{ res.totalCost | currency:'INR':'symbol':'1.2-2' }}</strong>
-            </div>
-            <div>
-              <span class="text-muted">Suggested Revenue ({{ res.markupPercent }}% Markup):</span>
-              <strong class="total-big text-gold">{{ res.suggestedSellingPrice | currency:'INR':'symbol':'1.2-2' }}</strong>
-            </div>
-            <div>
-              <span class="text-muted">Net Cloud Kitchen Profit:</span>
-              <strong class="total-big text-success">{{ res.profit | currency:'INR':'symbol':'1.2-2' }}</strong>
-            </div>
-          </div>
+        </section>
+        <section class="card">
+          <h2>Cost by recipe</h2>
+          @for (p of r.products; track $index) {
+            <details open>
+              <summary>
+                {{ p.recipeName }} · {{ p.targetUnits }} {{ p.yieldUom }} ·
+                {{ p.totalCost | currency: 'INR' }}
+              </summary>
+              <p>
+                {{ p.costPerUnit | currency: 'INR' }} per {{ p.yieldUom }}
+                @if (p.costPerGram) {
+                  · ₹{{ p.costPerGram | number: '1.2-6' }} per gram
+                }
+              </p>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Component</th>
+                      <th>Quantity</th>
+                      <th>Cost</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (c of p.components; track $index) {
+                      <tr>
+                        <td>{{ c.name }}</td>
+                        <td>{{ c.quantity | number: '1.0-3' }} {{ c.uom }}</td>
+                        <td>{{ c.totalCost | currency: 'INR' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </details>
+          }
         </section>
       }
     </div>
-  }
+  </div>
 </div>

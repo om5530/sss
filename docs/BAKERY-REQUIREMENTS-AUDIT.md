@@ -1,53 +1,86 @@
-# Bakery operations system audit
+# Bakery operations implementation audit
 
-Reviewed against the bakery operations prompt on 2026-09-10. The current implementation is an admin-only Angular/Express/MongoDB prototype with a materials screen, recipe screen, single/multi-product calculator, inventory quantity editing, and a waste log. The existing CRM, ordering, payment, and invoice modules remain separate.
+Updated 2026-09-10 against the supplied 45-section prompt. Replaces the earlier prototype audit. All changes are local; nothing has been pushed or deployed.
 
-## What is working
+## Architecture and boundaries
 
-- Admin-only bakery routes are mounted under `/api/admin/bakery` and the Angular admin navigation exposes Calculator, Recipes, Materials, Inventory, and Waste.
-- Materials calculate a purchase-pack unit rate automatically for the supported mass, volume, count, and time units.
-- Recipe costing separates ingredients, packaging, labour, and resources. Recipes can be scaled and the calculator can aggregate multiple recipes and show a basic shortage estimate.
-- Markup and gross margin are distinct formulas in the cost service. The acceptance examples for flour, butter, cocoa, sugar, milk, oil, the butter-cake total, markup, and stepped oven capacity pass in `server/test/bakery-cost.test.js`.
-- Existing invoices are not modified by these bakery routes. Archive operations use `isActive: false` rather than destructive deletion.
-- The UI includes draft costing-sheet/production-plan persistence and a waste-cost preview.
+Angular standalone components, Express, Mongoose and MongoDB remain the application stack. Bakery operations reuse admin authentication, routing and the existing cream/brown design system. Every bakery API requires the admin role and returns `Cache-Control: no-store`.
 
-## Gaps that block a full sign-off
+Customer, ordering, payment and invoice documents are untouched. This repository has Product/Order models, rather than the legacy Items/Invoice accounting source described in the prompt. Selling prices are never imported as ingredient purchase costs. No new customer CRM has been introduced.
 
-### Critical correctness
+The original prototype used floating-point calculations, mutable cached costs, client-supplied quote totals and direct stock edits. The replacement uses a shared Decimal engine, supplier formats and effective price history, recipe revisions, server-generated snapshots and transactional operations.
 
-- The authoritative engine uses JavaScript `Number` throughout. The prompt requires Decimal/NUMERIC as the money authority; Mongo schemas also store prices and costs as `Number`. This can introduce rounding drift and does not satisfy the precision rule.
-- `convertUnits()` silently returns the original quantity for unknown or invalid cross-type conversions. The prompt requires mass/volume conversion to be rejected unless an ingredient-specific density/conversion exists. Invalid UOM pairs need a validation error.
-- Nested recipe costing is only a one-level lookup. There is no recursive evaluation, circular-reference detection, or immutable recipe-version snapshot.
-- `updateRecipe()` and `updateMaterial()` recalculate cached values from the request body and current records, but do not create versions or historical cost snapshots. A saved costing sheet stores totals supplied by the client and is not re-evaluated server-side.
+## Requirements coverage
 
-### Phase 1 incomplete
+| Prompt | Implemented |
+| --- | --- |
+| 1–4: architecture and philosophy | Separate internal bakery workspace; existing stack retained; calculator and prefilled production exceptions replace manual costing. |
+| 5: materials | Ingredient, packaging, labour and resource types; code, category, base UOM, pack, stock/minimum/reorder, supplier/brand, density, description, notes and optional image URL. |
+| 6–8: purchase formats/history | Supplier, Format and append-only Price records; multiple suppliers/packs, MOQ, lead time, preferred format and effective dates. Latest effective preferred price drives live projections. Receiving adds price history. |
+| 9: UOM | Decimal mg/g/kg, ml/L, pieces/dozens, minutes/hours. Boxes/packets remain distinct. Unknown units and invalid dimensions are rejected. Mass/volume requires explicit material density. |
+| 10–12: recipes/nesting | Versioned recipes, recursive sub-recipes, dependency validation including custom options, component breakdown, live preview, archive safeguards and revision history. Cycles are rejected. |
+| 13–15: labour/equipment/packaging | Workers × time × rate, linear/fixed scaling, capacity-based equipment cycles and time conversion; packaging included in cost and stock requirements. |
+| 16–20: calculator/configurator/pricing | Single/multi-recipe quantity or finished-weight scaling; named custom option components; six-category cost breakdown; markup or target margin; reference/person/date/notes; saved costing sheets and plans. Server computes saved totals. |
+| 21: inventory | Opening, receipt, consumption, waste, adjustment and return ledger. Current/allocated/available stock; pack-to-base conversion; stale stock-count protection. Completed batches record production output. |
+| 22–24: purchasing | Aggregated shortages, whole packs, MOQ, supplier alternatives, spend/excess/lead time. Draft → ordered → partial → received; cancellation before full receipt. Stock enters only on receipt, never PO creation. Receipt retries are idempotent. |
+| 25–27: waste/yield | Material and packaging waste deduct stock with server cost; finished-product waste uses batch cost and remaining-output validation; production scrap/process loss, quantities/money/reason/date, expected/actual yield reports. |
+| 28–30: production/preparation | Plans allocate stock; completion consumes actual quantities atomically; planned/actual variance and output. Repeated recipes retain separate output line IDs. Plan-specific printable preparation list. |
+| 31–32: history | Immutable recipe revisions and costing/production snapshots. Current-cost comparison is separate. Migration preserves original totals/documents. |
+| 33–35: dashboard/reports | Upcoming production, reorder indicators, waste, recipe cost changes/current margin, usage/variance, yield/loss, stock movements, price history, goods receipts and recorded output. Inclusive India-calendar report dates. |
+| 36: optional traceability | Receipt lot and expiry capture. Full lot allocation/FIFO/FEFO and ingredient-lot-to-product traceability remain optional work. |
+| 37–38: precision/engine | decimal.js with 40 significant digits. Authoritative money/quantities stored and returned as decimal strings; display rounding only. Material and recipe previews call the backend. |
+| 39–40: migration | Reviewed pack-name parser/import and repeatable non-destructive database migration. No automatic invoice conversion because the described legacy accounting source is absent. |
+| 41: acceptance tests | Exact rates, cake total, markup/margin, stepped capacity, nesting, mixed UOM and weight tests; API tests for authorization, snapshots, receipts, stock, production, waste and migration. |
+| 42: UX | Consistent typography/cards/controls/spacing/navigation; compact phone menu and contained horizontal tables. Calculator updates in place; production starts with planned quantities. |
+| 43–45: phases/rules | Core phases 1–7 implemented in the engine, models, API and UI. Rollout and optional limits remain explicitly listed below. |
 
-- A material has one `supplierName`, one pack, and one current price. There is no supplier entity, multiple supplier formats, preferred-format flag, MOQ, supplier code, purchase history, effective date, or price-history model.
-- There is no migration assistant for parsing existing Item names or reviewing invoice-to-draft-recipe imports.
-- There is no non-destructive database migration file or migration runner for the new collections/schema.
+## Database/domain model
 
-### Production, inventory, purchasing, and waste incomplete
+`BakeryMaterial` stores base UOM, stock and preferred format. `BakeryOperations.js` defines Supplier, Format, Price, Revision, Sheet, Movement, Purchase, Receipt and Migration models. Existing Recipe and Waste models are extended. A Sheet stores the server snapshot, plan lifecycle, actual consumption/output and completion key. Movements preserve each material balance change. Migration markers prevent duplicate imports.
 
-- `BakeryProduction` is used as a saved calculator record, but there are no production-batch endpoints, planned-vs-actual ingredient quantities, actual yield, variance, batch version, or inventory consumption transaction.
-- Inventory is a current-stock field with direct overwrite/adjustment. There is no stock-movement ledger for receipts, production, output, waste, adjustments, or returns; no allocated stock; and no receiving workflow.
-- Purchasing has no suppliers, purchase requirements endpoint, purchase orders, goods receiving, status transitions, or price flow from receiving into recipe projections.
-- Waste supports a single material-oriented log. It lacks product/batch linkage, production scrap, finished-goods and packaging workflows, expected-vs-actual yield, and waste reports by ingredient/product/reason.
-- There are no bakery dashboard metrics, cost-change impact alerts, ingredient price-history reports, usage/variance/yield reports, or profitability reports. Existing sales reports are customer-order reports, not the requested internal bakery reports.
+Mongo transactions and a bakery write guard serialize stock/recipe mutations across stateless API instances. Receipt/production state and stock movements commit together or roll back together. MongoDB requires a replica set or Atlas transaction support.
 
-### UX and domain gaps
+## Navigation
 
-- Calculator covers single and multi-product scaling, but does not yet provide a complete fast workflow for target margin, custom costing sheets with required date/notes, configurable cake options, or a printable preparation list grouped by recipe/batch.
-- Resource scaling currently supports a stepped oven component, but capacity and cycle behavior need domain-level validation and coverage for fixed-per-batch, per-unit, and labour workers × duration × rate.
-- Finished products are not represented as a separate bakery product domain linked to recipes; the recipe/material distinction exists, but product profitability and sellable-unit mapping are missing.
-- No automated tests cover API authorization/validation, nested recipes, invalid UOMs, historical snapshots, inventory transactions, purchasing, production, waste categories, or reports. The current four cost-engine tests are necessary but insufficient for the prompt's rule that every important calculation be tested.
+Overview → Materials → Recipes → Calculator → Production → Inventory → Purchasing → Waste → Reports. Import materials is an additional admin entry.
 
-## Recommended order after Gemini finishes
+## Exact formulas
 
-1. Replace money/unit calculations with a Decimal-based domain service and reject invalid conversions; add tests for all required formulas and error cases.
-2. Add schema migrations and Phase 1 entities: suppliers, supplier-material purchase formats, price history, and reviewed legacy-item migration.
-3. Make recipes versioned and recursively costed with circular-reference prevention and server-generated historical snapshots.
-4. Implement inventory movement ledger, goods receiving, purchase requirements, and production batches as transactional workflows.
-5. Add expected-vs-actual yield/consumption and complete waste categories/cost reporting.
-6. Finish bakery dashboard and internal reports, then perform browser/accessibility/performance QA on the operational workflows.
+- Base rate = pack purchase price ÷ pack quantity converted to base UOM.
+- Units from finished weight = requested grams ÷ finished batch grams × batch yield.
+- Linear quantity = base quantity × requested units ÷ recipe yield.
+- Fixed batch quantity = base quantity × ceiling(requested units ÷ yield).
+- Equipment cycles = ceiling(requested units ÷ capacity); cost = cycles × cycle duration converted to resource base time × rate.
+- Labour = workers × converted duration × rate.
+- Batch cost = ingredients + packaging + labour + resources + other direct costs + overhead, including recursive sub-recipes.
+- Unit cost = batch cost ÷ units. Gram cost = batch cost ÷ finished grams when known.
+- Markup price = cost × (1 + markup/100). Profit = price − cost. Margin = profit/price × 100.
+- Target-margin price = cost ÷ (1 − margin/100); target margin must be below 100%.
+- Available = max(0, stock − allocation). Shortage = max(0, required − available).
+- Packs = max(ceiling(shortage ÷ base pack quantity), MOQ), or zero for no shortage. Excess = purchased quantity − shortage; spend = packs × pack price.
+- Actual cost = snapshot cost + sum((actual consumption − planned consumption) × snapshot rate).
+- Shared actual costs are allocated proportionally to planned product costs, not individually metered labour/equipment.
+- Actual process loss % = (input grams − baked grams)/input grams × 100. Expected weight = input grams × (1 − expected loss/100).
 
-This audit does not modify existing invoices or deploy anything. It is the review gate for the next implementation pass.
+## Migration and rollout
+
+From `server`, `npm run bakery:migrate` is read-only. `npm run bakery:migrate -- --apply` adds missing formats, prices, opening movements and revisions; copies old saved sheets as preserved historical drafts. It does not automatically schedule historical sheets with incomplete assumptions. Repeat execution does not duplicate records.
+
+The configured database preview found **15 materials, 1 recipe and 0 legacy sheets**. Apply has **not** been run against that database. Back up the target and apply the migration with the code rollout. The old schema's default density of 1 is cleared because it was not evidence of a measured ingredient density; review genuine measured values during rollout.
+
+## Verification
+
+- Full backend suite: 63 passing tests, including concurrent stock consumption, date boundaries and minimum-stock alerts.
+- All ten bakery routes at 390, 820 and 1366 px: no document overflow or runtime errors.
+- Browser workflow: target-margin calculation for 24 units → save plan → complete production; phone menu and material editor.
+- Browser mutations run against an isolated Mongo replica set and ephemeral API, never business stock.
+- Migration tests: dry run writes nothing; apply twice creates one historical copy with original total.
+- Angular production build passes with the existing unrelated `qrcode` CommonJS optimization warning.
+
+## Explicit limits
+
+- Migration application and deployment are pending; no real business stock was changed for testing.
+- Optional full lot traceability and invoice-to-draft migration are not implemented. Receipt lot/expiry and reviewed material imports are implemented.
+- Recorded output is separate from storefront fulfillment; output less waste is not a warehouse balance after dispatches.
+- Cost-change indicators compare live cost with saved recipe baseline. They are dashboard/report indicators, not outbound notifications.
+- Responsive Edge viewport checks are not physical iPad/Safari certification or a large-data load test.

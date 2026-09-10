@@ -2,8 +2,10 @@
   <!-- Header -->
   <header class="recipes-head">
     <div>
-      <h1 class="recipes-title">📜 Recipe Book & Live Costing</h1>
-      <p class="recipes-sub">Formulas, ingredient costs, packaging, labour and suggested selling prices.</p>
+      <h1 class="recipes-title">Recipes</h1>
+      <p class="recipes-sub">
+        Formulas, ingredient costs, packaging, labour and suggested selling prices.
+      </p>
     </div>
     <div class="actions">
       <button type="button" class="btn btn--accent" (click)="startNewRecipe()">
@@ -35,31 +37,46 @@
             <div>
               <span class="category-badge">{{ r.category }}</span>
               <h3 class="recipe-name">{{ r.name }}</h3>
-              <small class="recipe-yield">Yield: {{ r.yieldQuantity }} {{ r.yieldUom }} ({{ r.finishedWeightGrams }}g)</small>
+              <small class="recipe-yield"
+                >Yield: {{ r.yieldQuantity }} {{ r.yieldUom }} ({{ r.finishedWeightGrams }}g)</small
+              >
             </div>
             <div class="price-bubble">
-              <span class="price-val">{{ r.suggestedSellingPrice | currency:'INR':'symbol':'1.0-0' }}</span>
+              <span class="price-val">{{
+                r.suggestedSellingPrice | currency: 'INR' : 'symbol' : '1.0-0'
+              }}</span>
               <small class="price-label">Suggested</small>
             </div>
           </div>
+          @if (r.costingError) {
+            <p role="alert">{{ r.costingError }}</p>
+          }
 
           <!-- Cost Breakdown Summary -->
           <div class="cost-summary-list">
             <div class="cost-item">
               <span class="cost-label">Ingredients</span>
-              <span class="cost-num">{{ r.ingredientCost | currency:'INR':'symbol':'1.2-2' }}</span>
+              <span class="cost-num">{{
+                r.ingredientCost | currency: 'INR' : 'symbol' : '1.2-2'
+              }}</span>
             </div>
             <div class="cost-item">
               <span class="cost-label">Packaging</span>
-              <span class="cost-num">{{ r.packagingCost | currency:'INR':'symbol':'1.2-2' }}</span>
+              <span class="cost-num">{{
+                r.packagingCost | currency: 'INR' : 'symbol' : '1.2-2'
+              }}</span>
             </div>
             <div class="cost-item">
               <span class="cost-label">Labour</span>
-              <span class="cost-num">{{ r.labourCost | currency:'INR':'symbol':'1.2-2' }}</span>
+              <span class="cost-num">{{
+                r.labourCost | currency: 'INR' : 'symbol' : '1.2-2'
+              }}</span>
             </div>
             <div class="cost-item">
               <span class="cost-label">Oven / Energy</span>
-              <span class="cost-num">{{ r.resourceCost | currency:'INR':'symbol':'1.2-2' }}</span>
+              <span class="cost-num">{{
+                r.resourceCost | currency: 'INR' : 'symbol' : '1.2-2'
+              }}</span>
             </div>
           </div>
 
@@ -67,20 +84,34 @@
           <div class="total-batch-bar">
             <div>
               <span class="bar-label">Total Cost / Batch:</span>
-              <strong class="bar-num">{{ r.totalBatchCost | currency:'INR':'symbol':'1.2-2' }}</strong>
+              <strong class="bar-num">{{
+                r.totalBatchCost | currency: 'INR' : 'symbol' : '1.2-2'
+              }}</strong>
             </div>
             <div>
-              <span class="bar-label">Profit ({{ r.targetMarkupPercent }}% Markup):</span>
-              <strong class="bar-num text-success">{{ (r.suggestedSellingPrice - r.totalBatchCost) | currency:'INR':'symbol':'1.2-2' }}</strong>
+              <span class="bar-label">Cost per {{ r.yieldUom }}:</span>
+              <strong class="bar-num">{{
+                r.costPerUnit | currency: 'INR' : 'symbol' : '1.2-2'
+              }}</strong>
             </div>
           </div>
 
           <!-- Actions -->
           <div class="card-actions">
+            <button type="button" class="btn btn--outline btn--sm" (click)="history(r)">
+              Version history
+            </button>
+            <button type="button" class="btn btn--accent btn--sm" (click)="openCalculator(r)">
+              Calculate batch
+            </button>
             <button type="button" class="btn btn--outline btn--sm" (click)="editRecipe(r)">
               ✏️ Edit Formula
             </button>
-            <button type="button" class="btn btn--ghost btn--danger btn--sm" (click)="deleteRecipe(r._id)">
+            <button
+              type="button"
+              class="btn btn--ghost btn--danger btn--sm"
+              (click)="deleteRecipe(r._id)"
+            >
               Archive
             </button>
           </div>
@@ -93,7 +124,7 @@
        RECIPE EDIT / CREATE MODAL OR PANEL
        ========================================================================= -->
   @if (editingRecipe(); as form) {
-    <div class="edit-panel card">
+    <div class="edit-panel card" (input)="preview()" (change)="preview()">
       <div class="panel-head">
         <h2>{{ form._id ? 'Edit Formula: ' + form.name : 'Create New Bakery Recipe' }}</h2>
         <button type="button" class="btn btn--ghost" (click)="cancelEdit()">✕ Cancel</button>
@@ -124,6 +155,31 @@
           <label class="label">Target Markup %</label>
           <input class="input" type="number" min="0" [(ngModel)]="form.targetMarkupPercent" />
         </div>
+        <label class="field"
+          ><span class="label">Finished batch weight (g)</span
+          ><input class="input" type="number" min="0" [(ngModel)]="form.finishedWeightGrams"
+        /></label>
+        <label class="field"
+          ><span class="label">Overhead per batch (₹)</span
+          ><input class="input" type="number" min="0" [(ngModel)]="form.overheadPerBatch"
+        /></label>
+        <label class="field"
+          ><span class="label">Expected process loss (%)</span
+          ><input
+            class="input"
+            type="number"
+            min="0"
+            max="99.99"
+            [(ngModel)]="form.expectedLossPercent"
+        /></label>
+        <label class="field"
+          ><span class="label">Actual selling price / unit (₹)</span
+          ><input class="input" type="number" min="0" [(ngModel)]="form.manualSellingPrice"
+        /></label>
+        <label class="field"
+          ><span class="label">Internal notes</span
+          ><textarea class="input" [(ngModel)]="form.notes"></textarea>
+        </label>
       </div>
 
       <!-- Components Table -->
@@ -135,59 +191,240 @@
           </button>
         </div>
 
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Material</th>
-              <th>Quantity</th>
-              <th>Unit</th>
-              <th>Scaling Rule</th>
-              <th style="width: 50px"></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (comp of form.components; track $index; let idx = $index) {
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
               <tr>
-                <td>
-                  <select
-                    class="select"
-                    [ngModel]="comp.materialId"
-                    (ngModelChange)="onComponentMaterialChange(comp, $event)"
-                  >
-                    <option value="" disabled>Select Material…</option>
-                    @for (m of materials(); track m._id) {
-                      <option [value]="m._id">{{ m.name }} ({{ m.type }})</option>
-                    }
-                  </select>
-                </td>
-                <td>
-                  <input class="input font-mono" type="number" step="any" min="0" [(ngModel)]="comp.quantity" />
-                </td>
-                <td>
-                  <input class="input" [(ngModel)]="comp.uom" />
-                </td>
-                <td>
-                  <select class="select" [(ngModel)]="comp.scalingMethod">
-                    <option value="linear">Linear (scales with count)</option>
-                    <option value="stepped">Stepped Capacity (e.g. Oven cycle)</option>
-                    <option value="fixed">Fixed Per Batch</option>
-                  </select>
-                </td>
-                <td>
-                  <button type="button" class="btn btn--ghost btn--danger btn--sm" (click)="removeComponent(idx)">
-                    ✕
-                  </button>
-                </td>
+                <th>Material</th>
+                <th>Quantity</th>
+                <th>Unit</th>
+                <th>Scaling Rule</th>
+                <th style="width: 50px"></th>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (comp of form.components; track $index; let idx = $index) {
+                <tr>
+                  <td>
+                    <select class="select" [(ngModel)]="comp.componentType">
+                      <option value="material">Material</option>
+                      <option value="sub_recipe">Sub-recipe</option>
+                      <option value="other">Other direct cost</option>
+                    </select>
+                    @if (comp.componentType === 'sub_recipe') {
+                      <select class="select" [(ngModel)]="comp.subRecipeId">
+                        @for (r of recipes(); track r._id) {
+                          @if (r._id !== form._id) {
+                            <option [value]="r._id">{{ r.name }}</option>
+                          }
+                        }
+                      </select>
+                    } @else if (comp.componentType === 'other') {
+                      <input class="input" placeholder="Cost description" [(ngModel)]="comp.name" />
+                      <input
+                        class="input"
+                        type="number"
+                        min="0"
+                        step="any"
+                        placeholder="Cost per unit"
+                        [(ngModel)]="comp.unitCost"
+                      />
+                    } @else {
+                      <select
+                        class="select"
+                        [ngModel]="comp.materialId"
+                        (ngModelChange)="onComponentMaterialChange(comp, $event)"
+                      >
+                        <option value="" disabled>Select Material…</option>
+                        @for (m of materials(); track m._id) {
+                          <option [value]="m._id">{{ m.name }} ({{ m.type }})</option>
+                        }
+                      </select>
+                    }
+                  </td>
+                  <td>
+                    <input
+                      class="input font-mono"
+                      type="number"
+                      step="any"
+                      min="0"
+                      [(ngModel)]="comp.quantity"
+                    />
+                  </td>
+                  <td>
+                    <input class="input" [(ngModel)]="comp.uom" />
+                  </td>
+                  <td>
+                    <select class="select" [(ngModel)]="comp.scalingMethod">
+                      <option value="linear">Linear (scales with count)</option>
+                      <option value="stepped">Stepped Capacity (e.g. Oven cycle)</option>
+                      <option value="fixed">Fixed Per Batch</option>
+                    </select>
+                    @if (comp.scalingMethod === 'stepped') {
+                      <label class="label"
+                        >Units per cycle<input
+                          class="input"
+                          type="number"
+                          min="1"
+                          [(ngModel)]="comp.capacityPerCycle"
+                      /></label>
+                      <label class="label"
+                        >Minutes per cycle<input
+                          class="input"
+                          type="number"
+                          min="1"
+                          [(ngModel)]="comp.cycleMinutes"
+                      /></label>
+                    }
+                    @if (comp.itemType === 'labour') {
+                      <label class="label"
+                        >Workers<input
+                          class="input"
+                          type="number"
+                          min="1"
+                          [(ngModel)]="comp.workers"
+                      /></label>
+                    }
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      class="btn btn--ghost btn--danger btn--sm"
+                      (click)="removeComponent(idx)"
+                    >
+                      ✕
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="actions-foot">
+        <button type="button" class="btn btn--outline" (click)="preview()">
+          Calculate preview
+        </button>
         <button type="button" class="btn btn--outline" (click)="cancelEdit()">Cancel</button>
         <button type="button" class="btn btn--accent" (click)="saveRecipe()">Save Recipe</button>
       </div>
+      <section>
+        <h3>Custom product options</h3>
+        <p>
+          Add filling, decoration, topper or packaging choices. Components are included when
+          selected in the calculator.
+        </p>
+        <button class="btn btn--outline" (click)="addOption()">Add option</button>
+        @for (o of form.options; track $index; let oi = $index) {
+          <div class="card">
+            <label class="label">Option name<input class="input" [(ngModel)]="o.name" /></label>
+            @for (c of o.components; track $index; let ci = $index) {
+              <div class="form-grid">
+                <label class="field"
+                  ><span class="label">Component type</span
+                  ><select class="select" [(ngModel)]="c.componentType">
+                    <option value="material">Material / labour</option>
+                    <option value="sub_recipe">Sub-recipe</option>
+                    <option value="other">Fixed cost</option>
+                  </select></label
+                >
+                @if (c.componentType === 'material') {
+                  <label class="field"
+                    ><span class="label">Material</span
+                    ><select class="select" [(ngModel)]="c.materialId">
+                      @for (m of materials(); track m._id) {
+                        <option [value]="m._id">{{ m.name }}</option>
+                      }
+                    </select></label
+                  >
+                } @else if (c.componentType === 'sub_recipe') {
+                  <label class="field"
+                    ><span class="label">Sub-recipe</span
+                    ><select class="select" [(ngModel)]="c.subRecipeId">
+                      @for (r of recipes(); track r._id) {
+                        <option [value]="r._id">{{ r.name }}</option>
+                      }
+                    </select></label
+                  >
+                } @else {
+                  <label class="field"
+                    ><span class="label">Cost description</span
+                    ><input class="input" [(ngModel)]="c.name" /></label
+                  ><label class="field"
+                    ><span class="label">Unit cost (₹)</span
+                    ><input class="input" type="number" [(ngModel)]="c.unitCost"
+                  /></label>
+                }
+                <label class="field"
+                  ><span class="label">Quantity</span
+                  ><input class="input" type="number" [(ngModel)]="c.quantity" /></label
+                ><label class="field"
+                  ><span class="label">Unit</span><input class="input" [(ngModel)]="c.uom" /></label
+                ><button class="btn btn--outline" (click)="o.components.splice(ci, 1); preview()">
+                  Remove component
+                </button>
+              </div>
+            }
+            <div class="actions">
+              <button class="btn btn--outline" (click)="addOptionComponent(o)">
+                Add option component</button
+              ><button class="btn btn--outline" (click)="form.options?.splice(oi, 1); preview()">
+                Remove option
+              </button>
+            </div>
+          </div>
+        }
+      </section>
+      @if (previewError()) {
+        <p role="alert">{{ previewError() }}</p>
+      }
+      @if (previewResult(); as p) {
+        <section class="card">
+          <h3>Current batch cost · {{ p.totalBatchCost | currency: 'INR' }}</h3>
+          <p>
+            Cost per unit {{ p.costPerUnit | currency: 'INR' }} · Suggested unit price
+            {{ p.suggestedSellingPrice | currency: 'INR' }}
+          </p>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Component</th>
+                  <th>Quantity</th>
+                  <th>Rate</th>
+                  <th>Cost</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (c of p.components; track $index) {
+                  <tr>
+                    <td>{{ c.name }}</td>
+                    <td>{{ c.quantity }} {{ c.uom }}</td>
+                    <td>₹{{ c.unitCost | number: '1.2-6' }}</td>
+                    <td>{{ c.totalCost | currency: 'INR' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
     </div>
+  }
+  @if (revisions().length) {
+    <section class="card">
+      <h2>Recipe history</h2>
+      @for (v of revisions(); track v._id) {
+        <details>
+          <summary>Version {{ v.version }} · {{ v.createdAt | date: 'medium' }}</summary>
+          <p>{{ v.recipe.name }} · {{ v.recipe.totalBatchCost | currency: 'INR' }} at revision</p>
+          @for (c of v.recipe.components; track $index) {
+            <p>{{ c.name || c.materialId }} · {{ c.quantity }} {{ c.uom }}</p>
+          }
+        </details>
+      }
+      <button class="btn btn--outline" (click)="revisions.set([])">Close history</button>
+    </section>
   }
 </div>

@@ -5,7 +5,7 @@ import { AdminService } from '../../../core/services/admin.service';
 import { AdminSessionService } from '../../../core/services/admin-session.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -16,11 +16,13 @@ import { AuthService } from '../../../core/services/auth.service';
 export class AdminLayout {
   protected readonly unreadEnquiries = signal<number | null>(null);
   protected readonly bakeryOpen = signal<boolean>(true);
+  protected readonly mobileNavOpen = signal(false);
   protected auth = inject(AuthService);
   private router = inject(Router);
   private session = inject(AdminSessionService);
   constructor() {
     const destroy = inject(DestroyRef);
+    this.router.events.pipe(takeUntilDestroyed(destroy)).subscribe(e => { if(e instanceof NavigationEnd) this.mobileNavOpen.set(false); });
     const admin = inject(AdminService);
     merge(timer(0, 30_000), admin.enquiryChanges).pipe(
       switchMap(() => admin.unreadEnquiries().pipe(catchError(() => EMPTY))),

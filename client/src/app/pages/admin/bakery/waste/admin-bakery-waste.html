@@ -2,19 +2,23 @@
   <!-- Header -->
   <header class="waste-head">
     <div>
-      <h1 class="waste-title">🗑️ Kitchen Waste & Loss Tracker</h1>
-      <p class="waste-sub">Log spoiled, burnt or dropped ingredients in 2 clicks. Track true monetary cost lost.</p>
+      <h1 class="waste-title">Waste & loss</h1>
+      <p class="waste-sub">
+        Log spoiled, burnt or dropped ingredients in 2 clicks. Track true monetary cost lost.
+      </p>
     </div>
 
     <!-- Quick Loss KPIs -->
     <div class="kpi-banner">
       <div class="kpi-mini">
         <span class="label">Waste Today</span>
-        <strong class="val text-danger">{{ todayCost() | currency:'INR':'symbol':'1.0-2' }}</strong>
+        <strong class="val text-danger">{{
+          todayCost() | currency: 'INR' : 'symbol' : '1.0-2'
+        }}</strong>
       </div>
       <div class="kpi-mini">
         <span class="label">Waste This Month</span>
-        <strong class="val">{{ monthCost() | currency:'INR':'symbol':'1.0-2' }}</strong>
+        <strong class="val">{{ monthCost() | currency: 'INR' : 'symbol' : '1.0-2' }}</strong>
       </div>
     </div>
   </header>
@@ -62,15 +66,26 @@
 
       <div class="field">
         <label class="label">Notes (Optional)</label>
-        <input class="input" placeholder="e.g. Overbaked in oven tray #2" [ngModel]="notes()" (ngModelChange)="notes.set($event)" />
+        <input
+          class="input"
+          placeholder="e.g. Overbaked in oven tray #2"
+          [ngModel]="notes()"
+          (ngModelChange)="notes.set($event)"
+        />
       </div>
 
       <div class="cost-callout">
-        <span>Estimated Monetary Loss:</span>
-        <strong class="cost-loss">{{ getCostLostPreview() | currency:'INR':'symbol':'1.2-2' }}</strong>
+        <span
+          >The cost is calculated from the current purchase price when you record this entry.</span
+        >
       </div>
 
-      <button type="button" class="btn btn--accent btn--block" (click)="logWaste()">
+      <button
+        type="button"
+        class="btn btn--accent btn--block"
+        [disabled]="saving()"
+        (click)="logWaste()"
+      >
         Log Waste Entry
       </button>
     </section>
@@ -93,7 +108,7 @@
           <tbody>
             @for (log of wasteLogs(); track log._id) {
               <tr>
-                <td class="text-muted font-mono">{{ log.date | date:'shortDate' }}</td>
+                <td class="text-muted font-mono">{{ log.date | date: 'shortDate' }}</td>
                 <td>
                   <strong>{{ log.materialName }}</strong>
                   @if (log.notes) {
@@ -101,14 +116,16 @@
                   }
                 </td>
                 <td class="num font-mono">{{ log.quantity }} {{ log.uom }}</td>
-                <td><span class="badge badge--warning">{{ log.reason }}</span></td>
+                <td>
+                  <span class="badge badge--warning">{{ log.reason }}</span>
+                </td>
                 <td class="num font-mono font-bold text-danger">
-                  {{ log.totalCostLost | currency:'INR':'symbol':'1.2-2' }}
+                  {{ log.totalCostLost | currency: 'INR' : 'symbol' : '1.2-2' }}
                 </td>
               </tr>
             } @empty {
               <tr>
-                <td colspan="5" class="empty-state">No waste logged yet. Great job running a zero-waste kitchen!</td>
+                <td colspan="5" class="empty-state">No waste entries recorded yet.</td>
               </tr>
             }
           </tbody>
@@ -116,4 +133,46 @@
       </div>
     </section>
   </div>
+  <form class="card" (ngSubmit)="logFinished()">
+    <h2>Finished product waste</h2>
+    <p>Select the completed batch so the waste keeps its historical production cost.</p>
+    <div class="form-row">
+      <label class="field"
+        ><span class="label">Production batch</span
+        ><select
+          class="select"
+          name="batch"
+          [(ngModel)]="finished.productionId"
+          (ngModelChange)="finished.lineId = ''"
+          required
+        >
+          <option value="">Choose batch</option>
+          @for (b of batches(); track b._id) {
+            <option [value]="b._id">{{ b.referenceName || b.code }}</option>
+          }
+        </select></label
+      ><label class="field"
+        ><span class="label">Product</span
+        ><select class="select" name="recipe" [(ngModel)]="finished.lineId" required>
+          <option value="">Choose product</option>
+          @for (o of outputs(); track $index) {
+            <option [value]="o.lineId">
+              {{ o.recipeName }} · line {{ $index + 1 }} ({{ o.uom }})
+            </option>
+          }
+        </select></label
+      ><label class="field"
+        ><span class="label">Quantity</span
+        ><input class="input" name="qty" [(ngModel)]="finished.quantity" required /></label
+      ><label class="field"
+        ><span class="label">Reason</span
+        ><select class="select" name="reason" [(ngModel)]="finished.reason">
+          @for (r of reasons; track r) {
+            <option>{{ r }}</option>
+          }
+        </select></label
+      >
+    </div>
+    <button class="btn btn--accent" [disabled]="saving()">Record product waste</button>
+  </form>
 </div>

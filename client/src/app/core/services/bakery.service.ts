@@ -27,17 +27,31 @@ export class BakeryService {
     if (params?.type) p = p.set('type', params.type);
     if (params?.category) p = p.set('category', params.category);
     if (params?.search) p = p.set('search', params.search);
-    return this.http.get<{ success: boolean; count: number; materials: BakeryMaterial[] }>(`${this.base}/materials`, {
-      params: p,
-    });
+    return this.http.get<{ success: boolean; count: number; materials: BakeryMaterial[] }>(
+      `${this.base}/materials`,
+      {
+        params: p,
+      },
+    );
   }
 
-  createMaterial(data: Partial<BakeryMaterial>): Observable<{ success: boolean; material: BakeryMaterial }> {
-    return this.http.post<{ success: boolean; material: BakeryMaterial }>(`${this.base}/materials`, data);
+  createMaterial(
+    data: Partial<BakeryMaterial>,
+  ): Observable<{ success: boolean; material: BakeryMaterial }> {
+    return this.http.post<{ success: boolean; material: BakeryMaterial }>(
+      `${this.base}/materials`,
+      data,
+    );
   }
 
-  updateMaterial(id: string, data: Partial<BakeryMaterial>): Observable<{ success: boolean; material: BakeryMaterial }> {
-    return this.http.patch<{ success: boolean; material: BakeryMaterial }>(`${this.base}/materials/${id}`, data);
+  updateMaterial(
+    id: string,
+    data: Partial<BakeryMaterial>,
+  ): Observable<{ success: boolean; material: BakeryMaterial }> {
+    return this.http.patch<{ success: boolean; material: BakeryMaterial }>(
+      `${this.base}/materials/${id}`,
+      data,
+    );
   }
 
   deleteMaterial(id: string): Observable<{ success: boolean; message: string }> {
@@ -53,21 +67,32 @@ export class BakeryService {
     let p = new HttpParams();
     if (params?.category) p = p.set('category', params.category);
     if (params?.search) p = p.set('search', params.search);
-    return this.http.get<{ success: boolean; count: number; recipes: BakeryRecipe[] }>(`${this.base}/recipes`, {
-      params: p,
-    });
+    return this.http.get<{ success: boolean; count: number; recipes: BakeryRecipe[] }>(
+      `${this.base}/recipes`,
+      {
+        params: p,
+      },
+    );
   }
 
   getRecipe(id: string): Observable<{ success: boolean; recipe: BakeryRecipe }> {
     return this.http.get<{ success: boolean; recipe: BakeryRecipe }>(`${this.base}/recipes/${id}`);
   }
 
-  createRecipe(data: Partial<BakeryRecipe>): Observable<{ success: boolean; recipe: BakeryRecipe }> {
+  createRecipe(
+    data: Partial<BakeryRecipe>,
+  ): Observable<{ success: boolean; recipe: BakeryRecipe }> {
     return this.http.post<{ success: boolean; recipe: BakeryRecipe }>(`${this.base}/recipes`, data);
   }
 
-  updateRecipe(id: string, data: Partial<BakeryRecipe>): Observable<{ success: boolean; recipe: BakeryRecipe }> {
-    return this.http.patch<{ success: boolean; recipe: BakeryRecipe }>(`${this.base}/recipes/${id}`, data);
+  updateRecipe(
+    id: string,
+    data: Partial<BakeryRecipe>,
+  ): Observable<{ success: boolean; recipe: BakeryRecipe }> {
+    return this.http.patch<{ success: boolean; recipe: BakeryRecipe }>(
+      `${this.base}/recipes/${id}`,
+      data,
+    );
   }
 
   deleteRecipe(id: string): Observable<{ success: boolean; message: string }> {
@@ -80,37 +105,62 @@ export class BakeryService {
     quantity: number,
     targetMarkup?: number,
   ): Observable<{ success: boolean; scaled: ScaledRecipeResult }> {
-    return this.http.post<{ success: boolean; scaled: ScaledRecipeResult }>(`${this.base}/simulate/recipe`, {
-      recipeId,
-      quantity,
-      targetMarkup,
-    });
+    return this.http.post<{ success: boolean; scaled: ScaledRecipeResult }>(
+      `${this.base}/simulate/recipe`,
+      {
+        recipeId,
+        quantity,
+        targetMarkup,
+      },
+    );
   }
 
   simulateMulti(
     items: { recipeId: string; quantity: number }[],
     targetMarkup?: number,
   ): Observable<{ success: boolean; aggregated: MultiProductResult }> {
-    return this.http.post<{ success: boolean; aggregated: MultiProductResult }>(`${this.base}/simulate/multi`, {
-      items,
-      targetMarkup,
-    });
+    return this.http.post<{ success: boolean; aggregated: MultiProductResult }>(
+      `${this.base}/simulate/multi`,
+      {
+        items,
+        targetMarkup,
+      },
+    );
   }
 
   // Costing sheets
-  getCostingSheets(type?: string): Observable<{ success: boolean; count: number; sheets: CostingSheet[] }> {
+  getCostingSheets(
+    type?: string,
+  ): Observable<{ success: boolean; count: number; sheets: CostingSheet[] }> {
     let p = new HttpParams();
     if (type) p = p.set('type', type);
-    return this.http.get<{ success: boolean; count: number; sheets: CostingSheet[] }>(`${this.base}/costing-sheets`, {
-      params: p,
-    });
+    return this.http.get<{ success: boolean; count: number; sheets: CostingSheet[] }>(
+      `${this.base}/costing-sheets`,
+      {
+        params: p,
+      },
+    );
   }
 
-  saveCostingSheet(data: Partial<CostingSheet>): Observable<{ success: boolean; sheet: CostingSheet }> {
-    return this.http.post<{ success: boolean; sheet: CostingSheet }>(`${this.base}/costing-sheets`, data);
+  saveCostingSheet(
+    data: Partial<CostingSheet>,
+  ): Observable<{ success: boolean; sheet: CostingSheet }> {
+    return this.http.post<{ success: boolean; sheet: CostingSheet }>(
+      `${this.base}/costing-sheets`,
+      data,
+    );
   }
 
   // Inventory
+  adjustStock(
+    id: string,
+    packs: number,
+  ): Observable<{ success: boolean; material: BakeryMaterial }> {
+    return this.http.patch<{ success: boolean; material: BakeryMaterial }>(
+      `${this.base}/inventory/${id}/stock`,
+      { packs },
+    );
+  }
   getInventory(): Observable<{
     success: boolean;
     count: number;
@@ -127,10 +177,18 @@ export class BakeryService {
     }>(`${this.base}/inventory`);
   }
 
-  updateStock(id: string, currentStock: number): Observable<{ success: boolean; material: BakeryMaterial }> {
-    return this.http.patch<{ success: boolean; material: BakeryMaterial }>(`${this.base}/inventory/${id}/stock`, {
-      currentStock,
-    });
+  updateStock(
+    id: string,
+    currentStock: number,
+    expectedStock?: number,
+  ): Observable<{ success: boolean; material: BakeryMaterial }> {
+    return this.http.patch<{ success: boolean; material: BakeryMaterial }>(
+      `${this.base}/inventory/${id}/stock`,
+      {
+        currentStock,
+        expectedStock,
+      },
+    );
   }
 
   // Waste

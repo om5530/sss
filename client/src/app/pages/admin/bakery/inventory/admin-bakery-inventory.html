@@ -2,8 +2,10 @@
   <!-- Header -->
   <header class="inv-head">
     <div>
-      <h1 class="inv-title">📊 Kitchen Stock & Shortage Monitor</h1>
-      <p class="inv-sub">Track real physical inventory on your shelves and receive instant reorder alerts.</p>
+      <h1 class="inv-title">Inventory</h1>
+      <p class="inv-sub">
+        Track real physical inventory on your shelves and receive instant reorder alerts.
+      </p>
     </div>
     @if (lowStockCount() > 0) {
       <div class="alert-box">
@@ -22,6 +24,8 @@
             <th>Type</th>
             <th>Pack Size</th>
             <th class="num">Current Stock</th>
+            <th class="num">Allocated</th>
+            <th class="num">Available</th>
             <th class="num">Min Alert Level</th>
             <th>Status</th>
             <th class="num">Quick 1-Click Adjust</th>
@@ -29,14 +33,16 @@
         </thead>
         <tbody>
           @for (m of materials(); track m._id) {
-            <tr [class.low-stock-row]="m.currentStock <= m.minimumStock">
+            <tr [class.low-stock-row]="low(m)">
               <td>
                 <strong>{{ m.name }}</strong>
                 @if (m.supplierName) {
                   <small class="text-muted block">Supplier: {{ m.supplierName }}</small>
                 }
               </td>
-              <td><span class="tag-type {{ m.type }}">{{ m.type }}</span></td>
+              <td>
+                <span class="tag-type {{ m.type }}">{{ m.type }}</span>
+              </td>
               <td class="font-mono text-muted">{{ m.packQuantity }} {{ m.packUom }}</td>
               <td class="num font-mono font-bold">
                 <input
@@ -47,9 +53,11 @@
                 />
                 <span class="uom-suffix">{{ m.baseUom }}</span>
               </td>
+              <td class="num">{{ m.allocatedStock || 0 }} {{ m.baseUom }}</td>
+              <td class="num">{{ m.available ?? m.currentStock }} {{ m.baseUom }}</td>
               <td class="num font-mono text-muted">{{ m.minimumStock }} {{ m.baseUom }}</td>
               <td>
-                @if (m.currentStock <= m.minimumStock) {
+                @if (low(m)) {
                   <span class="badge badge--danger">⚠️ LOW STOCK</span>
                 } @else {
                   <span class="badge badge--success">✓ Optimal</span>
@@ -57,10 +65,20 @@
               </td>
               <td class="num">
                 <div class="adjust-btns">
-                  <button type="button" class="btn btn--outline btn--sm" (click)="quickAdjust(m, m.packQuantity)" title="Add 1 Pack">
+                  <button
+                    type="button"
+                    class="btn btn--outline btn--sm"
+                    (click)="quickAdjust(m, 1)"
+                    title="Add 1 Pack"
+                  >
                     +1 Pack ({{ m.packQuantity }})
                   </button>
-                  <button type="button" class="btn btn--ghost btn--sm" (click)="quickAdjust(m, -m.packQuantity)" title="Deduct 1 Pack">
+                  <button
+                    type="button"
+                    class="btn btn--ghost btn--sm"
+                    (click)="quickAdjust(m, -1)"
+                    title="Deduct 1 Pack"
+                  >
                     -1
                   </button>
                 </div>

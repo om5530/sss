@@ -1,4 +1,6 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, DestroyRef } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Subscription } from 'rxjs';
 import { CommonModule, CurrencyPipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BakeryService } from '../../../../core/services/bakery.service';
@@ -14,6 +16,17 @@ import { ToastService } from '../../../../core/services/toast.service';
 })
 export class AdminBakeryMaterials implements OnInit {
   private bakery = inject(BakeryService);
+  private http = inject(HttpClient);
+  private previewRequest?: Subscription;
+  private previewTimer?: ReturnType<typeof setTimeout>;
+  previewCost = signal<string | null>(null);
+  previewError = signal('');
+  constructor() {
+    inject(DestroyRef).onDestroy(() => {
+      this.previewRequest?.unsubscribe();
+      clearTimeout(this.previewTimer);
+    });
+  }
   private toast = inject(ToastService);
 
   materials = signal<BakeryMaterial[]>([]);
@@ -38,18 +51,23 @@ export class AdminBakeryMaterials implements OnInit {
   fetchMaterials() {
     this.loading.set(true);
     const typeParam = this.selectedType() === 'all' ? undefined : this.selectedType();
-    this.bakery.getMaterials({ type: typeParam, search: this.searchQuery() || undefined }).subscribe({
-      next: (res) => {
-        this.materials.set(res.materials);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
+    this.bakery
+      .getMaterials({ type: typeParam, search: this.searchQuery() || undefined })
+      .subscribe({
+        next: (res) => {
+          this.materials.set(res.materials);
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false),
+      });
   }
 
   setType(t: string) {
     this.selectedType.set(t);
     this.fetchMaterials();
+  }
+  low(m: BakeryMaterial) {
+    return Number(m.currentStock) <= Number(m.minimumStock);
   }
 
   startNewMaterial() {
@@ -62,7 +80,7 @@ export class AdminBakeryMaterials implements OnInit {
       packQuantity: 1000,
       packUom: 'g',
       purchasePrice: 100,
-      currentStock: 1000,
+      currentStock: 0,
       minimumStock: 200,
       supplierName: '',
     });
@@ -70,18 +88,26 @@ export class AdminBakeryMaterials implements OnInit {
 
   editMaterial(m: BakeryMaterial) {
     this.editingMaterial.set({ ...m });
+    this.preview();
   }
 
   cancelEdit() {
     this.editingMaterial.set(null);
   }
 
-  getCalculatedPreview(): number {
-    const m = this.editingMaterial();
-    if (!m) return 0;
-    const qty = Number(m.packQuantity) || 1;
-    const price = Number(m.purchasePrice) || 0;
-    return price / qty;
+  preview() {
+    clearTimeout(this.previewTimer);
+    this.previewRequest?.unsubscribe();
+    this.previewCost.set(null);
+    this.previewError.set('');
+    this.previewTimer = setTimeout(() => {
+      this.previewRequest = this.http
+        .post<any>('/api/admin/bakery/materials/preview', this.editingMaterial())
+        .subscribe({
+          next: (r) => this.previewCost.set(r.unitCost),
+          error: (e) => this.previewError.set(e.error?.message || 'Check pack quantity and units'),
+        });
+    }, 250);
   }
 
   saveMaterial() {

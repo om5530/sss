@@ -1,0 +1,916 @@
+<div class="bakery-workspace">
+  <header class="work-head">
+    <div>
+      <div class="eyebrow">THE GOLDEN BATCH · KITCHEN</div>
+      <h1>{{ title[view] }}</h1>
+      <p>Plan your baking. Know your costs. Keep your kitchen stocked.</p>
+    </div>
+    <a class="btn btn--accent" routerLink="/admin/bakery/calculator">Open calculator</a>
+  </header>
+  <nav class="work-nav" aria-label="Bakery operations">
+    <a routerLink="/admin/bakery/dashboard">Overview</a
+    ><a routerLink="/admin/bakery/materials">Materials</a
+    ><a routerLink="/admin/bakery/recipes">Recipes</a
+    ><a routerLink="/admin/bakery/production">Production</a
+    ><a routerLink="/admin/bakery/inventory">Inventory</a
+    ><a routerLink="/admin/bakery/purchasing">Purchasing</a
+    ><a routerLink="/admin/bakery/waste">Waste</a><a routerLink="/admin/bakery/reports">Reports</a>
+  </nav>
+  @if (error()) {
+    <div class="error" role="alert">{{ error() }}</div>
+  }
+  @if (notice()) {
+    <div class="notice" role="status">{{ notice() }}</div>
+  }
+  @if (busy()) {
+    <p role="status">Loading…</p>
+  }
+  @if (view === 'dashboard') {
+    <div class="stats">
+      <div class="card stat">
+        <span>Scheduled production</span><strong>{{ data().plans?.length || 0 }}</strong>
+      </div>
+      <div class="card stat">
+        <span>Materials to reorder</span><strong>{{ lowStock().length }}</strong>
+      </div>
+      <div class="card stat">
+        <span>Recorded waste cost</span><strong>{{ money(data().wasteCost) }}</strong>
+      </div>
+    </div>
+    <div class="work-grid">
+      <section class="card">
+        <h2 class="section-title">Upcoming production</h2>
+        @for (p of data().plans; track p._id) {
+          <p>
+            <a routerLink="/admin/bakery/production">{{ p.referenceName || p.code }}</a> ·
+            {{ p.requiredDate | date: 'mediumDate' }}
+          </p>
+        } @empty {
+          <p class="muted">Save a production plan from the calculator to begin.</p>
+        }
+      </section>
+      <section class="card">
+        <h2 class="section-title">Stock needing attention</h2>
+        @for (m of lowStock(); track m._id) {
+          <p>
+            {{ m.name }} · {{ m.currentStock | number: '1.0-2' }} {{ m.baseUom }} on hand ·
+            {{ m.allocatedStock | number: '1.0-2' }} allocated
+          </p>
+        } @empty {
+          <p class="muted">No materials below reorder level.</p>
+        }
+      </section>
+    </div>
+    <section class="card">
+      <h2 class="section-title">Recipe cost changes</h2>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Recipe</th>
+              <th>Previous batch cost</th>
+              <th>Current cost</th>
+              <th>Change</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of data().recipes; track r.name) {
+              <tr>
+                <td>{{ r.name }}</td>
+                <td>{{ money(r.oldCost) }}</td>
+                <td>{{ r.error || money(r.totalBatchCost) }}</td>
+                <td>{{ money(r.costChange) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+  @if (view === 'purchasing') {
+    <div class="work-grid">
+      <form class="card" (ngSubmit)="saveSupplier()">
+        <h2 class="section-title">Add supplier</h2>
+        <label
+          >Name<input
+            class="input"
+            name="supplierName"
+            [(ngModel)]="supplier.name"
+            required /></label
+        ><label
+          >Phone or email<input
+            class="input"
+            name="contact"
+            [(ngModel)]="supplier.contact" /></label
+        ><label>Notes<input class="input" name="notes" [(ngModel)]="supplier.notes" /></label
+        ><button class="btn btn--accent" [disabled]="busy()">Save supplier</button>
+      </form>
+      <form class="card" (ngSubmit)="saveFormat()">
+        <h2 class="section-title">Add purchase format</h2>
+        <div class="fields">
+          <label
+            >Material<select
+              class="select"
+              name="material"
+              [(ngModel)]="format.materialId"
+              required
+            >
+              <option value="">Choose material</option>
+              @for (m of materials(); track m._id) {
+                <option [value]="m._id">{{ m.name }}</option>
+              }
+            </select></label
+          ><label
+            >Supplier<select
+              class="select"
+              name="supplier"
+              [(ngModel)]="format.supplierId"
+              required
+            >
+              <option value="">Choose supplier</option>
+              @for (s of purchasing().suppliers; track s._id) {
+                <option [value]="s._id">{{ s.name }}</option>
+              }
+            </select></label
+          ><label
+            >Pack quantity<input
+              class="input"
+              name="pack"
+              [(ngModel)]="format.packQuantity"
+              required /></label
+          ><label
+            >Pack unit<select class="select" name="uom" [(ngModel)]="format.packUom">
+              @for (
+                u of [
+                  'mg',
+                  'g',
+                  'kg',
+                  'ml',
+                  'L',
+                  'piece',
+                  'dozen',
+                  'box',
+                  'packet',
+                  'minute',
+                  'hour',
+                ];
+                track u
+              ) {
+                <option>{{ u }}</option>
+              }
+            </select></label
+          ><label
+            >Pack price (₹)<input
+              class="input"
+              name="price"
+              [(ngModel)]="format.purchasePrice"
+              required /></label
+          ><label
+            >Minimum packs<input
+              class="input"
+              name="moq"
+              [(ngModel)]="format.minimumOrderPacks" /></label
+          ><label
+            >Lead time (days)<input
+              class="input"
+              type="number"
+              min="0"
+              name="lead"
+              [(ngModel)]="format.leadTimeDays" /></label
+          ><label>Brand<input class="input" name="brand" [(ngModel)]="format.brand" /></label
+          ><label
+            >Supplier code<input class="input" name="code" [(ngModel)]="format.supplierCode"
+          /></label>
+        </div>
+        <label class="inline"
+          ><input type="checkbox" name="preferred" [(ngModel)]="format.preferred" />Use as preferred
+          format</label
+        ><button class="btn btn--accent" [disabled]="busy()">Save purchase format</button>
+      </form>
+    </div>
+    <section class="card">
+      <h2 class="section-title">Supplier formats</h2>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Material</th>
+              <th>Supplier / pack</th>
+              <th>Price</th>
+              <th>Cost per base unit</th>
+              <th>Preference</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (f of purchasing().formats; track f._id) {
+              <tr>
+                <td>{{ name(f.materialId) }}</td>
+                <td>{{ f.supplierName }} · {{ f.packQuantity }} {{ f.packUom }}</td>
+                <td>{{ money(f.price?.purchasePrice) }}</td>
+                <td>{{ f.price?.unitCost | number: '1.2-6' }}</td>
+                <td>
+                  @if (f.preferred) {
+                    Preferred
+                  } @else {
+                    <button
+                      class="btn btn--outline"
+                      [disabled]="busy()"
+                      (click)="
+                        post('/formats/' + f._id + '/prefer', {}, 'Preferred supplier updated')
+                      "
+                    >
+                      Use this supplier
+                    </button>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5">Add a supplier and purchase format to compare prices.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <div class="work-grid">
+      <form class="card" (ngSubmit)="savePrice()">
+        <h2 class="section-title">Record new price</h2>
+        <label
+          >Purchase format<select
+            class="select"
+            name="format"
+            [(ngModel)]="priceForm.formatId"
+            required
+          >
+            <option value="">Choose format</option>
+            @for (f of purchasing().formats; track f._id) {
+              <option [value]="f._id">
+                {{ name(f.materialId) }} · {{ f.supplierName }} · {{ f.packQuantity }}
+                {{ f.packUom }}
+              </option>
+            }
+          </select></label
+        >
+        <div class="fields">
+          <label
+            >New pack price (₹)<input
+              class="input"
+              name="price"
+              [(ngModel)]="priceForm.purchasePrice"
+              required /></label
+          ><label
+            >Effective date<input
+              class="input"
+              type="date"
+              name="date"
+              [(ngModel)]="priceForm.effectiveAt"
+              required
+          /></label>
+        </div>
+        <button class="btn btn--accent" [disabled]="busy()">Record price</button>
+      </form>
+      <form class="card" (ngSubmit)="createPurchase()">
+        <h2 class="section-title">New purchase order</h2>
+        <label
+          >Supplier<select
+            class="select"
+            name="supplier"
+            [(ngModel)]="purchaseForm.supplierId"
+            required
+          >
+            <option value="">Choose supplier</option>
+            @for (s of purchasing().suppliers; track s._id) {
+              <option [value]="s._id">{{ s.name }}</option>
+            }
+          </select></label
+        >
+        @for (line of purchaseForm.lines; track $index) {
+          <div class="fields">
+            <label
+              >Format<select
+                class="select"
+                [name]="'format' + $index"
+                [(ngModel)]="line.formatId"
+                required
+              >
+                <option value="">Choose format</option>
+                @for (f of formatsForSupplier(); track f._id) {
+                  <option [value]="f._id">
+                    {{ name(f.materialId) }} · {{ f.packQuantity }} {{ f.packUom }}
+                  </option>
+                }
+              </select></label
+            ><label
+              >Number of packs<input
+                class="input"
+                [name]="'packs' + $index"
+                [(ngModel)]="line.packs"
+                required
+            /></label>
+          </div>
+        }
+        <button
+          type="button"
+          class="btn btn--outline"
+          (click)="purchaseForm.lines.push({ formatId: '', packs: '1' })"
+        >
+          Add line</button
+        ><button class="btn btn--accent" [disabled]="busy()">Create draft purchase</button>
+      </form>
+    </div>
+    <section class="card">
+      <h2 class="section-title">Purchase orders</h2>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Reference</th>
+              <th>Supplier</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of purchasing().purchases; track p._id) {
+              <tr>
+                <td>{{ p.code }}</td>
+                <td>{{ supplierName(p.supplierId) }}</td>
+                <td>
+                  <span class="status">{{ p.status.replaceAll('_', ' ') }}</span>
+                </td>
+                <td>
+                  <div class="inline">
+                    @if (p.status === 'draft') {
+                      <button
+                        class="btn btn--outline"
+                        [disabled]="busy()"
+                        (click)="
+                          post(
+                            '/purchases/' + p._id + '/status',
+                            { status: 'ordered' },
+                            'Purchase marked ordered'
+                          )
+                        "
+                      >
+                        Mark ordered
+                      </button>
+                    }
+                    @if (p.status === 'ordered' || p.status === 'partially_received') {
+                      <button class="btn btn--accent" (click)="beginReceipt(p)">
+                        Receive goods
+                      </button>
+                    }
+                    @if (p.status !== 'received' && p.status !== 'cancelled') {
+                      <button
+                        class="btn btn--outline"
+                        [disabled]="busy()"
+                        (click)="
+                          post(
+                            '/purchases/' + p._id + '/status',
+                            { status: 'cancelled' },
+                            'Remaining purchase cancelled'
+                          )
+                        "
+                      >
+                        Cancel remaining
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+    @if (receiving) {
+      <form class="card" (ngSubmit)="receive()">
+        <h2 class="section-title">Receive {{ receiving.purchase.code }}</h2>
+        <p class="muted">Enter only what arrived. Stock changes when this receipt is saved.</p>
+        @for (l of receiving.lines; track l.lineId) {
+          <h3>{{ name(l.materialId) }}</h3>
+          <div class="fields">
+            <label
+              >Packs received<input
+                class="input"
+                [name]="'rp' + l.lineId"
+                [(ngModel)]="l.packs" /></label
+            ><label
+              >Actual pack price<input
+                class="input"
+                [name]="'price' + l.lineId"
+                [(ngModel)]="l.purchasePrice" /></label
+            ><label
+              >Lot (optional)<input
+                class="input"
+                [name]="'lot' + l.lineId"
+                [(ngModel)]="l.lot" /></label
+            ><label
+              >Expiry (optional)<input
+                class="input"
+                type="date"
+                [name]="'expiry' + l.lineId"
+                [(ngModel)]="l.expiry"
+            /></label>
+          </div>
+        }
+        <div class="inline">
+          <button class="btn btn--accent" [disabled]="busy()">Save receipt</button
+          ><button type="button" class="btn btn--outline" (click)="receiving = null">Close</button>
+        </div>
+      </form>
+    }
+    <details class="card">
+      <summary>Purchase price history</summary>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Effective date</th>
+              <th>Material</th>
+              <th>Supplier</th>
+              <th>Pack</th>
+              <th>Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of purchasing().prices; track p._id) {
+              <tr>
+                <td>{{ p.effectiveAt | date: 'mediumDate' }}</td>
+                <td>{{ name(p.materialId) }}</td>
+                <td>{{ supplierName(p.supplierId) }}</td>
+                <td>{{ p.packQuantity }} {{ p.packUom }}</td>
+                <td>{{ money(p.purchasePrice) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </details>
+  }
+  @if (view === 'production') {
+    @for (s of sheets(); track s._id) {
+      <section class="card batch" [attr.id]="'batch-' + s._id">
+        <div class="batch-head">
+          <div>
+            <h2 class="section-title">{{ s.referenceName || s.code }}</h2>
+            <p>
+              {{ s.type.replaceAll('_', ' ') }} · {{ s.requiredDate | date: 'mediumDate' }} ·
+              {{ s.code }}
+            </p>
+          </div>
+          <span class="status">{{ s.status }}</span>
+        </div>
+        <div class="inline">
+          <strong>{{ money(s.snapshot.totalCost) }} production cost</strong
+          ><span>{{ money(s.snapshot.suggestedSellingPrice) }} suggested price</span>
+        </div>
+        <div class="no-print inline">
+          @if (s.status === 'scheduled') {
+            <button class="btn btn--accent" (click)="beginBatch(s)">Record production</button
+            ><button class="btn btn--outline" (click)="requirements(s)">
+              Purchase requirements
+            </button>
+          }
+          <button class="btn btn--outline" (click)="compare(s)">Compare current cost</button
+          ><button class="btn btn--outline" (click)="printBatch(s._id)">Print prep</button>
+          @if (s.status !== 'completed' && s.status !== 'cancelled') {
+            <button
+              class="btn btn--outline"
+              [disabled]="busy()"
+              (click)="post('/costing-sheets/' + s._id + '/cancel', {}, 'Plan cancelled')"
+            >
+              Cancel plan
+            </button>
+          }
+        </div>
+        <details>
+          <summary>Ingredients and packaging · saved assumptions</summary>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Material</th>
+                  <th>Required</th>
+                  <th>Cost</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (r of s.snapshot.requirements; track $index) {
+                  <tr>
+                    <td>{{ r.name }}</td>
+                    <td>{{ r.quantity | number: '1.0-3' }} {{ r.uom }}</td>
+                    <td>{{ money(r.totalCost) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </details>
+        @if (s.actual) {
+          <p>
+            Actual production cost: <strong>{{ money(s.actual.totalCost) }}</strong>
+          </p>
+          @for (o of s.actual.outputs; track $index) {
+            <p>
+              {{ o.recipeName }} v{{ o.version }} · {{ o.quantity }} {{ o.uom }} usable ·
+              {{ o.waste }} waste · variance {{ o.variance }}
+            </p>
+          }
+        }
+      </section>
+    } @empty {
+      <section class="card">
+        <p>
+          No saved production yet. Choose recipes in the calculator, then save a production plan or
+          costing sheet.
+        </p>
+      </section>
+    }
+    @if (completing) {
+      <form class="card" (ngSubmit)="complete()">
+        <h2 class="section-title">Record actual production</h2>
+        <p class="muted">Planned quantities are filled in. Change only the exceptions.</p>
+        <div class="fields">
+          @for (r of completing.ingredients; track r.materialId) {
+            <label
+              >{{ r.name }} ({{ r.uom }})<input
+                class="input"
+                [name]="r.materialId"
+                [(ngModel)]="r.quantity"
+            /></label>
+          }
+        </div>
+        <h3>Usable output and waste</h3>
+        @for (o of completing.outputs; track $index) {
+          <h3>{{ o.recipeName }} · planned {{ o.planned }} {{ o.uom }}</h3>
+          <div class="fields">
+            <label
+              >Usable quantity<input
+                class="input"
+                [name]="'out' + $index"
+                [(ngModel)]="o.quantity" /></label
+            ><label
+              >Broken / discarded<input
+                class="input"
+                [name]="'waste' + $index"
+                [(ngModel)]="o.waste"
+            /></label>
+          </div>
+        }
+        <h3>Process loss measurement (optional)</h3>
+        <p>Compare pre-bake weight with all baked output before discarding broken pieces.</p>
+        @for (o of completing.outputs; track $index) {
+          <h3>{{ o.recipeName }}</h3>
+          <div class="fields">
+            <label
+              >Before baking (g)<input
+                class="input"
+                [name]="'inputWeight' + $index"
+                [(ngModel)]="o.inputWeightGrams"
+            /></label>
+            <label
+              >Total baked weight (g)<input
+                class="input"
+                [name]="'outputWeight' + $index"
+                [(ngModel)]="o.actualWeightGrams"
+            /></label>
+          </div>
+        }
+        <label
+          >Notes<textarea class="input" name="notes" [(ngModel)]="completing.notes"></textarea>
+        </label>
+        <div class="inline">
+          <button class="btn btn--accent" [disabled]="busy()">
+            Complete batch and consume stock</button
+          ><button type="button" class="btn btn--outline" (click)="completing = null">Close</button>
+        </div>
+      </form>
+    }
+    @if (history) {
+      <section class="card">
+        <h2 class="section-title">Historical vs current cost</h2>
+        <p>
+          Saved: {{ money(history.historical.totalCost) }} · Current:
+          {{ money(history.current.totalCost) }}
+        </p>
+        <button class="btn btn--outline" (click)="history = null">Close</button>
+      </section>
+    }
+    @if (comparison) {
+      <section class="card">
+        <h2 class="section-title">Purchase requirements</h2>
+        @for (r of comparison; track r.materialId) {
+          <h3>{{ r.name }} · shortage {{ r.shortage | number: '1.0-3' }} {{ r.uom }}</h3>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Supplier</th>
+                  <th>Packs</th>
+                  <th>Spend</th>
+                  <th>Excess</th>
+                  <th>Lead time</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (c of r.comparisons; track c.formatId) {
+                  <tr>
+                    <td>{{ c.supplierName }} {{ c.preferred ? '(preferred)' : '' }}</td>
+                    <td>{{ c.packs }}</td>
+                    <td>{{ money(c.spend) }}</td>
+                    <td>{{ c.excess | number: '1.0-3' }} {{ r.uom }}</td>
+                    <td>{{ c.leadTimeDays }} days</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+        <a class="btn btn--accent" routerLink="/admin/bakery/purchasing">Open purchasing</a>
+      </section>
+    }
+  }
+  @if (view === 'reports') {
+    <div class="inline no-print">
+      <label>From<input class="input" type="date" [(ngModel)]="from" /></label
+      ><label>To<input class="input" type="date" [(ngModel)]="to" /></label
+      ><button class="btn btn--outline" (click)="load()">Apply dates</button
+      ><button class="btn btn--outline" (click)="print()">Print report</button>
+    </div>
+    <section class="card">
+      <h2 class="section-title">Recipe costs and profitability</h2>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Recipe</th>
+              <th>Batch cost</th>
+              <th>Unit cost</th>
+              <th>Suggested unit price</th>
+              <th>Current margin</th>
+              <th>Change</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of data().recipes; track r.name) {
+              <tr>
+                <td>{{ r.name }}</td>
+                <td>{{ r.error || money(r.totalBatchCost) }}</td>
+                <td>{{ money(r.costPerUnit) }}</td>
+                <td>{{ money(r.suggestedSellingPrice) }}</td>
+                <td>{{ r.currentMargin | number: '1.1-2' }}%</td>
+                <td>{{ money(r.costChange) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <section class="card">
+      <h2 class="section-title">Production usage and variance</h2>
+      @for (b of data().batches; track b._id) {
+        <h3>{{ b.referenceName }} · {{ b.completedAt | date: 'mediumDate' }}</h3>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Material</th>
+                <th>Theoretical</th>
+                <th>Actual</th>
+                <th>Variance</th>
+                <th>Actual cost</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of b.actual.consumption; track r.materialId) {
+                <tr>
+                  <td>{{ r.name }}</td>
+                  <td>{{ r.plannedQuantity }} {{ r.uom }}</td>
+                  <td>{{ r.quantity }} {{ r.uom }}</td>
+                  <td>{{ r.variance }} {{ r.uom }}</td>
+                  <td>{{ money(r.totalCost) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        @for (o of b.actual.outputs; track $index) {
+          <p>
+            {{ o.recipeName }}: {{ o.quantity }} usable / {{ o.planned }} expected ·
+            {{ o.waste }} waste
+          </p>
+        }
+      } @empty {
+        <p class="muted">Complete a production batch to see actual usage and yield.</p>
+      }
+    </section>
+    <section class="card">
+      <h2 class="section-title">Yield and process loss</h2>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Batch / recipe</th>
+              <th>Expected weight</th>
+              <th>Actual weight</th>
+              <th>Expected loss</th>
+              <th>Actual loss</th>
+              <th>Variance</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (b of data().batches; track b._id) {
+              @for (o of b.actual.outputs; track $index) {
+                <tr>
+                  <td>{{ b.referenceName }} · {{ o.recipeName }}</td>
+                  <td>{{ o.expectedWeightGrams || '—' }} g</td>
+                  <td>{{ o.actualWeightGrams || '—' }} g</td>
+                  <td>{{ o.expectedLossPercent || '0' }}%</td>
+                  <td>{{ o.actualLossPercent ?? '—' }}%</td>
+                  <td>{{ o.lossVariancePercent ?? '—' }} percentage points</td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <section class="card">
+      <h2 class="section-title">Waste cost · {{ money(data().wasteCost) }}</h2>
+      @for (g of data().wasteByReason | keyvalue; track g.key) {
+        <p>{{ g.key }} · {{ money(g.value) }}</p>
+      }
+    </section>
+    <section class="card">
+      <h2 class="section-title">Stock movement history</h2>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Material</th>
+              <th>Movement</th>
+              <th>Quantity</th>
+              <th>Balance</th>
+              <th>Reference</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of data().movements; track m._id) {
+              <tr>
+                <td>{{ m.createdAt | date: 'short' }}</td>
+                <td>{{ name(m.materialId) }}</td>
+                <td>{{ m.type }}</td>
+                <td>{{ m.quantity }}</td>
+                <td>{{ m.balance }}</td>
+                <td>{{ m.reference }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+  @if (view === 'reports') {
+    <section class="card">
+      <h2 class="section-title">Purchase price history</h2>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Effective date</th>
+              <th>Material</th>
+              <th>Supplier</th>
+              <th>Pack</th>
+              <th>Price</th>
+              <th>Unit cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of data().prices; track p._id) {
+              <tr>
+                <td>{{ p.effectiveAt | date: 'mediumDate' }}</td>
+                <td>{{ name(p.materialId) }}</td>
+                <td>{{ supplierName(p.supplierId) }}</td>
+                <td>{{ p.packQuantity }} {{ p.packUom }}</td>
+                <td>{{ money(p.purchasePrice) }}</td>
+                <td>₹{{ p.unitCost | number: '1.2-6' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <section class="card">
+      <h2 class="section-title">Goods received</h2>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Received</th>
+              <th>Material</th>
+              <th>Quantity</th>
+              <th>Pack price</th>
+              <th>Lot</th>
+              <th>Expiry</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of data().receipts; track r._id) {
+              @for (l of r.lines; track $index) {
+                <tr>
+                  <td>{{ r.receivedAt | date: 'mediumDate' }}</td>
+                  <td>{{ name(l.materialId) }}</td>
+                  <td>{{ l.packs }} × {{ l.packQuantity }} {{ l.packUom }}</td>
+                  <td>{{ money(l.purchasePrice) }}</td>
+                  <td>{{ l.lot || '—' }}</td>
+                  <td>{{ l.expiry | date: 'mediumDate' }}</td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <section class="card">
+      <h2 class="section-title">Recorded production output</h2>
+      <p>
+        Usable production less recorded finished-product waste. Deliveries and sales are tracked
+        separately.
+      </p>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Batch</th>
+              <th>Product</th>
+              <th>Quantity</th>
+              <th>Production unit cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (o of data().finishedStock; track $index) {
+              <tr>
+                <td>{{ o.batch }}</td>
+                <td>{{ o.recipeName }}</td>
+                <td>{{ o.quantity }} {{ o.uom }}</td>
+                <td>{{ money(o.unitCost) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+  @if (view === 'migration') {
+    <section class="card">
+      <h2 class="section-title">Review legacy materials</h2>
+      <p>
+        Paste one item per line as “Butter (500 gm) | 310”. Use its purchase cost, not selling
+        price. Review each detected pack before importing.
+      </p>
+      <label
+        >Legacy items<textarea
+          class="input"
+          rows="6"
+          [(ngModel)]="importText"
+          placeholder="Butter (500 gm) | 310"
+        ></textarea></label
+      ><button class="btn btn--accent" (click)="previewImport()">Preview pack detection</button>
+    </section>
+    @for (row of suggestions; track $index) {
+      <form class="card" (ngSubmit)="importOne(row)">
+        <div class="fields">
+          <label>Name<input class="input" [name]="'name' + $index" [(ngModel)]="row.name" /></label
+          ><label
+            >Pack quantity<input
+              class="input"
+              [name]="'qty' + $index"
+              [(ngModel)]="row.packQuantity" /></label
+          ><label
+            >Pack unit<input
+              class="input"
+              [name]="'unit' + $index"
+              [(ngModel)]="row.packUom" /></label
+          ><label
+            >Base unit<input
+              class="input"
+              [name]="'base' + $index"
+              [(ngModel)]="row.baseUom" /></label
+          ><label
+            >Purchase cost<input
+              class="input"
+              [name]="'cost' + $index"
+              [(ngModel)]="row.purchasePrice"
+          /></label>
+        </div>
+        <p>Detected unit cost: {{ row.effectiveUnitCost | number: '1.2-6' }}</p>
+        <button class="btn btn--accent" [disabled]="busy()">
+          Confirm and import this material
+        </button>
+      </form>
+    }
+  }
+</div>

@@ -13,12 +13,15 @@ const bakeryMaterialSchema = new mongoose.Schema(
     category: { type: String, trim: true, default: 'General' },
     baseUom: {
       type: String,
-      enum: ['g', 'kg', 'ml', 'L', 'piece', 'dozen', 'box', 'minute', 'hour'],
+      enum: ['mg', 'g', 'kg', 'ml', 'L', 'piece', 'dozen', 'packet', 'box', 'minute', 'hour'],
       required: true,
       default: 'g',
     },
     // Optional liquid density (g/ml) for mass-volume conversion when applicable
-    densityGramPerMl: { type: Number, default: 1.0, min: 0.01 },
+    densityGramPerMl: { type: Number, default: null, min: 0.01 },
+    preferredFormatId: { type: mongoose.Schema.Types.ObjectId, default: null },
+    description: { type: String, default: '' },
+    image: { type: String, default: '' },
 
     // Purchase Pack definition (Never manually enter price per gram)
     packQuantity: { type: Number, required: true, min: 0.0001, default: 1000 },
@@ -69,6 +72,7 @@ bakeryMaterialSchema.pre('save', function (next) {
   next();
 });
 
+require('./bakeryDecimal')(bakeryMaterialSchema, ['packQuantity', 'purchasePrice', 'effectiveUnitCost', 'currentStock', 'minimumStock', 'reorderLevel']);
 bakeryMaterialSchema.index({ type: 1, category: 1 });
 bakeryMaterialSchema.index({ name: 'text', code: 'text' });
 

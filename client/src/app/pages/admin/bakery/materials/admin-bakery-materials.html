@@ -2,8 +2,11 @@
   <!-- Header -->
   <header class="mat-head">
     <div>
-      <h1 class="mat-title">📦 Materials & Purchasing Formats</h1>
-      <p class="mat-sub">Raw ingredients, packaging, labour rates and equipment. Enter pack prices—the system calculates per-gram costs automatically.</p>
+      <h1 class="mat-title">Materials</h1>
+      <p class="mat-sub">
+        Raw ingredients, packaging, labour rates and equipment. Enter pack prices—the system
+        calculates per-gram costs automatically.
+      </p>
     </div>
     <div class="actions">
       <button type="button" class="btn btn--accent" (click)="startNewMaterial()">
@@ -67,33 +70,46 @@
               </td>
               <td>
                 <span class="pack-badge">
-                  {{ m.packQuantity }} {{ m.packUom }} @ {{ m.purchasePrice | currency:'INR':'symbol':'1.0-2' }}
+                  {{ m.packQuantity }} {{ m.packUom }} @
+                  {{ m.purchasePrice | currency: 'INR' : 'symbol' : '1.0-2' }}
                 </span>
               </td>
               <td class="num font-mono highlight-cost">
-                {{ m.effectiveUnitCost | currency:'INR':'symbol':'1.2-4' }} / {{ m.baseUom }}
+                {{ m.effectiveUnitCost | currency: 'INR' : 'symbol' : '1.2-4' }} / {{ m.baseUom }}
               </td>
               <td class="num font-mono">
-                <span [class.text-danger]="m.currentStock <= m.minimumStock">
-                  {{ m.currentStock | number:'1.0-2' }} {{ m.baseUom }}
+                <span [class.text-danger]="low(m)">
+                  {{ m.currentStock | number: '1.0-2' }} {{ m.baseUom }}
                 </span>
-                @if (m.currentStock <= m.minimumStock) {
+                @if (low(m)) {
                   <small class="text-danger block">⚠️ Low Stock</small>
                 }
               </td>
               <td>{{ m.supplierName || '—' }}</td>
               <td class="num">
-                <button type="button" class="btn btn--outline btn--sm" (click)="editMaterial(m)" title="Edit">
+                <button
+                  type="button"
+                  class="btn btn--outline btn--sm"
+                  (click)="editMaterial(m)"
+                  title="Edit"
+                >
                   ✏️
                 </button>
-                <button type="button" class="btn btn--ghost btn--danger btn--sm" (click)="deleteMaterial(m._id)" title="Archive">
+                <button
+                  type="button"
+                  class="btn btn--ghost btn--danger btn--sm"
+                  (click)="deleteMaterial(m._id)"
+                  title="Archive"
+                >
                   ✕
                 </button>
               </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="7" class="empty-state">No materials found in this category. Click "+ Add New Material" to create one.</td>
+              <td colspan="7" class="empty-state">
+                No materials found in this category. Click "+ Add New Material" to create one.
+              </td>
             </tr>
           }
         </tbody>
@@ -133,7 +149,11 @@
           <div class="form-row">
             <div class="field">
               <label class="label">Category</label>
-              <input class="input" [(ngModel)]="form.category" placeholder="e.g. Dairy, Flours, Boxes" />
+              <input
+                class="input"
+                [(ngModel)]="form.category"
+                placeholder="e.g. Dairy, Flours, Boxes"
+              />
             </div>
 
             <div class="field">
@@ -145,49 +165,125 @@
                 <option value="L">Litres (L)</option>
                 <option value="piece">Pieces (piece)</option>
                 <option value="minute">Minutes (min)</option>
+                <option value="hour">Hours</option>
+                <option value="mg">Milligrams</option>
+                <option value="dozen">Dozens</option>
+                <option value="box">Boxes</option>
+                <option value="packet">Packets</option>
               </select>
             </div>
           </div>
 
           <!-- Purchase Pack & Auto Calculation -->
-          <div class="pack-calc-box">
+          <div class="form-row">
+            <label class="field"
+              ><span class="label">Material code (optional)</span
+              ><input class="input" [(ngModel)]="form.code"
+            /></label>
+            <label class="field"
+              ><span class="label">Brand (optional)</span
+              ><input class="input" [(ngModel)]="form.brand"
+            /></label>
+          </div>
+          <label class="field"
+            ><span class="label">Description (optional)</span
+            ><input class="input" [(ngModel)]="form.description"
+          /></label>
+          <label class="field"
+            ><span class="label">Notes (optional)</span
+            ><textarea class="input" [(ngModel)]="form.notes"></textarea>
+          </label>
+          <label class="field"
+            ><span class="label">Image URL (optional)</span
+            ><input class="input" type="url" [(ngModel)]="form.image"
+          /></label>
+          <div class="pack-calc-box" (input)="preview()" (change)="preview()">
             <h4>How do you buy it? (Purchase Pack)</h4>
-            <p class="box-sub">Never calculate price per gram manually—enter the pack size & total price you paid.</p>
+            <p class="box-sub">
+              Never calculate price per gram manually—enter the pack size & total price you paid.
+            </p>
 
             <div class="form-row">
               <div class="field">
                 <label class="label">Pack Quantity</label>
-                <input class="input font-mono" type="number" step="any" min="0.001" [(ngModel)]="form.packQuantity" />
+                <input
+                  class="input font-mono"
+                  type="number"
+                  step="any"
+                  min="0.001"
+                  [(ngModel)]="form.packQuantity"
+                />
               </div>
 
               <div class="field">
                 <label class="label">Pack Unit</label>
-                <input class="input" [(ngModel)]="form.packUom" placeholder="e.g. g, kg, L, piece" />
+                <input
+                  class="input"
+                  [(ngModel)]="form.packUom"
+                  placeholder="e.g. g, kg, L, piece"
+                />
               </div>
 
               <div class="field">
                 <label class="label">Pack Purchase Price (₹)</label>
-                <input class="input font-mono" type="number" step="any" min="0" [(ngModel)]="form.purchasePrice" />
+                <input
+                  class="input font-mono"
+                  type="number"
+                  step="any"
+                  min="0"
+                  [(ngModel)]="form.purchasePrice"
+                />
               </div>
             </div>
 
             <div class="auto-calc-preview">
               <span>Automatic Effective Cost:</span>
               <strong class="font-mono text-gold">
-                {{ getCalculatedPreview() | currency:'INR':'symbol':'1.2-4' }} / {{ form.baseUom }}
+                @if (previewCost() !== null) {
+                  ₹{{ previewCost() | number: '1.2-6' }} / {{ form.baseUom }}
+                } @else {
+                  Enter pack details
+                }
               </strong>
             </div>
+            @if (previewError()) {
+              <p role="alert">{{ previewError() }}</p>
+            }
+            <label class="field"
+              ><span class="label">Density g/ml (only for mass ↔ volume)</span
+              ><input
+                class="input"
+                type="number"
+                min="0.01"
+                step="any"
+                [(ngModel)]="form.densityGramPerMl"
+                placeholder="Leave blank unless measured for this material"
+            /></label>
           </div>
 
           <div class="form-row">
             <div class="field">
               <label class="label">Current Kitchen Stock</label>
-              <input class="input font-mono" type="number" min="0" [(ngModel)]="form.currentStock" />
+              <input
+                class="input font-mono"
+                type="number"
+                min="0"
+                [(ngModel)]="form.currentStock"
+                [disabled]="!!form._id"
+              />
+              @if (form._id) {
+                <small>Use Inventory to record a stock adjustment.</small>
+              }
             </div>
 
             <div class="field">
               <label class="label">Minimum Alert Stock</label>
-              <input class="input font-mono" type="number" min="0" [(ngModel)]="form.minimumStock" />
+              <input
+                class="input font-mono"
+                type="number"
+                min="0"
+                [(ngModel)]="form.minimumStock"
+              />
             </div>
 
             <div class="field">
@@ -199,7 +295,9 @@
 
         <div class="modal-foot">
           <button type="button" class="btn btn--outline" (click)="cancelEdit()">Cancel</button>
-          <button type="button" class="btn btn--accent" (click)="saveMaterial()">Save Material</button>
+          <button type="button" class="btn btn--accent" (click)="saveMaterial()">
+            Save Material
+          </button>
         </div>
       </div>
     </div>

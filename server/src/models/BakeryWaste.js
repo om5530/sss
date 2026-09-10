@@ -8,9 +8,11 @@ const bakeryWasteSchema = new mongoose.Schema(
       default: null,
     },
     materialName: { type: String, required: true, trim: true },
+    productionId: { type: mongoose.Schema.Types.ObjectId, default: null },
+    outputLineId: { type: String },
     type: {
       type: String,
-      enum: ['raw_material', 'packaging', 'production_scrap', 'finished_good'],
+      enum: ['raw_material', 'packaging', 'production_scrap', 'finished_good', 'process_loss'],
       default: 'raw_material',
     },
     quantity: { type: Number, required: true, min: 0.001 },
@@ -30,6 +32,8 @@ const bakeryWasteSchema = new mongoose.Schema(
         'Incorrect Recipe',
         'Unsold',
         'Other',
+        'Quality Failure',
+        'Production Error',
       ],
       default: 'Spoilage',
     },
@@ -39,6 +43,7 @@ const bakeryWasteSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+require('./bakeryDecimal')(bakeryWasteSchema, ['quantity', 'unitCost', 'totalCostLost']);
 bakeryWasteSchema.index({ date: -1 });
 bakeryWasteSchema.index({ reason: 1 });
 

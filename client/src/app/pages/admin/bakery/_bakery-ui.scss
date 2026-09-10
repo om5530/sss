@@ -1,0 +1,246 @@
+/* Shared operational UI: compact controls, readable tables and responsive work areas. */
+:is(.calc-shell, .materials-shell, .recipes-shell, .inv-shell, .waste-shell, .bakery-workspace) {
+  --surface: #f7f2eb;
+  --muted: #6f6257;
+  --radius: 12px;
+  min-width: 0;
+  padding: clamp(20px, 3vw, 36px);
+  width: 100%;
+  color: var(--ink);
+  h1 {
+    font-family: var(--font-body) !important;
+    font-size: clamp(1.5rem, 3vw, 2rem) !important;
+    font-weight: 750;
+    letter-spacing: -0.035em;
+    line-height: 1.2;
+  }
+  h2,
+  h3 {
+    font-family: var(--font-body);
+    font-weight: 700;
+    line-height: 1.35;
+  }
+  h3 {
+    font-size: 1rem;
+  }
+  .card,
+  .table-card,
+  .recipe-card {
+    border-radius: 14px;
+    box-shadow: 0 2px 8px #24171008;
+    border: 1px solid var(--line);
+    min-width: 0;
+  }
+  .card:not(.table-card) {
+    padding: clamp(16px, 2vw, 24px);
+  }
+  .table-wrap,
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+  }
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.86rem;
+  }
+  .data-table th {
+    padding: 13px 16px;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    background: #f5efe6;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  .data-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #eee5da;
+    vertical-align: middle;
+  }
+  .data-table tr:last-child td {
+    border-bottom: 0;
+  }
+  .data-table tbody tr:hover {
+    background: #faf7f1;
+  }
+  .data-table .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .data-table .input,
+  .data-table .select {
+    min-width: 85px;
+    padding: 9px;
+  }
+  .data-table td:first-child .select {
+    min-width: 180px;
+  }
+  .input,
+  .select {
+    border-radius: 9px;
+    min-height: 44px;
+    background: #fffdf9;
+    font-size: 0.9rem;
+    width: 100%;
+  }
+  .field {
+    min-width: 0;
+  }
+  .label {
+    display: block;
+    font-weight: 650;
+    color: var(--cocoa);
+    margin-bottom: 0.4rem;
+    font-size: 0.8rem;
+  }
+  .form-row,
+  .form-grid {
+    gap: 1rem;
+  }
+  .type-tabs,
+  .calc-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    border: 1px solid var(--line);
+    background: #f3ede4;
+    border-radius: 10px;
+  }
+  .type-tab-btn,
+  .calc-tab-btn {
+    min-height: 42px;
+    border-radius: 7px;
+  }
+  .btn {
+    border-radius: 9px;
+    min-height: 42px;
+    padding: 0.65rem 1rem;
+    box-shadow: none;
+    font-size: 0.83rem;
+  }
+  .btn--accent {
+    background: var(--cocoa);
+    color: white;
+  }
+  .btn--outline {
+    background: transparent;
+    color: var(--cocoa);
+    border: 1px solid var(--line);
+  }
+  .btn:focus-visible,
+  button:focus-visible {
+    outline: 3px solid var(--gold);
+    outline-offset: 3px;
+  }
+  .search-box {
+    width: min(100%, 280px);
+  }
+  .calc-grid {
+    grid-template-columns: minmax(280px, 0.85fr) minmax(0, 1.4fr);
+  }
+  .kpi-val {
+    font-variant-numeric: tabular-nums;
+    font-size: clamp(1.2rem, 2.3vw, 1.7rem);
+    overflow-wrap: anywhere;
+  }
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)) !important;
+  }
+  .actions,
+  .actions-foot,
+  .comp-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+  .comp-table-wrap {
+    overflow-x: auto;
+  }
+  .plan-item-row {
+    display: grid;
+    gap: 0.75rem;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+  }
+  .results-panel {
+    display: grid;
+    gap: 1rem;
+    min-width: 0;
+  }
+  .cost-summary p {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0.35rem 0;
+    font-size: 0.85rem;
+  }
+  .block {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .option-choice {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .option-choice input {
+    width: auto;
+  }
+  details {
+    margin-top: 1rem;
+  }
+  summary {
+    cursor: pointer;
+    font-weight: 650;
+    margin-bottom: 0.7rem;
+  }
+  .empty-hint {
+    padding: 2rem;
+    color: var(--muted);
+    text-align: center;
+  }
+  @media (max-width: 1100px) {
+    .calc-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  @media (max-width: 600px) {
+    .form-row,
+    .form-grid,
+    .waste-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .type-tabs,
+    .calc-tabs {
+      width: 100%;
+    }
+    .type-tab-btn,
+    .calc-tab-btn {
+      flex: 1 1 auto;
+      padding: 0.55rem 0.65rem;
+      font-size: 0.8rem;
+    }
+    .data-table {
+      min-width: 600px;
+    }
+    .search-box {
+      width: 100%;
+    }
+  }
+  @media print {
+    padding: 0;
+    .calc-grid {
+      display: block;
+    }
+    details {
+      display: block;
+    }
+  }
+}

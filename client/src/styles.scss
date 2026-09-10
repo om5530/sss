@@ -1,3 +1,4 @@
+@use './app/pages/admin/bakery/bakery-ui';
 /* ============================================================
    The Golden Batch — "Midnight Patisserie" design system
    Cinematic dark-espresso canvas · warm cream editorial light ·
@@ -422,7 +423,9 @@ button { font-family: inherit; cursor: pointer; }
   font-weight: 700;
 }
 
-.adm-side__nav { flex: 1; display: flex; flex-direction: column; gap: 0.2rem; overflow-y: auto; }
+.adm-side__nav { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 0.2rem; overflow-y: auto; overscroll-behavior-y: contain; }
+.adm-side__nav > * { flex-shrink: 0; }
+.adm-side__brand, .adm-side__foot { flex-shrink: 0; }
 
 .adm-side__link {
   display: flex;
@@ -826,8 +829,9 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ---- Responsive shell (AS-10.1) ---- */
 
+.adm-menu-toggle { display:none; }
 @media (max-width: 960px) {
-  .adm-shell { grid-template-columns: 1fr; }
+  .adm-shell { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
   .adm-side {
     position: sticky;
     top: 0;
@@ -836,11 +840,14 @@ button { font-family: inherit; cursor: pointer; }
     align-items: center;
     gap: 0.6rem;
     padding: 0.55rem 0.8rem;
-    overflow-x: auto;
+    overflow: visible;
+    flex-wrap: wrap;
   }
   .adm-side__brand { padding: 0 0.4rem 0 0; }
   .adm-side__brand span { display: none; }
-  .adm-side__nav { flex-direction: row; align-items: center; flex: 1; overflow-x: auto; overflow-y: visible; }
+  .adm-menu-toggle { display:block; margin-left:auto; padding:.6rem .8rem; min-height:44px; color:var(--d-text); background:transparent; border:1px solid var(--d-line); border-radius:8px; }
+  .adm-side__nav { display:none; }
+  .adm-side--open .adm-side__nav { display:flex; order:3; flex: 1 0 100%; flex-direction:column; align-items:stretch; max-height:calc(100dvh - 90px); overflow-y:auto; }
   .adm-side__link { padding: 0.45rem 0.6rem; white-space: nowrap; font-size: 0.82rem; }
   .adm-side__foot { flex-direction: row; border-top: none; padding-top: 0; }
   .adm-side__foot .adm-side__link span { display: none; }
@@ -891,4 +898,8 @@ button { font-family: inherit; cursor: pointer; }
   .adm-card,
   .adm-table-wrap { box-shadow: none !important; border-color: #ccc !important; }
   a { text-decoration: none; color: inherit; }
+}
+@media print {
+  body.printing-prep .bakery-workspace > :not(.printing-batch) { display: none !important; }
+  body.printing-prep .printing-batch { display: block !important; }
 }

@@ -1,0 +1,149 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+.bakery-workspace {
+  display: grid;
+  gap: 1.4rem;
+}
+.work-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.eyebrow {
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  margin-bottom: 0.6rem;
+  color: var(--caramel-dark);
+}
+.work-head p {
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+}
+.work-nav {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.work-nav a {
+  padding: 0.6rem 0.85rem;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 0.82rem;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+}
+.stat {
+  display: grid;
+  gap: 0.7rem;
+}
+.stat span {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.stat strong {
+  font-size: 1.7rem;
+}
+.work-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+form {
+  display: grid;
+  gap: 1rem;
+}
+.fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr));
+  gap: 1rem;
+}
+label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+input,
+select,
+textarea {
+  width: 100%;
+  min-width: 0;
+}
+input[type='checkbox'] {
+  width: auto;
+}
+.inline {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.status {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.74rem;
+  white-space: nowrap;
+}
+.notice {
+  padding: 1rem;
+  background: #edf4eb;
+  border-radius: 10px;
+}
+.error {
+  padding: 1rem;
+  background: #fbeeea;
+  color: #923821;
+  border-radius: 10px;
+}
+.batch {
+  display: grid;
+  gap: 1rem;
+}
+.batch-head {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.batch-head p {
+  color: var(--muted);
+  margin: 0.25rem 0;
+  font-size: 0.85rem;
+}
+.section-title {
+  margin: 0;
+  font-size: 1.15rem;
+}
+.muted {
+  color: var(--muted);
+}
+details summary {
+  cursor: pointer;
+  font-weight: 650;
+  padding: 0.4rem 0;
+}
+@media (max-width: 900px) {
+  .work-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media print {
+  .work-nav,
+  form,
+  .work-head .btn,
+  .no-print {
+    display: none !important;
+  }
+  .card {
+    break-inside: avoid;
+  }
+}

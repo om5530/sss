@@ -1,144 +1,235 @@
-const { test } = require('node:test');
-const assert = require('node:assert/strict');
-const costEngine = require('../src/services/bakeryCost.service');
-
-test('Section 41 Acceptance Test: Raw Ingredient Unit Cost Conversions', () => {
-  // Flour: 1kg = ₹58 -> ₹0.058/g
-  const flourCost = costEngine.calculateEffectiveUnitCost(1, 'kg', 58, 'g');
-  assert.equal(flourCost, 0.058);
-
-  // Butter: 500g = ₹310 -> ₹0.62/g
-  const butterCost = costEngine.calculateEffectiveUnitCost(500, 'g', 310, 'g');
-  assert.equal(butterCost, 0.62);
-
-  // Cocoa: 225g = ₹330 -> ₹1.466666666.../g
-  const cocoaCost = costEngine.calculateEffectiveUnitCost(225, 'g', 330, 'g');
-  assert.ok(Math.abs(cocoaCost - 330 / 225) < 0.00000001);
-  assert.equal(cocoaCost.toFixed(4), '1.4667');
-
-  // Caster Sugar: 200g = ₹35 -> ₹0.175/g
-  const sugarCost = costEngine.calculateEffectiveUnitCost(200, 'g', 35, 'g');
-  assert.equal(sugarCost, 0.175);
-
-  // Milk: 1L = ₹78 -> ₹0.078/ml
-  const milkCost = costEngine.calculateEffectiveUnitCost(1, 'L', 78, 'ml');
-  assert.equal(milkCost, 0.078);
-
-  // Oil: 1L = ₹150 -> ₹0.15/ml
-  const oilCost = costEngine.calculateEffectiveUnitCost(1, 'L', 150, 'ml');
-  assert.equal(oilCost, 0.15);
+const { test } = require("node:test");
+const assert = require("node:assert/strict");
+const E = require("../src/services/bakeryCost.service");
+test("Pack acceptance examples retain decimal precision", () => {
+  for (const [qty, uom, price, base, expected] of [
+    [1, "kg", 58, "g", "0.058"],
+    [500, "g", 310, "g", "0.62"],
+    [200, "g", 35, "g", "0.175"],
+    [1, "L", 78, "ml", "0.078"],
+    [1, "L", 150, "ml", "0.15"],
+  ])
+    assert.equal(E.calculateEffectiveUnitCost(qty, uom, price, base), expected);
+  assert.equal(
+    E.calculateEffectiveUnitCost(225, "g", 330, "g"),
+    "1.466666666666666666666666666666666666667",
+  );
 });
-
-test('Section 41 Acceptance Test: Historical Butter Cake Exact Unrounded Cost = ₹162.116', () => {
-  const flour = { effectiveUnitCost: 0.058, baseUom: 'g', type: 'ingredient' };
-  const bakingPowder = { effectiveUnitCost: 0.40, baseUom: 'g', type: 'ingredient' };
-  const bakingSoda = { effectiveUnitCost: 0.40, baseUom: 'g', type: 'ingredient' };
-  const salt = { effectiveUnitCost: 0.03, baseUom: 'g', type: 'ingredient' };
-  const butter = { effectiveUnitCost: 0.62, baseUom: 'g', type: 'ingredient' };
-  const oil = { effectiveUnitCost: 0.15, baseUom: 'ml', type: 'ingredient' };
-  const sugar = { effectiveUnitCost: 0.05, baseUom: 'g', type: 'ingredient' };
-  const milk = { effectiveUnitCost: 0.078, baseUom: 'ml', type: 'ingredient' };
-  const vinegar = { effectiveUnitCost: 0.08, baseUom: 'ml', type: 'ingredient' };
-  const oven = { effectiveUnitCost: 0.60, baseUom: 'minute', type: 'resource' };
-  const labour = { effectiveUnitCost: 20.0, baseUom: 'piece', type: 'labour' };
-
-  const materialMap = new Map([
-    ['flour', flour],
-    ['bakingPowder', bakingPowder],
-    ['bakingSoda', bakingSoda],
-    ['salt', salt],
-    ['butter', butter],
-    ['oil', oil],
-    ['sugar', sugar],
-    ['milk', milk],
-    ['vinegar', vinegar],
-    ['oven', oven],
-    ['labour', labour],
+test("Conversions reject invalid dimensions and require explicit density", () => {
+  assert.equal(E.convertUnits(1, "kg", "mg"), "1000000");
+  assert.equal(E.convertUnits(1, "L", "g", "1.03"), "1030");
+  assert.equal(E.convertUnits(1, "dozen", "piece"), "12");
+  assert.equal(E.convertUnits(1, "hour", "minute"), "60");
+  for (const args of [
+    [1, "g", "ml"],
+    [1, "box", "piece"],
+    [1, "g", "hour"],
+    [1, "unknown", "g"],
+    [-1, "g", "g"],
+  ])
+    assert.throws(() => E.convertUnits(...args));
+  assert.throws(() => E.calculateEffectiveUnitCost(0, "g", 1, "g"));
+});
+test("Historical butter cake exact total is 162.116; zero markup is respected", () => {
+  const rows = [
+    [192, ".058", "g"],
+    [4, ".4", "g"],
+    [3, ".4", "g"],
+    [1, ".03", "g"],
+    [70, ".62", "g"],
+    [9, ".15", "ml"],
+    [150, ".05", "g"],
+    [250, ".078", "ml"],
+    [5, ".08", "ml"],
+    [60, ".6", "minute", "resource"],
+    [2, "20", "piece", "labour"],
+  ];
+  const map = new Map(
+    rows.map((r, i) => [
+      String(i),
+      {
+        name: String(i),
+        effectiveUnitCost: r[1],
+        baseUom: r[2],
+        type: r[3] || "ingredient",
+      },
+    ]),
+  );
+  const r = E.evaluateRecipeCost(
+    {
+      name: "Cake",
+      yieldQuantity: 1,
+      targetMarkupPercent: 0,
+      components: rows.map((r, i) => ({
+        materialId: String(i),
+        quantity: r[0],
+        uom: r[2],
+      })),
+    },
+    map,
+  );
+  assert.equal(r.totalBatchCost, "162.116");
+  assert.equal(r.suggestedSellingPrice, "162.116");
+  assert.equal(r.resourceCost, "36");
+  assert.equal(r.labourCost, "40");
+});
+test("Markup and margin are distinct and invalid margins rejected", () => {
+  const p = E.calculatePricing(292, 50);
+  assert.equal(p.suggestedSellingPrice, "438");
+  assert.equal(p.profit, "146");
+  assert.ok(p.marginPercent.startsWith("33.333333"));
+  assert.equal(
+    E.calculatePriceFromMargin(292, 50).suggestedSellingPrice,
+    "584",
+  );
+  assert.throws(() => E.calculatePriceFromMargin(292, 100));
+});
+test("Hourly oven cost scales by capacity, not by a multiplied hourly rate", () => {
+  const m = new Map([
+    [
+      "oven",
+      {
+        name: "Oven",
+        type: "resource",
+        baseUom: "hour",
+        packQuantity: "1",
+        packUom: "hour",
+        purchasePrice: "36",
+      },
+    ],
   ]);
-
-  const butterCakeRecipe = {
-    name: 'Classic Butter Cake',
+  const r = {
+    name: "Cake",
     yieldQuantity: 1,
     components: [
-      { materialId: 'flour', quantity: 192, uom: 'g' },
-      { materialId: 'bakingPowder', quantity: 4, uom: 'g' },
-      { materialId: 'bakingSoda', quantity: 3, uom: 'g' },
-      { materialId: 'salt', quantity: 1, uom: 'g' },
-      { materialId: 'butter', quantity: 70, uom: 'g' },
-      { materialId: 'oil', quantity: 9, uom: 'ml' },
-      { materialId: 'sugar', quantity: 150, uom: 'g' },
-      { materialId: 'milk', quantity: 250, uom: 'ml' },
-      { materialId: 'vinegar', quantity: 5, uom: 'ml' },
-      { materialId: 'oven', quantity: 60, uom: 'minute', scalingMethod: 'linear' },
-      { materialId: 'labour', quantity: 2, uom: 'piece', scalingMethod: 'linear' },
-    ],
-  };
-
-  const result = costEngine.evaluateRecipeCost(butterCakeRecipe, materialMap);
-
-  // Unrounded check
-  const total = result.totalBatchCost;
-  // 192 * 0.058 = 11.136
-  // 4 * 0.4 = 1.6
-  // 3 * 0.4 = 1.2
-  // 1 * 0.03 = 0.03
-  // 70 * 0.62 = 43.4
-  // 9 * 0.15 = 1.35
-  // 150 * 0.05 = 7.5
-  // 250 * 0.078 = 19.5
-  // 5 * 0.08 = 0.4
-  // 60 * 0.60 = 36.0
-  // 2 * 20 = 40.0
-  // Total = 162.116
-  assert.equal(Math.round(total * 1000) / 1000, 162.116);
-  assert.equal(result.resourceCost, 36.0);
-  assert.equal(result.labourCost, 40.0);
-});
-
-test('Section 41 Acceptance Test: Markup vs Margin Calculation', () => {
-  // Cost: ₹292, Markup: 50% -> Selling: ₹438, Profit: ₹146, Gross Margin: 33.3333...%
-  const pricing = costEngine.calculatePricing(292, 50);
-
-  assert.equal(pricing.cost, 292);
-  assert.equal(pricing.markupPercent, 50);
-  assert.equal(pricing.suggestedSellingPrice, 438);
-  assert.equal(pricing.profit, 146);
-  assert.ok(Math.abs(pricing.marginPercent - (146 / 438) * 100) < 0.0001);
-  assert.equal(pricing.marginPercent.toFixed(2), '33.33');
-});
-
-test('Stepped Capacity Oven Cost Scaling', () => {
-  const oven = { effectiveUnitCost: 0.60, baseUom: 'minute', type: 'resource' };
-  const materialMap = new Map([['oven', oven]]);
-
-  const recipe = {
-    name: 'Butter Cake',
-    baseBatchUnits: 1,
-    components: [
       {
-        materialId: 'oven',
+        materialId: "oven",
         quantity: 60,
-        uom: 'minute',
-        scalingMethod: 'stepped',
-        capacityPerCycle: 4, // 4 cakes per cycle
+        uom: "minute",
+        scalingMethod: "stepped",
+        capacityPerCycle: 4,
         cycleMinutes: 60,
       },
     ],
   };
-
-  // 1 cake -> 1 cycle = 60 min * 0.60 = ₹36
-  const scaled1 = costEngine.scaleRecipeForQuantity(recipe, 1, materialMap);
-  assert.equal(scaled1.resourceCost, 36);
-
-  // 4 cakes -> 1 cycle = 60 min * 0.60 = ₹36
-  const scaled4 = costEngine.scaleRecipeForQuantity(recipe, 4, materialMap);
-  assert.equal(scaled4.resourceCost, 36);
-
-  // 5 cakes -> 2 cycles = 120 min * 0.60 = ₹72
-  const scaled5 = costEngine.scaleRecipeForQuantity(recipe, 5, materialMap);
-  assert.equal(scaled5.resourceCost, 72);
-
-  // 7 cakes -> 2 cycles = 120 min * 0.60 = ₹72
-  const scaled7 = costEngine.scaleRecipeForQuantity(recipe, 7, materialMap);
-  assert.equal(scaled7.resourceCost, 72);
+  for (const [qty, cost] of [
+    [1, "36"],
+    [4, "36"],
+    [5, "72"],
+    [7, "72"],
+  ])
+    assert.equal(E.scaleRecipeForQuantity(r, qty, m).totalCost, cost);
+});
+test("Mixed units aggregate in base units, including nested recipes and packaging shortages", () => {
+  const m = new Map([
+    [
+      "flour",
+      {
+        name: "Flour",
+        type: "ingredient",
+        baseUom: "g",
+        packQuantity: 1,
+        packUom: "kg",
+        purchasePrice: 58,
+        currentStock: 200,
+        allocatedStock: 100,
+      },
+    ],
+    [
+      "box",
+      {
+        name: "Box",
+        type: "packaging",
+        baseUom: "box",
+        packQuantity: 1,
+        packUom: "box",
+        purchasePrice: 20,
+        currentStock: 0,
+      },
+    ],
+  ]);
+  const sub = {
+    _id: "sub",
+    name: "Mix",
+    yieldQuantity: 1000,
+    yieldUom: "g",
+    components: [{ materialId: "flour", quantity: 1, uom: "kg" }],
+  };
+  const parent = {
+    _id: "parent",
+    name: "Cake",
+    yieldQuantity: 1,
+    components: [
+      {
+        componentType: "sub_recipe",
+        subRecipeId: "sub",
+        quantity: 500,
+        uom: "g",
+      },
+      { materialId: "flour", quantity: 1, uom: "kg" },
+      { materialId: "box", quantity: 1, uom: "box" },
+    ],
+  };
+  const r = E.aggregateMultiProductRequirements(
+    [{ recipe: parent, quantity: 1 }],
+    m,
+    new Map([["sub", sub]]),
+  );
+  assert.equal(r.ingredients[0].quantity, "1500");
+  assert.equal(r.ingredients[0].shortage, "1400");
+  assert.equal(r.ingredients[0].packsNeeded, "2");
+  assert.equal(r.packaging[0].shortage, "1");
+  assert.equal(r.totalCost, "107");
+  sub.components = [
+    {
+      componentType: "sub_recipe",
+      subRecipeId: "parent",
+      quantity: 1,
+      uom: "piece",
+    },
+  ];
+  assert.throws(
+    () =>
+      E.scaleRecipeForQuantity(
+        parent,
+        1,
+        m,
+        new Map([
+          ["sub", sub],
+          ["parent", parent],
+        ]),
+      ),
+    /Circular/,
+  );
+});
+test("Weight requests, fixed batch costs and missing materials are deterministic", () => {
+  const r = {
+    name: "Cake",
+    yieldQuantity: 1,
+    yieldUom: "cake",
+    finishedWeightGrams: 600,
+    components: [
+      {
+        componentType: "other",
+        name: "Setup",
+        quantity: 1,
+        unitCost: 10,
+        scalingMethod: "fixed",
+      },
+    ],
+  };
+  assert.equal(
+    E.scaleRecipeForQuantity(r, "1.2", new Map(), new Map(), { uom: "kg" })
+      .totalCost,
+    "20",
+  );
+  assert.throws(() => E.scaleRecipeForQuantity(r, 0));
+  assert.throws(
+    () =>
+      E.evaluateRecipeCost({
+        ...r,
+        components: [{ materialId: "missing", quantity: 1, uom: "g" }],
+      }),
+    /unavailable/,
+  );
 });
