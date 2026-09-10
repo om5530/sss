@@ -9,6 +9,26 @@
     </a>
 
     <div class="adm-side__top-actions">
+      <button
+        type="button"
+        class="adm-bell-btn"
+        [class.muted]="orderNotification.isMuted()"
+        (click)="orderNotification.toggleMute()"
+        [title]="orderNotification.isMuted() ? 'Kitchen order ring is muted — click to unmute' : 'Kitchen order ring is loud & active — click to mute'"
+        [attr.aria-pressed]="!orderNotification.isMuted()"
+        aria-label="Toggle kitchen order ring"
+      >
+        @if (orderNotification.isMuted()) {
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M13.73 21a2 2 0 0 1-3.46 0M18.63 13A17.89 17.89 0 0 1 18 8M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14M1 1l22 22"/>
+          </svg>
+        } @else {
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+        }
+        <span>{{ orderNotification.isMuted() ? 'Muted' : 'Ring: On' }}</span>
+      </button>
       @if (wakeLockSupported) {
         <button
           type="button"
@@ -200,6 +220,20 @@
           }
         </button>
       }
+      <button
+        type="button"
+        class="adm-side__link"
+        (click)="orderNotification.testSound()"
+        style="background: none; border: none; width: 100%; text-align: left"
+        title="Test loud kitchen order chime"
+        aria-label="Test kitchen order chime"
+      >
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+        </svg>
+        <span>Test order ring</span>
+      </button>
       <a routerLink="/" class="adm-side__link" aria-label="View store">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
           <path d="M3 10.5 12 3l9 7.5M5.5 9v11h13V9" stroke-linecap="round" stroke-linejoin="round" />
@@ -231,6 +265,46 @@
         Offline — reconnect to load live data or save changes. Changes are not queued.
       </div>
     }
+
+    <!-- High-priority Loud Order Alert Banner -->
+    @if (orderNotification.activeAlarmOrder(); as alertOrder) {
+      <div class="adm-order-alert-banner" role="alert" aria-live="assertive">
+        <div class="alarm-bell-icon" aria-hidden="true">🔔</div>
+        <div class="alarm-content">
+          <div class="alarm-head">
+            <span class="alarm-badge">NEW ORDER ARRIVED</span>
+            <strong>Order #{{ alertOrder.orderNumber }}</strong>
+          </div>
+          <div class="alarm-meta">
+            <span class="alarm-type">{{ alertOrder.orderType | uppercase }}</span>
+            <span class="alarm-total">₹{{ alertOrder.pricing.total }}</span>
+            <span class="alarm-items">{{ alertOrder.items.length }} {{ alertOrder.items.length === 1 ? 'item' : 'items' }}</span>
+            @if (alertOrder.dining?.tableNumber) {
+              <span class="alarm-table">Table {{ alertOrder.dining?.tableNumber }}</span>
+            }
+          </div>
+        </div>
+        <div class="alarm-actions">
+          <a
+            routerLink="/admin/queue"
+            (click)="orderNotification.silenceAlarm()"
+            class="btn btn--sm alarm-view-btn"
+          >
+            Kitchen Queue →
+          </a>
+          <button
+            type="button"
+            (click)="orderNotification.silenceAlarm()"
+            class="btn btn--sm alarm-silence-btn"
+            title="Silence ringing alarm"
+            aria-label="Silence alarm"
+          >
+            Silence ✕
+          </button>
+        </div>
+      </div>
+    }
+
     <router-outlet />
   </main>
 </div>

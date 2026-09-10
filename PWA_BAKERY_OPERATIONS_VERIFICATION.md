@@ -48,6 +48,35 @@
    - Lifecycle resiliency: Automatically re-acquires the lock on `visibilitychange` (when switching back from another app/tab) and cleanly releases sentinel locks on page destroy or logout (`signOut`).
    - Graceful fallback: Automatically hides toggle buttons if the host device or browser does not support `navigator.wakeLock`.
 
+4. **Haptic & Visual Feedback on Quick Adjustments (`admin-bakery-inventory.ts/html/scss`, `admin-bakery-waste.ts`):**
+   - **Tactile Haptic Feedback:** Uses the Vibration API (`navigator.vibrate`) to deliver crisp haptic pulses on touch devices:
+     - `+1 Pack`: Single sharp pulse (28ms).
+     - `-1 Pack`: Double pulse (20ms, 30ms pause, 20ms).
+     - Manual inline stock change & Waste logging: 25–35ms confirmation pulse.
+     - Error state: Low-buzz warning pulse (`[60, 40, 100]ms`).
+   - **Dynamic Visual Feedback:**
+     - Real-time animated floating pills (`.adjust-pill-flyout`): Smoothly shoots up showing exact change (e.g. `+10 kg` in green, `-10 kg` in red) and fades away over 1.25s.
+     - Row highlight flash: Subtle green (`flashGreen`) or red (`flashRed`) background flash on the affected table row.
+     - Active micro-scale button press (`transform: scale(0.91)`) for tactile responsiveness on tablet/phone touchscreens.
+
+5. **Loud Kitchen Order Notification & Ring Alarm in Admin PWA (`admin-order-notification.service.ts`, `admin-layout.ts/html`, `styles.scss`, `admin-queue.ts`):**
+   - **Web Audio API Multi-Harmonic Bell Synthesis:**
+     - Dual-tone brass service bell synthesized client-side with zero audio file dependencies (works 100% offline).
+     - Combines fundamental sine waves with octave harmonic triangle waves (880Hz -> 1175Hz -> 880Hz -> 1318Hz).
+     - Master dynamics compressor node (`DynamicsCompressorNode`) delivers maximum acoustic punch and high volume without audio distortion or clipping, ensuring it cuts through ambient kitchen noise (mixers, ovens, extractor hoods).
+     - Automatic gesture unlock: Automatically initializes and resumes `AudioContext` upon first user interaction (tap/click/keydown).
+   - **Order Detection & Repeating Chime:**
+     - Global background polling (every 8s) monitors incoming orders across the entire Admin and Bakery operations workspace.
+     - When a new placed order arrives, repeats the loud 4-tone chime sequence 3 times (every 5s) or until staff acknowledges.
+     - Triggers heavy mobile vibration pattern (`[300, 120, 300, 120, 500, 150, 500]ms`).
+     - Fires native OS/PWA Web Notifications when enabled.
+   - **High-Visibility Alert Banner & Controls:**
+     - High-contrast pulsing banner (`.adm-order-alert-banner`) at the top of the admin main view displaying Order #, Order Type badge, Total amount, and item count.
+     - Instant actions: One-tap "Kitchen Queue →" navigation and "Silence ✕" dismissal.
+     - Header order bell toggle (`.adm-bell-btn`) allows quick muting/unmuting with persisted preferences.
+     - Sidebar "Test order ring" button allows kitchen staff to test speaker loudness anytime.
+     - Unified with `AdminQueue` so all order chimes use the same loud acoustic profile.
+
 ### Fresh verification
 
 - Angular production build passed (18.17 seconds), with the existing unrelated `qrcode` CommonJS warning.

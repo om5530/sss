@@ -21,6 +21,7 @@ export class AdminBakeryInventory implements OnInit {
   loading = signal<boolean>(false);
   searchQuery = signal<string>('');
   filterType = signal<'all' | 'low' | 'ingredient' | 'packaging'>('all');
+  recentlyAdjusted = signal<Record<string, { type: 'inc' | 'dec'; label: string }>>({});
 
   filteredMaterials = computed(() => {
     const q = this.searchQuery().trim().toLowerCase();
@@ -56,25 +57,75 @@ export class AdminBakeryInventory implements OnInit {
   }
 
   quickAdjust(m: BakeryMaterial, amount: number) {
+    const isInc = amount > 0;
+    const type = isInc ? 'inc' : 'dec';
+    const delta = amount * (m.packQuantity || 1);
+    const label = isInc ? `+${delta} ${m.baseUom}` : `${delta} ${m.baseUom}`;
+
+    // Haptic vibration feedback
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        if (isInc) navigator.vibrate([28]);
+        else navigator.vibrate([20, 30, 20]);
+      } catch {}
+    }
+
+    // Visual micro-feedback flyout and row highlight
+    this.recentlyAdjusted.update((prev) => ({
+      ...prev,
+      [m._id]: { type, label },
+    }));
+
+    setTimeout(() => {
+      this.recentlyAdjusted.update((prev) => {
+        const next = { ...prev };
+        delete next[m._id];
+        return next;
+      });
+    }, 1300);
+
     this.bakery.adjustStock(m._id, amount).subscribe({
       next: (res) => {
         m.currentStock = res.material.currentStock;
-        this.toast.success(`Updated ${m.name} stock`);
+        this.toast.success(`Updated ${m.name} stock (${label})`);
         this.fetchInventory();
       },
-      error: () => this.toast.error('Failed to update stock'),
+      error: () => {
+        this.toast.error('Failed to update stock');
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+          try { navigator.vibrate([60, 40, 100]); } catch {}
+        }
+      },
     });
   }
 
   setStock(m: BakeryMaterial, newStock: number) {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try { navigator.vibrate([25]); } catch {}
+    }
+
     this.bakery.updateStock(m._id, Number(newStock), m.currentStock).subscribe({
       next: (res) => {
         m.currentStock = res.material.currentStock;
         this.toast.success(`Stock set to ${m.currentStock} ${m.baseUom}`);
+        this.recentlyAdjusted.update((prev) => ({
+          ...prev,
+          [m._id]: { type: 'inc', label: `Set: ${m.currentStock}` },
+        }));
+        setTimeout(() => {
+          this.recentlyAdjusted.update((prev) => {
+            const next = { ...prev };
+            delete next[m._id];
+            return next;
+          });
+        }, 1200);
       },
       error: (e) => {
         this.toast.error(e.error?.message || 'Failed to set stock');
         this.fetchInventory();
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+          try { navigator.vibrate([60, 40, 100]); } catch {}
+        }
       },
     });
   }

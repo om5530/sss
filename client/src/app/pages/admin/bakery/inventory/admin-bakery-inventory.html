@@ -88,7 +88,11 @@
         </thead>
         <tbody>
           @for (m of filteredMaterials(); track m._id) {
-            <tr [class.low-stock-row]="low(m)">
+            <tr
+              [class.low-stock-row]="low(m)"
+              [class.row-flash-inc]="recentlyAdjusted()[m._id]?.type === 'inc'"
+              [class.row-flash-dec]="recentlyAdjusted()[m._id]?.type === 'dec'"
+            >
               <td>
                 <strong>{{ m.name }}</strong>
                 @if (m.supplierName) {
@@ -99,7 +103,7 @@
                 <span class="tag-type {{ m.type }}">{{ m.type }}</span>
               </td>
               <td class="font-mono text-muted">{{ m.packQuantity }} {{ m.packUom }}</td>
-              <td class="num font-mono font-bold">
+              <td class="num font-mono font-bold stock-cell">
                 <input
                   type="number"
                   inputmode="decimal"
@@ -110,6 +114,11 @@
                   aria-label="Current stock quantity"
                 />
                 <span class="uom-suffix">{{ m.baseUom }}</span>
+                @if (recentlyAdjusted()[m._id]; as adj) {
+                  <span class="adjust-pill-flyout" [class.adjust-pill-flyout--dec]="adj.type === 'dec'">
+                    {{ adj.label }}
+                  </span>
+                }
               </td>
               <td class="num">{{ m.allocatedStock || 0 }} {{ m.baseUom }}</td>
               <td class="num">{{ m.available ?? m.currentStock }} {{ m.baseUom }}</td>

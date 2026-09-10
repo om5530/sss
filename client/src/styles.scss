@@ -927,6 +927,176 @@ button { font-family: inherit; cursor: pointer; }
   100% { transform: scale(0.9); opacity: 0.7; }
 }
 
+/* Order Alert Bell button in top header */
+.adm-bell-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0.35rem 0.6rem;
+  min-height: 38px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--d-line);
+  border-radius: 7px;
+  color: var(--gold-bright);
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  svg { color: var(--gold-bright); }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+  }
+
+  &.muted {
+    color: var(--d-muted);
+    border-color: rgba(255, 255, 255, 0.05);
+
+    svg { color: var(--d-muted); }
+  }
+}
+
+/* Loud New Order Alert Banner in Admin/Kitchen */
+.adm-order-alert-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  background: linear-gradient(135deg, #2b1805 0%, #170d03 100%);
+  border: 2px solid var(--gold);
+  border-radius: 10px;
+  margin-bottom: 0.85rem;
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(223, 167, 87, 0.35);
+  animation: bannerPulse 1.8s infinite alternate ease-in-out;
+  position: relative;
+  z-index: 100;
+
+  .alarm-bell-icon {
+    font-size: 1.5rem;
+    animation: bellShake 0.6s infinite ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .alarm-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .alarm-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+
+    strong {
+      font-size: 1rem;
+      color: #fff;
+    }
+  }
+
+  .alarm-badge {
+    background: #d32f2f;
+    color: #fff;
+    font-size: 0.66rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+    animation: blinkBadge 1s infinite;
+  }
+
+  .alarm-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.82rem;
+    color: var(--d-muted);
+  }
+
+  .alarm-type {
+    background: rgba(255, 255, 255, 0.12);
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.72rem;
+  }
+
+  .alarm-total {
+    color: var(--gold-bright);
+    font-weight: 700;
+    font-family: var(--font-mono, monospace);
+  }
+
+  .alarm-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .alarm-view-btn {
+    background: var(--gold);
+    color: #120a06;
+    font-weight: 700;
+    border: none;
+    min-height: 38px;
+    padding: 0 1rem;
+    border-radius: 6px;
+
+    &:hover {
+      background: var(--gold-bright);
+    }
+  }
+
+  .alarm-silence-btn {
+    color: var(--d-muted);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    min-height: 38px;
+    padding: 0 0.75rem;
+    border-radius: 6px;
+
+    &:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.1);
+    }
+  }
+}
+
+@keyframes bannerPulse {
+  0% {
+    box-shadow: 0 0 12px rgba(223, 167, 87, 0.25);
+    border-color: var(--gold);
+  }
+  100% {
+    box-shadow: 0 0 24px rgba(223, 167, 87, 0.55);
+    border-color: #ffd54f;
+  }
+}
+
+@keyframes bellShake {
+  0% { transform: rotate(0); }
+  20% { transform: rotate(15deg); }
+  40% { transform: rotate(-15deg); }
+  60% { transform: rotate(10deg); }
+  80% { transform: rotate(-10deg); }
+  100% { transform: rotate(0); }
+}
+
+@keyframes blinkBadge {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
 /* Phones and tablets share a labelled, collapsible operations menu. */
 @media (max-width: 960px) {
   .adm-shell { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }

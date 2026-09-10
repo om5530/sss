@@ -5,6 +5,7 @@ import { AdminOrder } from '../../../core/models/admin.model';
 import { OrderStatus } from '../../../core/models/order.model';
 import { ConfirmModal } from '../shared/confirm-modal';
 import { NEXT_LABEL, NEXT_STATUS, elapsed, elapsedMinutes, itemsSummary, orderCustomer } from '../shared/admin-ui';
+import { AdminOrderNotificationService } from '../../../core/services/admin-order-notification.service';
 
 const POLL_MS = 8_000;
 const MUTE_KEY = 'adm_queue_muted';
@@ -21,6 +22,7 @@ const STAGES: OrderStatus[] = ['placed', 'confirmed', 'preparing', 'ready'];
 export class AdminQueue {
   private admin = inject(AdminService);
   private toast = inject(ToastService);
+  private orderNotification = inject(AdminOrderNotificationService);
 
   protected readonly orders = signal<AdminOrder[]>([]);
   protected readonly loading = signal(true);
@@ -140,28 +142,8 @@ export class AdminQueue {
     return [order.delivery?.area, order.delivery?.city].filter(Boolean).join(', ') || 'Delivery';
   }
 
-  /** Two-tone counter bell — no audio asset needed. Autoplay rules may block
-   *  it before the first interaction; that's fine, the highlight still shows. */
+  /** Loud kitchen chime using unified AdminOrderNotificationService */
   private chime() {
-    try {
-      const ctx = new AudioContext();
-      const note = (freq: number, at: number) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.001, ctx.currentTime + at);
-        gain.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + at + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + at + 0.5);
-        osc.connect(gain).connect(ctx.destination);
-        osc.start(ctx.currentTime + at);
-        osc.stop(ctx.currentTime + at + 0.55);
-      };
-      note(880, 0);
-      note(1174, 0.15);
-      setTimeout(() => ctx.close(), 1200);
-    } catch {
-      /* no audio available — the visual highlight is enough */
-    }
+    this.orderNotification.testSound();
   }
 }

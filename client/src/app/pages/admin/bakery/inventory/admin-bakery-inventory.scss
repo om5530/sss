@@ -156,10 +156,82 @@
   color: var(--muted);
 }
 
+.stock-cell {
+  position: relative;
+}
+
+.adjust-pill-flyout {
+  position: absolute;
+  right: 6px;
+  top: -10px;
+  background: #2e7d32;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(46, 125, 50, 0.4);
+  animation: flyoutUp 1.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  z-index: 10;
+  white-space: nowrap;
+
+  &--dec {
+    background: #d32f2f;
+    box-shadow: 0 2px 8px rgba(211, 47, 47, 0.4);
+  }
+}
+
+@keyframes flyoutUp {
+  0% {
+    opacity: 0;
+    transform: translateY(4px) scale(0.85);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.05);
+  }
+  75% {
+    opacity: 1;
+    transform: translateY(-6px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.9);
+  }
+}
+
+.row-flash-inc {
+  animation: flashGreen 1.3s ease-out;
+}
+
+.row-flash-dec {
+  animation: flashRed 1.3s ease-out;
+}
+
+@keyframes flashGreen {
+  0% { background-color: rgba(76, 175, 80, 0.32); }
+  100% { background-color: transparent; }
+}
+
+@keyframes flashRed {
+  0% { background-color: rgba(244, 67, 54, 0.28); }
+  100% { background-color: transparent; }
+}
+
 .adjust-btns {
   display: inline-flex;
   gap: 3px;
+
+  .btn {
+    transition: transform 0.1s ease, background 0.15s ease, box-shadow 0.15s ease;
+
+    &:active {
+      transform: scale(0.91);
+    }
+  }
 }
 
 .block { display: block; }
 .font-mono { font-family: monospace; }
+

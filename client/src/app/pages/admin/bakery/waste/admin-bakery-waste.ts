@@ -28,11 +28,17 @@ export class AdminBakeryWaste implements OnInit {
     this.http.post('/api/admin/bakery/waste', this.finished).subscribe({
       next: () => {
         this.saving.set(false);
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+          try { navigator.vibrate([35]); } catch {}
+        }
         this.toast.success('Finished product waste recorded');
         this.fetchData();
       },
       error: (e: any) => {
         this.saving.set(false);
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+          try { navigator.vibrate([60, 40, 100]); } catch {}
+        }
         this.toast.error(e.error?.message || 'Could not record waste');
       },
     });
@@ -124,12 +130,18 @@ export class AdminBakeryWaste implements OnInit {
     this.bakery.logWaste(payload).subscribe({
       next: () => {
         this.saving.set(false);
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+          try { navigator.vibrate([35]); } catch {}
+        }
         this.toast.success('Waste recorded. Its calculated cost is shown in the log.');
         this.notes.set('');
         this.fetchData();
       },
       error: (e) => {
         this.saving.set(false);
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+          try { navigator.vibrate([60, 40, 100]); } catch {}
+        }
         this.toast.error(e.error?.message || 'Failed to log waste');
       },
     });
