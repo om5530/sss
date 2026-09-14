@@ -6,24 +6,22 @@ import { AppInstallService } from '../../../core/services/app-install.service';
   template: `
     @if (install.visible()) {
       <aside class="install install--popup" aria-label="Install The Golden Batch" aria-live="polite">
-        <button type="button" class="install__close" (click)="install.dismiss()" aria-label="Dismiss install prompt">×</button>
         <img src="icons/icon-192.png" width="52" height="52" alt="" />
         <div class="install__copy">
-          <strong>Install The Golden Batch</strong>
-          <p>Keep the bakery menu and your orders one tap away.</p>
+          <strong>Install The Golden Batch app</strong>
+          <p>Install once for faster ordering and reliable order updates.</p>
         </div>
         <div class="install__actions">
           <button type="button" class="btn btn--primary btn--sm" (click)="install.install()" [disabled]="install.busy()" aria-controls="install-help" [attr.aria-expanded]="install.instructions()">
-            {{ install.nativeAvailable() ? 'Install app' : 'Add to home screen' }}
+            {{ install.nativeAvailable() ? 'Install app' : 'Show install steps' }}
           </button>
-          <button type="button" class="btn btn--ghost btn--sm" (click)="install.dismiss()">Not now</button>
         </div>
         @if (install.instructions()) {
           <div id="install-help" class="install__help" role="status">
             @if (install.ios) {
-              Open this site in Safari, tap <strong>Share</strong>, then <strong>Add to Home Screen</strong> and <strong>Add</strong>.
+              In Safari, tap <strong>Share</strong>, choose <strong>Add to Home Screen</strong>, then tap <strong>Add</strong> to install the app.
             } @else {
-              Open your browser menu and choose <strong>Install app</strong> or <strong>Add to Home screen</strong>, if available. If you opened this inside another app, try opening it in Chrome.
+              Open this page in Chrome, open the browser menu, and choose <strong>Install app</strong>. If you only see “Add to Home screen”, Chrome has not enabled full app installation for this page yet.
             }
             <p>Ordering, payments and live order updates need an internet connection.</p>
           </div>
@@ -35,8 +33,7 @@ import { AppInstallService } from '../../../core/services/app-install.service';
     :host { display: block; }
     .install { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-block: 1.5rem; padding: 1.2rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--cream-2); }
     .install--popup { position: fixed; z-index: 1200; inset-inline: 12px; bottom: max(12px, env(safe-area-inset-bottom)); max-width: 520px; margin: 0 auto; padding: .8rem; background: rgba(250,244,234,.98); box-shadow: 0 12px 36px rgba(28,15,8,.28); }
-    .install__close { position: absolute; top: 5px; right: 7px; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--muted); font-size: 1.35rem; line-height: 1; cursor: pointer; }
-    .install__close:focus-visible, .install button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+    .install button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
     .install > img { flex-shrink: 0; border-radius: 12px; }
     .install__copy { flex: 1 1 180px; min-width: 0; }
     .install strong { color: var(--choco); }

@@ -9,8 +9,6 @@ interface InstallPrompt extends Event {
 export class AppInstallService {
   private deferred: InstallPrompt | null = null;
   private readonly displayMode = matchMedia('(display-mode: standalone)');
-  // Versioned so users who dismissed the first banner get the improved prompt once.
-  private readonly dismissalKey = 'golden-batch-install-dismissed-v2';
   private promptAccepted = false;
   readonly ios = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -19,8 +17,9 @@ export class AppInstallService {
   readonly nativeAvailable = signal(false);
   readonly instructions = signal(false);
   readonly busy = signal(false);
-  readonly dismissed = signal(this.wasDismissed());
-  readonly visible = computed(() => this.mobile && window.isSecureContext && !this.installed() && !this.dismissed());
+  // Installation is required for the mobile operations experience, so this
+  // banner stays present until the browser confirms the app was installed.
+  readonly visible = computed(() => this.mobile && window.isSecureContext && !this.installed());
 
   constructor() {
     window.addEventListener('beforeinstallprompt', (event) => {
@@ -29,15 +28,10 @@ export class AppInstallService {
       this.nativeAvailable.set(true);
     });
     window.addEventListener('appinstalled', () => {
-      // Some browsers can emit this while restoring an install state. Do not
-      // remove the prompt unless this session's own prompt was accepted.
-      if (this.promptAccepted) {
-        this.installed.set(true);
-        this.dismissed.set(true);
-      }
+      this.installed.set(true);
       this.deferred = null;
       this.nativeAvailable.set(false);
-      if (this.promptAccepted) this.instructions.set(false);
+      this.instructions.set(false);
     });
     this.displayMode.addEventListener('change', () => this.installed.set(this.displayMode.matches));
   }
@@ -56,7 +50,11 @@ export class AppInstallService {
       if (choice.outcome === 'accepted') {
         this.promptAccepted = true;
         this.installed.set(true);
-        this.dismiss();
+        this.instructions.set(false);
+      } else {
+        // A browser can close its own native dialog. Keep our required banner
+        // visible and explain how to install from the browser menu instead.
+        this.instructions.set(true);
       }
     } catch {
       this.instructions.set(true);
@@ -65,17 +63,5 @@ export class AppInstallService {
       this.nativeAvailable.set(false);
       this.busy.set(false);
     }
-  }
-
-  dismiss() {
-    this.dismissed.set(true);
-    try { localStorage.setItem(this.dismissalKey, String(Date.now())); } catch { /* Storage is optional. */ }
-  }
-
-  private wasDismissed() {
-    try {
-      const value = Number(localStorage.getItem(this.dismissalKey));
-      return value > 0 && Date.now() - value < 7 * 24 * 60 * 60 * 1000;
-    } catch { return false; }
   }
 }

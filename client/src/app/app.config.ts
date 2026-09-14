@@ -32,7 +32,9 @@ export const appConfig: ApplicationConfig = {
     // PWA: offline app shell + cached menu; only registered in prod builds.
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),
-      registrationStrategy: 'registerWhenStable:30000',
+      // Register immediately so the browser can expose its full PWA install
+      // prompt on the first visit instead of falling back to a shortcut.
+      registrationStrategy: 'registerImmediately',
     }),
   ],
 };

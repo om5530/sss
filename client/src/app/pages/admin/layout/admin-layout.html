@@ -253,9 +253,8 @@
     @if (install.visible()) {
       <div class="adm-install no-print">
         <button type="button" class="btn btn--outline" (click)="install.install()" [disabled]="install.busy()" [attr.aria-expanded]="install.instructions()">Install Operations app</button>
-        <button type="button" class="btn btn--outline" (click)="install.dismiss()">Not now</button>
         @if (install.instructions()) {
-          <p role="status">Open your browser menu (Share in Safari), choose Add to Home Screen, then confirm. Live data and saving changes require internet.</p>
+          <p role="status">Open this page in Chrome, then use the browser menu and choose Install app. On iPhone, use Safari → Share → Add to Home Screen → Add. Live data and saving changes require internet.</p>
         }
       </div>
     }
