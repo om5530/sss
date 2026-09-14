@@ -6,7 +6,7 @@ import { AppInstallService } from '../../../core/services/app-install.service';
   template: `
     @if (install.visible()) {
       <aside class="install install--popup" aria-label="Install The Golden Batch" aria-live="polite">
-        <img src="icons/icon-192.png" width="52" height="52" alt="" />
+        <img src="icons/golden-batch-icon-192.png" width="52" height="52" alt="" />
         <div class="install__copy">
           <strong>Install The Golden Batch app</strong>
           <p>Install once for faster ordering and reliable order updates.</p>
