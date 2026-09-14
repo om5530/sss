@@ -9,7 +9,9 @@ interface InstallPrompt extends Event {
 export class AppInstallService {
   private deferred: InstallPrompt | null = null;
   private readonly displayMode = matchMedia('(display-mode: standalone)');
-  private readonly dismissalKey = 'golden-batch-install-dismissed';
+  // Versioned so users who dismissed the first banner get the improved prompt once.
+  private readonly dismissalKey = 'golden-batch-install-dismissed-v2';
+  private promptAccepted = false;
   readonly ios = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   readonly mobile = this.ios || /Android|Mobile/.test(navigator.userAgent);
@@ -27,10 +29,15 @@ export class AppInstallService {
       this.nativeAvailable.set(true);
     });
     window.addEventListener('appinstalled', () => {
-      this.installed.set(true);
+      // Some browsers can emit this while restoring an install state. Do not
+      // remove the prompt unless this session's own prompt was accepted.
+      if (this.promptAccepted) {
+        this.installed.set(true);
+        this.dismissed.set(true);
+      }
       this.deferred = null;
       this.nativeAvailable.set(false);
-      this.instructions.set(false);
+      if (this.promptAccepted) this.instructions.set(false);
     });
     this.displayMode.addEventListener('change', () => this.installed.set(this.displayMode.matches));
   }
@@ -46,7 +53,11 @@ export class AppInstallService {
     try {
       await prompt.prompt();
       const choice = await prompt.userChoice;
-      if (choice.outcome === 'accepted') this.dismiss();
+      if (choice.outcome === 'accepted') {
+        this.promptAccepted = true;
+        this.installed.set(true);
+        this.dismiss();
+      }
     } catch {
       this.instructions.set(true);
     } finally {

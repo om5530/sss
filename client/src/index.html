@@ -26,7 +26,7 @@
   <!-- Swap to admin manifest when installing from /admin so the PWA launches into ops -->
   <script>
     if (location.pathname.startsWith('/admin')) {
-      document.getElementById('pwa-manifest').href = 'admin-manifest.webmanifest';
+      document.getElementById('pwa-manifest').href = '/admin-manifest.webmanifest';
       var m = document.querySelector('meta[name="apple-mobile-web-app-title"]');
       if (m) m.content = 'GB Ops';
     }
