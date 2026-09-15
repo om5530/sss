@@ -48,6 +48,17 @@ const CUTE_NOUNS = [
   'Strudel', 'Puff', 'Shortcake', 'Bake', 'Bun',
 ];
 
+// Store phone identities in one canonical form so an Indian number entered as
+// 9623838707, +91 96238 38707, or +919623838707 always resolves to the same
+// account (and therefore the same server-side role).
+function normalizePhone(phone) {
+  const value = String(phone ?? '').trim();
+  const cleaned = value.replace(/[^\d+]/g, '');
+  if (cleaned.startsWith('+')) return cleaned;
+  const digits = cleaned.replace(/\D/g, '');
+  return digits.length === 10 ? `+91${digits}` : cleaned;
+}
+
 function generateCuteName() {
   const adj = CUTE_ADJECTIVES[Math.floor(Math.random() * CUTE_ADJECTIVES.length)];
   const noun = CUTE_NOUNS[Math.floor(Math.random() * CUTE_NOUNS.length)];
@@ -104,13 +115,14 @@ const firebasePhoneLogin = asyncHandler(async (req, res) => {
 });
 
 const requestOtp = asyncHandler(async (req, res) => {
-  const { phone } = req.body;
+  const phone = normalizePhone(req.body.phone);
   const result = await otpService.createOtp(phone);
   res.json({ success: true, message: 'OTP sent', ...result });
 });
 
 const verifyOtpLogin = asyncHandler(async (req, res) => {
-  const { phone, code } = req.body;
+  const phone = normalizePhone(req.body.phone);
+  const { code } = req.body;
   const result = await otpService.verifyOtp(phone, code);
   if (!result.ok) throw ApiError.badRequest(result.reason);
 
@@ -229,10 +241,10 @@ const validators = {
     body('phone').optional().isString().bail().trim().if((value) => value !== '').matches(/^\+?[0-9\s()-]{7,20}$/).withMessage('Enter a valid phone number'),
   ],
   requestOtp: [
-    body('phone').trim().matches(/^\+?[0-9]{7,15}$/).withMessage('Enter a valid phone number'),
+    body('phone').trim().matches(/^\+?[0-9\s()-]{7,20}$/).withMessage('Enter a valid phone number'),
   ],
   verifyOtp: [
-    body('phone').trim().notEmpty().withMessage('Phone number is required'),
+    body('phone').trim().matches(/^\+?[0-9\s()-]{7,20}$/).withMessage('Enter a valid phone number'),
     body('code').trim().isLength({ min: 4, max: 8 }).withMessage('Enter the OTP you received'),
   ],
   address: [
