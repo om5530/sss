@@ -237,10 +237,15 @@
 .text-gold { color: var(--gold-dark); font-size: 0.95rem; }
 
 .modal-foot {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
-  margin-top: 0.9rem;
-  padding-top: 0.65rem;
+  margin: 0.9rem -0.85rem 0;
+  padding: 0.65rem 0.85rem max(0.65rem, env(safe-area-inset-bottom));
+  background: var(--white);
+  box-shadow: 0 -8px 16px rgba(54, 32, 18, 0.08);
   border-top: 1px solid var(--line);
 }
