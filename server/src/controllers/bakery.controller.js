@@ -255,6 +255,41 @@ async function initialFormat(m, session) {
   m.preferredFormatId = format._id;
   await m.save({ session });
 }
+async function convertMaterialBaseUnit(m, nextUom, session) {
+  const previousUom = m.baseUom;
+  if (!nextUom || nextUom === previousUom) return;
+
+  const scheduled = (await O.Sheet.find({ status: "scheduled" })
+    .session(session)
+    .lean()).find((sheet) =>
+    (sheet.snapshot?.requirements || []).some(
+      (requirement) => String(requirement.materialId) === String(m._id),
+    ),
+  );
+  if (scheduled)
+    throw ApiError.conflict(
+      "This material is used in a scheduled production plan. Complete or cancel that plan before changing its base unit.",
+    );
+
+  const convert = (value) =>
+    E.convertUnits(value ?? 0, previousUom, nextUom, m.densityGramPerMl);
+  const convertSigned = (value) => {
+    const quantity = new D(value ?? 0);
+    const converted = new D(convert(quantity.abs()));
+    return (quantity.isNegative() ? converted.neg() : converted).toString();
+  };
+  const movements = await O.Movement.find({ materialId: m._id }).session(session);
+  for (const movement of movements) {
+    movement.quantity = convertSigned(movement.quantity);
+    movement.balance = convert(movement.balance);
+    await movement.save({ session });
+  }
+
+  m.currentStock = convert(m.currentStock);
+  if (m.minimumStock != null) m.minimumStock = convert(m.minimumStock);
+  if (m.reorderLevel != null) m.reorderLevel = convert(m.reorderLevel);
+  m.baseUom = nextUom;
+}
 exports.getMaterials = handler(async (req) => {
   const m = await maps(undefined, new Date(), undefined, false);
   let materials = [...m.materials.values()].filter((x) => x.isActive);
@@ -316,12 +351,9 @@ exports.updateMaterial = handler((req) =>
       );
     const desiredStock =
       req.body.currentStock != null ? dec(req.body.currentStock) : null;
-    const originalStock = new D(m.currentStock);
-    if (req.body.baseUom && req.body.baseUom !== m.baseUom)
-      throw ApiError.badRequest(
-        "Base unit cannot change after creation; create a new material to preserve stock history",
-      );
-    const formatChanged = [
+    const baseUnitChanged =
+      Boolean(req.body.baseUom) && req.body.baseUom !== m.baseUom;
+    const formatChanged = baseUnitChanged || [
       "purchasePrice",
       "packQuantity",
       "packUom",
@@ -331,6 +363,9 @@ exports.updateMaterial = handler((req) =>
     ].some(
       (k) => req.body[k] != null && String(req.body[k]) !== String(m[k]),
     );
+    if (baseUnitChanged)
+      await convertMaterialBaseUnit(m, req.body.baseUom, session);
+    const originalStock = new D(m.currentStock);
     m.set(pick(req.body, materialFields));
     m.effectiveUnitCost = E.rate(m);
     await m.save({ session });
@@ -437,6 +472,24 @@ async function saveRecipe(req, session, creating) {
   if (!r.components.length || r.components.length > 200)
     throw ApiError.badRequest("Recipe needs between 1 and 200 components");
   const m = await maps(session);
+  for (const component of [
+    ...r.components,
+    ...(r.options || []).flatMap((option) => option.components || []),
+  ]) {
+    if (component.componentType !== "material") continue;
+    const material = m.materials.get(String(component.materialId));
+    if (!material || !material.isActive)
+      throw ApiError.badRequest("Material is unavailable");
+    component.quantity = E.convertUnits(
+      component.quantity,
+      component.uom || material.baseUom,
+      material.baseUom,
+      material.densityGramPerMl,
+    );
+    component.uom = material.baseUom;
+    component.name = material.name;
+    component.itemType = material.type;
+  }
   m.recipes.set(String(r._id), r.toObject());
   // Include option edges in graph validation, even when no option is currently selected.
   function graph(recipe, seen = []) {

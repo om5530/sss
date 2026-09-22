@@ -375,6 +375,16 @@
   width: 52%;
 }
 
+.unit-readonly {
+  display: flex;
+  align-items: center;
+  min-height: 2.35rem;
+  background: var(--cream);
+  color: var(--cocoa);
+  font-weight: 700;
+  cursor: default;
+}
+
 .component-cell {
   min-width: 260px;
 }

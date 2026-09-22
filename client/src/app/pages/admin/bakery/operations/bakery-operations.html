@@ -2,7 +2,20 @@
   <header class="work-head">
     <div>
       <div class="eyebrow">THE GOLDEN BATCH · KITCHEN</div>
-      <h1>{{ title[view] }}</h1>
+      <div class="title-with-help">
+        <h1>{{ title[view] }}</h1>
+        @if (view === 'production') {
+          <button
+            type="button"
+            class="production-help-button"
+            aria-label="How production works"
+            [attr.aria-expanded]="showProductionHelp()"
+            (click)="showProductionHelp.update((open) => !open)"
+          >
+            i
+          </button>
+        }
+      </div>
       <p>Plan your baking. Know your costs. Keep your kitchen stocked.</p>
     </div>
     <a class="btn btn--accent" routerLink="/admin/bakery/calculator">Open calculator</a>
@@ -24,6 +37,21 @@
   }
   @if (busy()) {
     <p role="status">Loading…</p>
+  }
+  @if (view === 'production' && showProductionHelp()) {
+    <section class="production-help card" aria-label="How to use production">
+      <div>
+        <h2 class="section-title">How production works</h2>
+        <p>Use Production to turn a recipe plan into a completed kitchen batch and keep stock accurate.</p>
+      </div>
+      <ol>
+        <li>Open the calculator, choose the main recipe and enter how many units you plan to make.</li>
+        <li>Review the ingredients, packaging, expected cost and any shortages, then save it as a production plan.</li>
+        <li>Use <strong>Purchase requirements</strong> if stock is short. When the batch is ready, select <strong>Record production</strong>.</li>
+        <li>Enter what was actually used and the finished output. Completing the batch deducts the recorded ingredients from inventory.</li>
+      </ol>
+      <p class="production-example"><strong>Example:</strong> Plan 20 Tiramisu portions in the calculator and save the plan. If it needs more mascarpone than you have, use Purchase requirements first. After making 19 good portions with 1 portion wasted, record those actual figures and complete the batch; the used ingredients are then removed from stock.</p>
+    </section>
   }
   @if (view === 'dashboard') {
     <div class="stats">

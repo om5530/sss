@@ -21,6 +21,7 @@ export class AdminBakeryMaterials implements OnInit {
   private previewTimer?: ReturnType<typeof setTimeout>;
   previewCost = signal<string | null>(null);
   previewError = signal('');
+  saveError = signal('');
   constructor() {
     inject(DestroyRef).onDestroy(() => {
       this.previewRequest?.unsubscribe();
@@ -118,6 +119,7 @@ export class AdminBakeryMaterials implements OnInit {
   }
 
   startNewMaterial() {
+    this.saveError.set('');
     this.supplierSelection.set('');
     this.originalStock.set(0);
     this.editingMaterial.set({
@@ -136,6 +138,7 @@ export class AdminBakeryMaterials implements OnInit {
   }
 
   editMaterial(m: BakeryMaterial) {
+    this.saveError.set('');
     this.supplierSelection.set(
       m.supplierName && this.supplierOptions.includes(m.supplierName)
         ? m.supplierName
@@ -155,7 +158,70 @@ export class AdminBakeryMaterials implements OnInit {
     material.supplierName = value === this.customSupplierValue ? '' : value;
   }
 
+  onBaseUomChange(form: Partial<BakeryMaterial>, nextUom: string) {
+    const previousUom = form.baseUom || nextUom;
+    if (previousUom === nextUom) return;
+
+    try {
+      for (const field of ['currentStock', 'minimumStock', 'reorderLevel'] as const) {
+        const value = form[field];
+        if (value != null) {
+          form[field] = this.convertUnitValue(
+            Number(value),
+            previousUom,
+            nextUom,
+            form.densityGramPerMl,
+          );
+        }
+      }
+      form.baseUom = nextUom;
+      this.preview();
+    } catch (error) {
+      this.toast.error(error instanceof Error ? error.message : 'These units cannot be converted');
+    }
+  }
+
+  private convertUnitValue(
+    value: number,
+    from: string,
+    to: string,
+    densityGramPerMl?: number,
+  ) {
+    const units: Record<string, { dimension: string; factor: number }> = {
+      mg: { dimension: 'mass', factor: 0.001 },
+      g: { dimension: 'mass', factor: 1 },
+      kg: { dimension: 'mass', factor: 1000 },
+      ml: { dimension: 'volume', factor: 1 },
+      L: { dimension: 'volume', factor: 1000 },
+      piece: { dimension: 'count', factor: 1 },
+      dozen: { dimension: 'count', factor: 12 },
+      minute: { dimension: 'time', factor: 1 },
+      hour: { dimension: 'time', factor: 60 },
+      box: { dimension: 'box', factor: 1 },
+      packet: { dimension: 'packet', factor: 1 },
+    };
+    const source = units[from];
+    const target = units[to];
+    if (!source || !target) throw new Error('Unsupported unit conversion');
+
+    let baseValue = value * source.factor;
+    if (source.dimension !== target.dimension) {
+      if (
+        !['mass', 'volume'].includes(source.dimension) ||
+        !['mass', 'volume'].includes(target.dimension) ||
+        !densityGramPerMl
+      ) {
+        throw new Error('Choose a compatible unit, or enter density for mass/volume conversion');
+      }
+      baseValue = source.dimension === 'mass'
+        ? baseValue / densityGramPerMl
+        : baseValue * densityGramPerMl;
+    }
+    return Number((baseValue / target.factor).toPrecision(12));
+  }
+
   cancelEdit() {
+    this.saveError.set('');
     this.editingMaterial.set(null);
   }
 
@@ -176,8 +242,11 @@ export class AdminBakeryMaterials implements OnInit {
 
   saveMaterial() {
     const m = this.editingMaterial();
+    this.saveError.set('');
     if (!m || !m.name?.trim()) {
-      this.toast.error('Material name is required');
+      const message = 'Material name is required';
+      this.saveError.set(message);
+      this.toast.error(message);
       return;
     }
 
@@ -191,8 +260,7 @@ export class AdminBakeryMaterials implements OnInit {
           this.editingMaterial.set(null);
           this.upsertMaterial(res.material);
         },
-        error: (error) =>
-          this.toast.error(error.error?.message || 'Failed to update material'),
+        error: (error) => this.showSaveError(error, 'Failed to update material'),
       });
     } else {
       this.bakery.createMaterial(m).subscribe({
@@ -201,9 +269,19 @@ export class AdminBakeryMaterials implements OnInit {
           this.editingMaterial.set(null);
           this.upsertMaterial(res.material);
         },
-        error: () => this.toast.error('Failed to create material'),
+        error: (error) => this.showSaveError(error, 'Failed to create material'),
       });
     }
+  }
+
+  private showSaveError(error: any, fallback: string) {
+    const details = error?.error?.details
+      ?.map((detail: { message?: string }) => detail.message)
+      .filter(Boolean)
+      .join(' ');
+    const message = details || error?.error?.message || fallback;
+    this.saveError.set(message);
+    this.toast.error(message);
   }
 
   deleteMaterial(id: string) {

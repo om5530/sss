@@ -336,7 +336,15 @@
                     />
                   </td>
                   <td>
-                    <input class="input" [(ngModel)]="comp.uom" />
+                    @if (comp.componentType === 'material') {
+                      <span
+                        class="input unit-readonly"
+                        title="Defined in Materials"
+                        aria-label="Unit defined by the selected material"
+                      >{{ comp.uom }}</span>
+                    } @else {
+                      <input class="input" [(ngModel)]="comp.uom" />
+                    }
                     @if (comp.itemType === 'labour') {
                       <label class="label"
                         >Workers<input
@@ -398,7 +406,11 @@
                 @if (c.componentType === 'material') {
                   <label class="field"
                     ><span class="label">Material</span
-                    ><select class="select" [(ngModel)]="c.materialId">
+                    ><select
+                      class="select"
+                      [ngModel]="c.materialId"
+                      (ngModelChange)="onComponentMaterialChange(c, $event)"
+                    >
                       @for (m of materials(); track m._id) {
                         <option [value]="m._id">{{ m.name }}</option>
                       }
@@ -426,7 +438,17 @@
                   ><span class="label">Quantity</span
                   ><input class="input" type="number" [(ngModel)]="c.quantity" /></label
                 ><label class="field"
-                  ><span class="label">Unit</span><input class="input" [(ngModel)]="c.uom" /></label
+                  ><span class="label">Unit</span>
+                  @if (c.componentType === 'material') {
+                    <span
+                      class="input unit-readonly"
+                      title="Defined in Materials"
+                      aria-label="Unit defined by the selected material"
+                    >{{ c.uom }}</span>
+                  } @else {
+                    <input class="input" [(ngModel)]="c.uom" />
+                  }
+                </label
                 ><button class="btn btn--outline" (click)="o.components.splice(ci, 1); preview()">
                   Remove component
                 </button>

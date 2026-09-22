@@ -116,6 +116,39 @@ test("Material lifecycle: create with pack pricing, auto-calculates effectiveUni
     listed.materials.find((m) => m._id === created.material._id).supplierName,
     "Updated Supplier",
   );
+
+  // Changing the base UOM preserves the physical quantities and rewrites
+  // inventory history so balances continue to use the material's current UOM.
+  const unitChangeRes = await json(
+    "PATCH",
+    `/admin/bakery/materials/${created.material._id}`,
+    {
+      baseUom: "kg",
+      currentStock: 4.75,
+      expectedStock: 4750,
+      minimumStock: 1,
+    },
+  );
+  const unitChanged = await unitChangeRes.json();
+  assert.equal(unitChangeRes.status, 200, JSON.stringify(unitChanged));
+  assert.equal(unitChanged.material.baseUom, "kg");
+  assert.equal(unitChanged.material.currentStock, "4.75");
+  assert.equal(unitChanged.material.minimumStock, "1");
+  assert.equal(unitChanged.material.effectiveUnitCost, "1200");
+
+  const opening = await Movement.findOne({
+    materialId: created.material._id,
+    type: "opening",
+  });
+  assert.equal(opening.quantity, "5");
+  assert.equal(opening.balance, "5");
+
+  const convertedAdjustment = await Movement.findOne({
+    materialId: created.material._id,
+    notes: "Stock updated from material details",
+  });
+  assert.equal(convertedAdjustment.quantity, "-0.25");
+  assert.equal(convertedAdjustment.balance, "4.75");
 });
 
 test("Recipe simulation endpoint: accurate costing, markup, and gross margin", async () => {
@@ -162,7 +195,7 @@ test("Recipe simulation endpoint: accurate costing, markup, and gross margin", a
     yieldUom: "piece",
     targetMarkupPercent: 60,
     components: [
-      { materialId: flour._id, quantity: 200, uom: "g" },
+      { materialId: flour._id, quantity: 0.2, uom: "kg" },
       { materialId: butter._id, quantity: 200, uom: "g" },
       { materialId: labour._id, quantity: 10, uom: "minute" },
       { materialId: oven._id, quantity: 60, uom: "minute" },
@@ -177,6 +210,8 @@ test("Recipe simulation endpoint: accurate costing, markup, and gross margin", a
   const createdRecipe = await (
     await json("POST", "/admin/bakery/recipes", recipePayload)
   ).json();
+  assert.equal(createdRecipe.recipe.components[0].quantity, "200");
+  assert.equal(createdRecipe.recipe.components[0].uom, "g");
   const simRes = await json("POST", "/admin/bakery/simulate/recipe", {
     recipeId: createdRecipe.recipe._id,
     quantity: 2,

@@ -26,6 +26,7 @@ export class BakeryOperations {
   busy = signal(false);
   error = signal('');
   notice = signal('');
+  showProductionHelp = signal(false);
   data = signal<any>({});
   purchasing = signal<any>({ suppliers: [], formats: [], purchases: [], prices: [] });
   materials = signal<any[]>([]);
