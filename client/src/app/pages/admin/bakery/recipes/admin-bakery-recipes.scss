@@ -375,6 +375,10 @@
   width: 52%;
 }
 
+.components-box .data-table tbody td {
+  vertical-align: top;
+}
+
 .unit-readonly {
   display: flex;
   align-items: center;
