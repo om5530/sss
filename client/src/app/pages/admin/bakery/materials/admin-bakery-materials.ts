@@ -35,6 +35,7 @@ export class AdminBakeryMaterials implements OnInit {
   searchQuery = signal<string>('');
 
   editingMaterial = signal<Partial<BakeryMaterial> | null>(null);
+  originalStock = signal<number | null>(null);
 
   types: { label: string; value: string }[] = [
     { label: 'All Items', value: 'all' },
@@ -43,6 +44,36 @@ export class AdminBakeryMaterials implements OnInit {
     { label: 'Equipment & Oven', value: 'resource' },
     { label: 'Labour Staff', value: 'labour' },
   ];
+
+  readonly packUnits = [
+    { value: 'mg', label: 'Milligrams (mg)' },
+    { value: 'g', label: 'Grams (g)' },
+    { value: 'kg', label: 'Kilograms (kg)' },
+    { value: 'ml', label: 'Millilitres (ml)' },
+    { value: 'L', label: 'Litres (L)' },
+    { value: 'piece', label: 'Pieces' },
+    { value: 'dozen', label: 'Dozens' },
+    { value: 'box', label: 'Boxes' },
+    { value: 'packet', label: 'Packets' },
+    { value: 'minute', label: 'Minutes' },
+    { value: 'hour', label: 'Hours' },
+  ];
+
+  readonly supplierOptions = [
+    'Blinkit',
+    'Zepto',
+    'Swiggy Instamart',
+    'BigBasket / BB Now',
+    'Flipkart Minutes',
+    'Amazon Now',
+    'Amazon Fresh',
+    'JioMart',
+    'DMart Ready',
+    'Reliance Smart Bazaar',
+    'Local wholesaler',
+  ];
+  readonly customSupplierValue = '__custom__';
+  supplierSelection = signal('');
 
   ngOnInit() {
     this.fetchMaterials();
@@ -70,7 +101,25 @@ export class AdminBakeryMaterials implements OnInit {
     return Number(m.currentStock) <= Number(m.minimumStock);
   }
 
+  private matchesCurrentView(material: BakeryMaterial) {
+    const typeMatches = this.selectedType() === 'all' || material.type === this.selectedType();
+    const query = this.searchQuery().trim().toLowerCase();
+    return typeMatches && (!query || `${material.name} ${material.code || ''}`.toLowerCase().includes(query));
+  }
+
+  private upsertMaterial(material: BakeryMaterial) {
+    const visible = this.materials().filter((item) => item._id !== material._id);
+    if (material.isActive !== false && this.matchesCurrentView(material)) visible.push(material);
+    visible.sort((a, b) =>
+      new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime() ||
+      String(b._id).localeCompare(String(a._id)),
+    );
+    this.materials.set(visible);
+  }
+
   startNewMaterial() {
+    this.supplierSelection.set('');
+    this.originalStock.set(0);
     this.editingMaterial.set({
       name: '',
       code: 'ING-' + Date.now().toString().slice(-4),
@@ -87,8 +136,23 @@ export class AdminBakeryMaterials implements OnInit {
   }
 
   editMaterial(m: BakeryMaterial) {
-    this.editingMaterial.set({ ...m });
+    this.supplierSelection.set(
+      m.supplierName && this.supplierOptions.includes(m.supplierName)
+        ? m.supplierName
+        : m.supplierName
+          ? this.customSupplierValue
+          : '',
+    );
+    this.originalStock.set(Number(m.currentStock));
+    this.editingMaterial.set({ ...m, packUom: m.packUom === 'l' ? 'L' : m.packUom });
     this.preview();
+  }
+
+  selectSupplier(value: string) {
+    this.supplierSelection.set(value);
+    const material = this.editingMaterial();
+    if (!material) return;
+    material.supplierName = value === this.customSupplierValue ? '' : value;
   }
 
   cancelEdit() {
@@ -118,20 +182,24 @@ export class AdminBakeryMaterials implements OnInit {
     }
 
     if (m._id) {
-      this.bakery.updateMaterial(m._id, m).subscribe({
-        next: () => {
+      this.bakery.updateMaterial(m._id, {
+        ...m,
+        expectedStock: this.originalStock() ?? undefined,
+      }).subscribe({
+        next: (res) => {
           this.toast.success('Material updated');
           this.editingMaterial.set(null);
-          this.fetchMaterials();
+          this.upsertMaterial(res.material);
         },
-        error: () => this.toast.error('Failed to update material'),
+        error: (error) =>
+          this.toast.error(error.error?.message || 'Failed to update material'),
       });
     } else {
       this.bakery.createMaterial(m).subscribe({
-        next: () => {
+        next: (res) => {
           this.toast.success('Material created');
           this.editingMaterial.set(null);
-          this.fetchMaterials();
+          this.upsertMaterial(res.material);
         },
         error: () => this.toast.error('Failed to create material'),
       });
@@ -141,9 +209,9 @@ export class AdminBakeryMaterials implements OnInit {
   deleteMaterial(id: string) {
     if (!confirm('Archive this material?')) return;
     this.bakery.deleteMaterial(id).subscribe({
-      next: () => {
+      next: (res) => {
         this.toast.success('Material archived');
-        this.fetchMaterials();
+        this.upsertMaterial(res.material);
       },
       error: () => this.toast.error('Failed to archive material'),
     });

@@ -28,6 +28,25 @@
     }
   </div>
 
+  <div class="recipe-view-toggle" role="group" aria-label="Recipe type to show">
+    <button
+      type="button"
+      class="filter-pill"
+      [class.active]="recipeView() === 'main'"
+      (click)="recipeView.set('main')"
+    >
+      Main recipes
+    </button>
+    <button
+      type="button"
+      class="filter-pill"
+      [class.active]="recipeView() === 'sub'"
+      (click)="recipeView.set('sub')"
+    >
+      Sub-recipes
+    </button>
+  </div>
+
   <!-- Recipe Cards Grid -->
   @if (!editingRecipe()) {
     <div class="recipe-cards-grid">
@@ -36,6 +55,9 @@
           <div class="card-header">
             <div>
               <span class="category-badge">{{ r.category }}</span>
+              @if (r.isSubRecipe) {
+                <span class="sub-recipe-badge">Sub-recipe</span>
+              }
               <h3 class="recipe-name">{{ r.name }}</h3>
               <small class="recipe-yield"
                 >Yield: {{ r.yieldQuantity }} {{ r.yieldUom }} ({{ r.finishedWeightGrams }}g)</small
@@ -137,47 +159,90 @@
         </div>
 
         <div class="field">
-          <label class="label">Category</label>
-          <input class="input" [(ngModel)]="form.category" placeholder="e.g. Cakes" />
+          <label class="label" for="recipe-category">Category</label>
+          <select
+            id="recipe-category"
+            class="select"
+            [ngModel]="form.category"
+            (ngModelChange)="onCategorySelection(form, $event)"
+          >
+            @for (category of categories(); track category) {
+              @if (category !== 'All') {
+                <option [value]="category">{{ category }}</option>
+              }
+            }
+            <option value="__add_new__">+ Add new category…</option>
+          </select>
+          @if (addingCategory()) {
+            <div class="category-add">
+              <input
+                class="input"
+                [(ngModel)]="newCategoryName"
+                placeholder="New category name"
+                aria-label="New category name"
+                (keydown.enter)="$event.preventDefault(); addCategory(form)"
+                autofocus
+              />
+              <button type="button" class="btn btn--accent btn--sm" (click)="addCategory(form)">
+                Add
+              </button>
+              <button type="button" class="btn btn--ghost btn--sm" (click)="cancelAddCategory()">
+                Cancel
+              </button>
+            </div>
+          }
+        </div>
+
+        <div class="field recipe-type-field">
+          <span class="label">Recipe type</span>
+          <div class="recipe-type-toggle" role="group" aria-label="Recipe type">
+            <button
+              type="button"
+              [class.active]="!form.isSubRecipe"
+              [attr.aria-pressed]="!form.isSubRecipe"
+              (click)="form.isSubRecipe = false; preview()"
+            >
+              Main recipe
+            </button>
+            <button
+              type="button"
+              [class.active]="form.isSubRecipe"
+              [attr.aria-pressed]="!!form.isSubRecipe"
+              (click)="form.isSubRecipe = true; preview()"
+            >
+              Sub-recipe
+            </button>
+          </div>
+          <small class="recipe-type-hint">Sub-recipes are ingredients or preparations used inside another recipe.</small>
         </div>
 
         <div class="field">
-          <label class="label">Yield Quantity</label>
+          <div class="label-with-help">
+            <label class="label">Yield Quantity</label>
+            <button type="button" class="field-help" aria-label="About yield quantity" data-tooltip="How many finished units this recipe makes. Example: enter 2 if one batch makes two cakes.">i</button>
+          </div>
           <input class="input" type="number" inputmode="decimal" min="1" step="any" [(ngModel)]="form.yieldQuantity" />
         </div>
 
         <div class="field">
-          <label class="label">Yield Unit (e.g. cake, piece)</label>
+          <div class="label-with-help">
+            <label class="label">Yield Unit (e.g. cake, piece)</label>
+            <button type="button" class="field-help" aria-label="About yield unit" data-tooltip="The name of one finished unit. Example: use “cake” for whole cakes or “piece” for individual slices.">i</button>
+          </div>
           <input class="input" [(ngModel)]="form.yieldUom" placeholder="cake" />
         </div>
 
         <div class="field">
-          <label class="label">Target Markup %</label>
+          <div class="label-with-help">
+            <label class="label">Target Markup %</label>
+            <button type="button" class="field-help" aria-label="About target markup" data-tooltip="The percentage added to cost to calculate a suggested selling price. Example: 100% markup turns a ₹250 cost into a ₹500 selling price.">i</button>
+          </div>
           <input class="input" type="number" inputmode="decimal" min="0" step="any" [(ngModel)]="form.targetMarkupPercent" />
         </div>
-        <label class="field"
-          ><span class="label">Finished batch weight (g)</span
-          ><input class="input" type="number" inputmode="decimal" min="0" step="any" [(ngModel)]="form.finishedWeightGrams"
-        /></label>
-        <label class="field"
-          ><span class="label">Overhead per batch (₹)</span
-          ><input class="input" type="number" inputmode="decimal" min="0" step="any" [(ngModel)]="form.overheadPerBatch"
-        /></label>
-        <label class="field"
-          ><span class="label">Expected process loss (%)</span
-          ><input
-            class="input"
-            type="number"
-            inputmode="decimal"
-            min="0"
-            max="99.99"
-            step="any"
-            [(ngModel)]="form.expectedLossPercent"
-        /></label>
-        <label class="field"
-          ><span class="label">Actual selling price / unit (₹)</span
-          ><input class="input" type="number" inputmode="decimal" min="0" step="any" [(ngModel)]="form.manualSellingPrice"
-        /></label>
+        <div class="field">
+          <div class="label-with-help"><label class="label">Finished batch weight (g)</label><button type="button" class="field-help" aria-label="About finished batch weight" data-tooltip="The weight of the completed batch after baking or cooking. Example: enter 900 for a finished 900 g loaf.">i</button></div>
+          <input class="input" type="number" inputmode="decimal" min="0" step="any" [(ngModel)]="form.finishedWeightGrams" />
+        </div>
         <label class="field"
           ><span class="label">Internal notes</span
           ><textarea class="input" [(ngModel)]="form.notes"></textarea>
@@ -188,37 +253,28 @@
       <div class="components-box">
         <div class="comp-head">
           <h3>Recipe Ingredients & Resources</h3>
-          <button type="button" class="btn btn--outline btn--sm" (click)="addComponent()">
-            + Add Component
-          </button>
         </div>
 
         <div class="table-wrap">
           <table class="data-table">
             <thead>
               <tr>
-                <th>Material</th>
+                <th>Ingredient / resource</th>
                 <th>Quantity</th>
                 <th>Unit</th>
-                <th>Scaling Rule</th>
                 <th style="width: 50px"></th>
               </tr>
             </thead>
             <tbody>
               @for (comp of form.components; track $index; let idx = $index) {
                 <tr>
-                  <td>
-                    <select class="select" [(ngModel)]="comp.componentType">
-                      <option value="material">Material</option>
-                      <option value="sub_recipe">Sub-recipe</option>
-                      <option value="other">Other direct cost</option>
-                    </select>
+                  <td class="component-cell">
+                    <div class="component-picker">
                     @if (comp.componentType === 'sub_recipe') {
                       <select class="select" [(ngModel)]="comp.subRecipeId">
-                        @for (r of recipes(); track r._id) {
-                          @if (r._id !== form._id) {
-                            <option [value]="r._id">{{ r.name }}</option>
-                          }
+                        <option value="" disabled>Select sub-recipe…</option>
+                        @for (r of subRecipes(form._id); track r._id) {
+                          <option [value]="r._id">{{ r.name }}</option>
                         }
                       </select>
                     } @else if (comp.componentType === 'other') {
@@ -243,6 +299,32 @@
                         }
                       </select>
                     }
+                      <div class="component-picker__meta">
+                        <span class="component-type-badge">
+                          {{ componentTypeLabel(comp.componentType) }}
+                        </span>
+                        <button
+                          type="button"
+                          class="component-type-change"
+                          (click)="toggleComponentTypeEditor(idx)"
+                          [attr.aria-expanded]="editingComponentType() === idx"
+                        >
+                          Change type
+                        </button>
+                      </div>
+                      @if (editingComponentType() === idx) {
+                        <select
+                          class="select component-type-editor"
+                          [ngModel]="comp.componentType"
+                          (ngModelChange)="setComponentType(comp, $event)"
+                          aria-label="Component type"
+                        >
+                          <option value="material">Material</option>
+                          <option value="sub_recipe">Sub-recipe</option>
+                          <option value="other">Other direct cost</option>
+                        </select>
+                      }
+                    </div>
                   </td>
                   <td>
                     <input
@@ -255,29 +337,6 @@
                   </td>
                   <td>
                     <input class="input" [(ngModel)]="comp.uom" />
-                  </td>
-                  <td>
-                    <select class="select" [(ngModel)]="comp.scalingMethod">
-                      <option value="linear">Linear (scales with count)</option>
-                      <option value="stepped">Stepped Capacity (e.g. Oven cycle)</option>
-                      <option value="fixed">Fixed Per Batch</option>
-                    </select>
-                    @if (comp.scalingMethod === 'stepped') {
-                      <label class="label"
-                        >Units per cycle<input
-                          class="input"
-                          type="number"
-                          min="1"
-                          [(ngModel)]="comp.capacityPerCycle"
-                      /></label>
-                      <label class="label"
-                        >Minutes per cycle<input
-                          class="input"
-                          type="number"
-                          min="1"
-                          [(ngModel)]="comp.cycleMinutes"
-                      /></label>
-                    }
                     @if (comp.itemType === 'labour') {
                       <label class="label"
                         >Workers<input
@@ -301,6 +360,11 @@
               }
             </tbody>
           </table>
+        </div>
+        <div class="components-add">
+          <button type="button" class="btn btn--outline btn--sm" (click)="addComponent()">
+            + Add Material
+          </button>
         </div>
       </div>
 
@@ -344,7 +408,7 @@
                   <label class="field"
                     ><span class="label">Sub-recipe</span
                     ><select class="select" [(ngModel)]="c.subRecipeId">
-                      @for (r of recipes(); track r._id) {
+                      @for (r of subRecipes(form._id); track r._id) {
                         <option [value]="r._id">{{ r.name }}</option>
                       }
                     </select></label
@@ -414,19 +478,23 @@
       }
     </div>
   }
-  @if (revisions().length) {
+  @if (historyRecipe(); as recipe) {
     <section class="card">
-      <h2>Recipe history</h2>
-      @for (v of revisions(); track v._id) {
-        <details>
-          <summary>Version {{ v.version }} · {{ v.createdAt | date: 'medium' }}</summary>
-          <p>{{ v.recipe.name }} · {{ v.recipe.totalBatchCost | currency: 'INR' }} at revision</p>
-          @for (c of v.recipe.components; track $index) {
-            <p>{{ c.name || c.materialId }} · {{ c.quantity }} {{ c.uom }}</p>
-          }
-        </details>
+      <h2>Recipe history · {{ recipe.name }}</h2>
+      @if (revisions().length) {
+        @for (v of revisions(); track v._id) {
+          <details>
+            <summary>Version {{ v.version }} · {{ v.createdAt | date: 'medium' }}</summary>
+            <p>{{ v.recipe.name }} · {{ v.recipe.totalBatchCost | currency: 'INR' }} at revision</p>
+            @for (c of v.recipe.components; track $index) {
+              <p>{{ c.name || c.materialId }} · {{ c.quantity }} {{ c.uom }}</p>
+            }
+          </details>
+        }
+      } @else {
+        <p class="muted">Loading saved versions…</p>
       }
-      <button class="btn btn--outline" (click)="revisions.set([])">Close history</button>
+      <button class="btn btn--outline" (click)="closeHistory()">Close history</button>
     </section>
   }
 </div>

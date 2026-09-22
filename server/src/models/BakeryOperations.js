@@ -66,7 +66,7 @@ exports.Sheet = model("BakerySheet", {
   actual: Schema.Types.Mixed,
   completedAt: Date,
   operationKey: String,
-});
+}, [[{ status: 1, type: 1 }, {}]]);
 exports.Movement = model("BakeryMovement", {
   materialId: ref,
   quantity: String,

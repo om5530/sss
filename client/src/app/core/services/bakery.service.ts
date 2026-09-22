@@ -46,7 +46,7 @@ export class BakeryService {
 
   updateMaterial(
     id: string,
-    data: Partial<BakeryMaterial>,
+    data: Partial<BakeryMaterial> & { expectedStock?: number },
   ): Observable<{ success: boolean; material: BakeryMaterial }> {
     return this.http.patch<{ success: boolean; material: BakeryMaterial }>(
       `${this.base}/materials/${id}`,
@@ -54,8 +54,8 @@ export class BakeryService {
     );
   }
 
-  deleteMaterial(id: string): Observable<{ success: boolean; message: string }> {
-    return this.http.delete<{ success: boolean; message: string }>(`${this.base}/materials/${id}`);
+  deleteMaterial(id: string): Observable<{ success: boolean; material: BakeryMaterial }> {
+    return this.http.delete<{ success: boolean; material: BakeryMaterial }>(`${this.base}/materials/${id}`);
   }
 
   // Recipes

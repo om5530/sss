@@ -32,6 +32,11 @@
   padding-bottom: 3px;
 }
 
+.recipe-view-toggle {
+  display: flex;
+  gap: 0.3rem;
+}
+
 .filter-pill {
   border: 1px solid var(--line);
   background: var(--white);
@@ -171,10 +176,30 @@
 }
 
 .card-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.35rem;
+
+  .btn {
+    width: 100%;
+    min-width: 0;
+    white-space: normal;
+    line-height: 1.2;
+  }
+}
+
+.sub-recipe-badge {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.12rem 0.35rem;
+  border-radius: 999px;
+  background: rgba(223, 167, 87, 0.16);
+  color: var(--caramel-dark);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  vertical-align: middle;
 }
 
 /* Edit Panel */
@@ -201,6 +226,131 @@
   margin-bottom: 1rem;
 }
 
+.recipe-type-field {
+  grid-column: 1 / -1;
+}
+
+.recipe-type-toggle {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+
+  button {
+    border: 0;
+    border-right: 1px solid var(--line);
+    background: var(--white);
+    color: var(--cocoa);
+    padding: 0.45rem 0.7rem;
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+
+    &:last-child { border-right: 0; }
+
+    &.active {
+      background: var(--night);
+      color: var(--white);
+    }
+
+    &:focus-visible {
+      position: relative;
+      outline: 2px solid var(--gold);
+      outline-offset: -2px;
+    }
+  }
+}
+
+.recipe-type-hint {
+  display: block;
+  margin-top: 0.3rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.category-add {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+
+  .input {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .category-add {
+    grid-template-columns: 1fr 1fr;
+
+    .input {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
+.label-with-help {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: fit-content;
+  margin-bottom: 0.3rem;
+}
+
+.field-help {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 1.15rem;
+  height: 1.15rem;
+  padding: 0;
+  border: 1px solid var(--caramel);
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--caramel-dark);
+  font-family: Georgia, serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: help;
+
+  &::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    z-index: 10;
+    top: calc(100% + 0.4rem);
+    left: 0;
+    width: min(17rem, 72vw);
+    padding: 0.55rem 0.65rem;
+    border-radius: 6px;
+    background: var(--night);
+    color: var(--cream);
+    box-shadow: var(--shadow);
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    font-weight: 500;
+    line-height: 1.4;
+    text-align: left;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-0.2rem);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+  }
+
+  &:hover::after,
+  &:focus::after {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+  }
+}
+
 .components-box {
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -213,6 +363,72 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.6rem;
+}
+
+.components-add {
+  display: flex;
+  justify-content: flex-start;
+  padding-top: 0.65rem;
+}
+
+.components-box .data-table th:first-child {
+  width: 52%;
+}
+
+.component-cell {
+  min-width: 260px;
+}
+
+.component-picker {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.component-picker__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 22px;
+}
+
+.component-type-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.component-type-change {
+  min-height: 28px;
+  padding: 0.15rem 0.3rem;
+  border: 0;
+  background: transparent;
+  color: var(--caramel-dark);
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.component-type-change:hover {
+  text-decoration: underline;
+}
+
+.component-type-change:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 1px;
+  border-radius: 4px;
+}
+
+.component-type-editor {
+  max-width: 220px;
 }
 
 .actions-foot {

@@ -88,6 +88,22 @@
   color: var(--caramel-dark);
 }
 
+.row-actions {
+  width: 108px;
+  white-space: nowrap;
+}
+
+.row-actions__buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
+.row-actions__buttons .btn {
+  flex: 0 0 auto;
+}
+
 .empty-state {
   text-align: center;
   padding: 1.4rem !important;

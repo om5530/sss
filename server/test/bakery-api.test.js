@@ -94,12 +94,28 @@ test("Material lifecycle: create with pack pricing, auto-calculates effectiveUni
     `/admin/bakery/materials/${created.material._id}`,
     {
       purchasePrice: 3000,
+      currentStock: 4750,
+      expectedStock: 5000,
+      supplierName: "Updated Supplier",
     },
   );
   assert.equal(patchRes.status, 200);
   const updated = await patchRes.json();
   // 3000 / 2500 = 1.20 per gram
   assert.equal(updated.material.effectiveUnitCost, "1.2");
+  assert.equal(updated.material.currentStock, "4750");
+  const { Movement } = require("../src/models/BakeryOperations");
+  const adjustment = await Movement.findOne({
+    materialId: created.material._id,
+    notes: "Stock updated from material details",
+  });
+  assert.equal(adjustment.quantity, "-250");
+  assert.equal(adjustment.balance, "4750");
+  const listed = await (await json("GET", "/admin/bakery/materials")).json();
+  assert.equal(
+    listed.materials.find((m) => m._id === created.material._id).supplierName,
+    "Updated Supplier",
+  );
 });
 
 test("Recipe simulation endpoint: accurate costing, markup, and gross margin", async () => {

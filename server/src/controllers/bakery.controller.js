@@ -66,23 +66,33 @@ async function transaction(fn) {
     return fn(session);
   });
 }
-async function maps(session, at = new Date(), excludePlanId) {
-  const materials = new Map(
-    (await read(Material, {}, session)).map((m) => [String(m._id), m]),
-  );
-  const prices = await O.Price.find({ effectiveAt: { $lte: at } })
+async function maps(session, at = new Date(), excludePlanId, includeRecipes = true) {
+  const pricesQuery = O.Price.find({ effectiveAt: { $lte: at } })
     .sort({ effectiveAt: -1, _id: -1 })
     .session(session || null)
     .lean();
+  const plansQuery = {
+    status: "scheduled",
+    type: "production_plan",
+    ...(excludePlanId ? { _id: { $ne: id(excludePlanId) } } : {}),
+  };
+  const [materialRows, prices, formatRows, supplierRows, plans, recipeRows] =
+    await Promise.all([
+      read(Material, {}, session),
+      pricesQuery,
+      read(O.Format, {}, session),
+      read(O.Supplier, {}, session),
+      read(O.Sheet, plansQuery, session),
+      includeRecipes ? read(Recipe, {}, session) : Promise.resolve([]),
+    ]);
+  const materials = new Map(
+    materialRows.map((m) => [String(m._id), m]),
+  );
   const latest = new Map();
   for (const p of prices)
     if (!latest.has(String(p.formatId))) latest.set(String(p.formatId), p);
-  const formats = new Map(
-    (await read(O.Format, {}, session)).map((f) => [String(f._id), f]),
-  );
-  const suppliers = new Map(
-    (await read(O.Supplier, {}, session)).map((s) => [String(s._id), s]),
-  );
+  const formats = new Map(formatRows.map((f) => [String(f._id), f]));
+  const suppliers = new Map(supplierRows.map((s) => [String(s._id), s]));
   for (const m of materials.values()) {
     const f = formats.get(String(m.preferredFormatId)),
       p = f && latest.get(String(f._id));
@@ -103,15 +113,7 @@ async function maps(session, at = new Date(), excludePlanId) {
       });
     m.allocatedStock = "0";
   }
-  for (const plan of await read(
-    O.Sheet,
-    {
-      status: "scheduled",
-      type: "production_plan",
-      ...(excludePlanId ? { _id: { $ne: id(excludePlanId) } } : {}),
-    },
-    session,
-  ))
+  for (const plan of plans)
     for (const r of plan.snapshot?.requirements || []) {
       const m = materials.get(String(r.materialId));
       if (m && ["ingredient", "packaging"].includes(m.type))
@@ -119,9 +121,7 @@ async function maps(session, at = new Date(), excludePlanId) {
     }
   return {
     materials,
-    recipes: new Map(
-      (await read(Recipe, {}, session)).map((r) => [String(r._id), r]),
-    ),
+    recipes: new Map(recipeRows.map((r) => [String(r._id), r])),
     latest,
     formats,
     suppliers,
@@ -256,7 +256,7 @@ async function initialFormat(m, session) {
   await m.save({ session });
 }
 exports.getMaterials = handler(async (req) => {
-  const m = await maps();
+  const m = await maps(undefined, new Date(), undefined, false);
   let materials = [...m.materials.values()].filter((x) => x.isActive);
   if (req.query.type)
     materials = materials.filter((x) => x.type === req.query.type);
@@ -266,6 +266,11 @@ exports.getMaterials = handler(async (req) => {
       `${x.name} ${x.code}`.toLowerCase().includes(q),
     );
   }
+  materials.sort(
+    (a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime() ||
+      String(b._id).localeCompare(String(a._id)),
+  );
   return { materials, count: materials.length };
 });
 exports.previewMaterial = handler(async (req) => ({
@@ -302,20 +307,48 @@ exports.createMaterial = handler((req) =>
 exports.updateMaterial = handler((req) =>
   transaction(async (session) => {
     const m = await get(Material, req.params.id, session);
+    if (
+      req.body.expectedStock != null &&
+      !dec(req.body.expectedStock).eq(m.currentStock)
+    )
+      throw ApiError.conflict(
+        "Stock changed. Reload before saving this material.",
+      );
+    const desiredStock =
+      req.body.currentStock != null ? dec(req.body.currentStock) : null;
+    const originalStock = new D(m.currentStock);
     if (req.body.baseUom && req.body.baseUom !== m.baseUom)
       throw ApiError.badRequest(
         "Base unit cannot change after creation; create a new material to preserve stock history",
       );
-    const context = await maps(session),
-      current = context.materials.get(String(m._id));
-    const priceChanged = ["purchasePrice", "packQuantity", "packUom"].some(
-      (k) => req.body[k] != null && String(req.body[k]) !== String(current[k]),
+    const formatChanged = [
+      "purchasePrice",
+      "packQuantity",
+      "packUom",
+      "supplierName",
+      "brand",
+      "leadTimeDays",
+    ].some(
+      (k) => req.body[k] != null && String(req.body[k]) !== String(m[k]),
     );
     m.set(pick(req.body, materialFields));
     m.effectiveUnitCost = E.rate(m);
     await m.save({ session });
-    if (priceChanged || !m.preferredFormatId) await initialFormat(m, session);
-    return { material: m };
+    if (formatChanged || !m.preferredFormatId) await initialFormat(m, session);
+    return {
+      material:
+        desiredStock && !desiredStock.eq(originalStock)
+          ? await move(
+              m._id,
+              desiredStock.sub(originalStock).toString(),
+              "adjustment",
+              randomUUID(),
+              "Stock updated from material details",
+              req.user?._id,
+              session,
+            )
+          : m,
+    };
   }),
 );
 exports.deleteMaterial = handler((req) =>
@@ -1322,11 +1355,26 @@ exports.reports = handler(async (req) => {
     ),
   };
 });
-exports.revisions = handler(async (req) => ({
-  revisions: await O.Revision.find({ recipeId: id(req.params.id) })
+exports.revisions = handler(async (req) => {
+  const recipeId = id(req.params.id);
+  const revisions = await O.Revision.find({ recipeId })
     .sort({ version: -1 })
-    .lean(),
-}));
+    .lean();
+
+  // Recipes created before version snapshots were introduced have no history
+  // rows. Still return their current state so the history action is useful.
+  if (!revisions.length) {
+    const recipe = await get(Recipe, recipeId);
+    revisions.push({
+      _id: `current-${recipe._id}`,
+      version: recipe.version || 1,
+      recipe: recipe.toObject(),
+      createdAt: recipe.updatedAt || recipe.createdAt,
+    });
+  }
+
+  return { revisions };
+});
 exports.migrationPreview = handler(async (req) => {
   if (!Array.isArray(req.body.items) || req.body.items.length > 200)
     throw ApiError.badRequest("Supply up to 200 legacy items for review");

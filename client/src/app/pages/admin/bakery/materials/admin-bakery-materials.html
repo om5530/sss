@@ -86,23 +86,27 @@
                 }
               </td>
               <td>{{ m.supplierName || '—' }}</td>
-              <td class="num">
-                <button
-                  type="button"
-                  class="btn btn--outline btn--sm"
-                  (click)="editMaterial(m)"
-                  title="Edit"
-                >
-                  ✏️
-                </button>
-                <button
-                  type="button"
-                  class="btn btn--ghost btn--danger btn--sm"
-                  (click)="deleteMaterial(m._id)"
-                  title="Archive"
-                >
-                  ✕
-                </button>
+              <td class="row-actions">
+                <div class="row-actions__buttons">
+                  <button
+                    type="button"
+                    class="btn btn--outline btn--sm"
+                    (click)="editMaterial(m)"
+                    title="Edit"
+                    aria-label="Edit material"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn--ghost btn--danger btn--sm"
+                    (click)="deleteMaterial(m._id)"
+                    title="Archive"
+                    aria-label="Archive material"
+                  >
+                    ✕
+                  </button>
+                </div>
               </td>
             </tr>
           } @empty {
@@ -189,14 +193,6 @@
             ><span class="label">Description (optional)</span
             ><input class="input" [(ngModel)]="form.description"
           /></label>
-          <label class="field"
-            ><span class="label">Notes (optional)</span
-            ><textarea class="input" [(ngModel)]="form.notes"></textarea>
-          </label>
-          <label class="field"
-            ><span class="label">Image URL (optional)</span
-            ><input class="input" type="url" [(ngModel)]="form.image"
-          /></label>
           <div class="pack-calc-box" (input)="preview()" (change)="preview()">
             <h4>How do you buy it? (Purchase Pack)</h4>
             <p class="box-sub">
@@ -218,11 +214,11 @@
 
               <div class="field">
                 <label class="label">Pack Unit</label>
-                <input
-                  class="input"
-                  [(ngModel)]="form.packUom"
-                  placeholder="e.g. g, kg, L, piece"
-                />
+                <select class="select" [(ngModel)]="form.packUom">
+                  @for (unit of packUnits; track unit.value) {
+                    <option [value]="unit.value">{{ unit.label }}</option>
+                  }
+                </select>
               </div>
 
               <div class="field">
@@ -274,10 +270,9 @@
                 step="any"
                 min="0"
                 [(ngModel)]="form.currentStock"
-                [disabled]="!!form._id"
               />
               @if (form._id) {
-                <small>Use Inventory to record a stock adjustment.</small>
+                <small>Stock changes are recorded automatically in Inventory history.</small>
               }
             </div>
 
@@ -295,7 +290,24 @@
 
             <div class="field">
               <label class="label">Supplier Name</label>
-              <input class="input" [(ngModel)]="form.supplierName" placeholder="e.g. Amul Depot" />
+              <select
+                class="select"
+                [ngModel]="supplierSelection()"
+                (ngModelChange)="selectSupplier($event)"
+              >
+                <option value="">Select supplier</option>
+                @for (supplier of supplierOptions; track supplier) {
+                  <option [value]="supplier">{{ supplier }}</option>
+                }
+                <option [value]="customSupplierValue">+ Add custom supplier</option>
+              </select>
+              @if (supplierSelection() === customSupplierValue) {
+                <input
+                  class="input"
+                  [(ngModel)]="form.supplierName"
+                  placeholder="Enter supplier name"
+                />
+              }
             </div>
           </div>
         </div>
