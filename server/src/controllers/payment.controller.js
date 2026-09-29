@@ -4,18 +4,14 @@ const Order = require('../models/Order');
 const Payment = require('../models/Payment');
 const stripeService = require('../services/stripe.service');
 const razorpayService = require('../services/razorpay.service');
-const { emailForOrder, notifyOrderStatus } = require('../services/notify.service');
-
-/** Fire-and-forget "your order is confirmed" email once money arrives. */
-function notifyPaid(order) {
-  if (order.orderStatus !== 'confirmed') return;
-  return emailForOrder(order).then((email) => notifyOrderStatus(order, 'confirmed', email));
-}
 
 // Authorises a caller to act on an order's payment. Guest orders (no user) are
 // accessible to anyone holding the unguessable order id; account orders are
 // private to their owner.
 function assertCanPay(order, user) {
+  if (order.source && order.source !== 'website') {
+    throw ApiError.forbidden('Payments for staff-entered orders are recorded in the admin console');
+  }
   if (order.user && (!user || String(order.user) !== String(user._id))) {
     throw ApiError.forbidden();
   }
@@ -140,7 +136,6 @@ const verifyRazorpayPayment = asyncHandler(async (req, res) => {
   if (order.paymentStatus !== 'paid' && order.paymentStatus !== 'refunded') {
     markOrderPaid(order, 'Payment confirmed');
     await order.save();
-    await notifyPaid(order);
   }
   if (payment.status !== 'succeeded' && payment.status !== 'refunded') {
     payment.status = 'succeeded';
@@ -188,7 +183,6 @@ const razorpayWebhook = asyncHandler(async (req, res) => {
         if (succeeded) markOrderPaid(order, 'Payment confirmed');
         else order.paymentStatus = 'failed';
         await order.save();
-        if (succeeded) await notifyPaid(order);
       }
     }
   }

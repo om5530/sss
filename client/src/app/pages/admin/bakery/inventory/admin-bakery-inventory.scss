@@ -235,3 +235,18 @@
 .block { display: block; }
 .font-mono { font-family: monospace; }
 
+
+.inv-sort {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+
+  .input {
+    width: auto;
+    min-height: 34px;
+    height: 34px;
+    font-size: 0.8rem;
+  }
+}

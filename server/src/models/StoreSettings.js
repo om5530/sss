@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const env = require('../config/env');
+const { DEFAULT_UPI } = require('../config/upi');
 
 // One document holds operational values that used to require an environment
 // change and deployment. The stable id makes reads and updates race-safe.
@@ -14,6 +15,8 @@ const storeSettingsSchema = new mongoose.Schema(
     contactAddress: { type: String, default: '' },
     contactPhone: { type: String, default: '' },
     contactEmail: { type: String, default: '' },
+    defaultUpiRecipientId: { type: String, default: DEFAULT_UPI.defaultUpiRecipientId },
+    upiRecipients: { type: [{ _id: false, id: String, name: String, upiId: String, payeeName: String }], default: () => DEFAULT_UPI.upiRecipients.map((r) => ({ ...r })) },
   },
   { timestamps: true, versionKey: false },
 );

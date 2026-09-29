@@ -16,22 +16,23 @@
       type="search"
       placeholder="Search products…"
       style="min-width: 200px"
+      [disabled]="busy()"
       [(ngModel)]="q"
       (ngModelChange)="onSearch()"
       aria-label="Search products"
     />
-    <select class="select" [(ngModel)]="group" (ngModelChange)="fetch()" aria-label="Filter by group">
+    <select class="select" [disabled]="busy()" [(ngModel)]="group" (ngModelChange)="fetch()" aria-label="Filter by group">
       <option value="">Bakery + Savoury</option>
       <option value="bakery">Bakery</option>
       <option value="savoury">Savoury</option>
     </select>
-    <select class="select" [(ngModel)]="availability" (ngModelChange)="fetch()" aria-label="Filter by availability">
+    <select class="select" [disabled]="busy()" [(ngModel)]="availability" (ngModelChange)="fetch()" aria-label="Filter by availability">
       <option value="">Any availability</option>
       <option value="true">Available</option>
       <option value="false">Unavailable</option>
     </select>
     <label style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.88rem; font-weight: 600; color: var(--cocoa)">
-      <input type="checkbox" [(ngModel)]="showArchived" (ngModelChange)="allArchives = false; fetch()" />
+      <input type="checkbox" [disabled]="busy()" [(ngModel)]="showArchived" (ngModelChange)="allArchives = false; fetch()" />
       Show archived
     </label>
   </div>
@@ -39,10 +40,20 @@
   @if (loading()) {
     <div class="skeleton" style="height: 360px" aria-hidden="true"></div>
   } @else {
+    @if (selectedIds().size) {
+      <div class="bulk-actions" role="region" aria-label="Bulk product actions">
+        <span role="status">{{ selectedIds().size }} product{{ selectedIds().size === 1 ? '' : 's' }} selected</span>
+        <button type="button" class="btn btn--accent btn--sm" [disabled]="busy()" (click)="bulkArchiveOpen.set(true)">Archive selected</button>
+        <button type="button" class="btn btn--ghost btn--sm" [disabled]="busy()" (click)="selectAll(false)">Clear selection</button>
+      </div>
+    }
     <div class="adm-table-wrap">
       <table class="adm-table">
         <thead>
           <tr>
+            <th class="selection-cell">
+              <input type="checkbox" aria-label="Select all active products in this list" [checked]="allSelected()" [indeterminate]="selectedIds().size > 0 && !allSelected()" [disabled]="busy() || !selectableProducts().length" (change)="selectAll($any($event.target).checked)" />
+            </th>
             <th></th>
             <th>Product</th>
             <th>Category</th>
@@ -55,7 +66,10 @@
         </thead>
         <tbody>
           @for (p of products(); track p._id) {
-            <tr [style.opacity]="p.archived ? 0.55 : 1">
+            <tr [style.opacity]="p.archived ? 0.55 : 1" [class.selected-row]="selectedIds().has(p._id)">
+              <td class="selection-cell">
+                <input type="checkbox" [attr.aria-label]="'Select ' + p.name" [checked]="selectedIds().has(p._id)" [disabled]="busy() || p.archived" (change)="selectProduct(p, $any($event.target).checked)" />
+              </td>
               <td style="width: 54px">
                 @if (p.image) {
                   <img [src]="p.image" alt="" class="adm-thumb" loading="lazy" />
@@ -73,31 +87,43 @@
               <td><span class="diet diet--{{ p.dietary }}" [title]="p.dietary"></span></td>
               <td>
                 <label class="adm-switch" [attr.aria-label]="'Toggle availability for ' + p.name">
-                  <input type="checkbox" [checked]="p.available" [disabled]="p.archived" (change)="toggle(p, 'available')" />
+                  <input type="checkbox" [checked]="p.available" [disabled]="busy() || p.archived" (change)="toggle(p, 'available')" />
                   <span></span>
                 </label>
               </td>
               <td>
                 <label class="adm-switch" [attr.aria-label]="'Toggle featured for ' + p.name">
-                  <input type="checkbox" [checked]="p.featured" [disabled]="p.archived" (change)="toggle(p, 'featured')" />
+                  <input type="checkbox" [checked]="p.featured" [disabled]="busy() || p.archived" (change)="toggle(p, 'featured')" />
                   <span></span>
                 </label>
               </td>
               <td class="nowrap" style="text-align: right">
                 <a [routerLink]="['/admin/products', p._id, 'edit']" class="btn btn--ghost btn--sm">Edit</a>
-                <button type="button" class="btn btn--ghost btn--sm" style="margin-left: 0.35rem" (click)="archiveTarget.set(p)">
+                <button type="button" class="btn btn--ghost btn--sm" style="margin-left: 0.35rem" [disabled]="busy()" (click)="archiveTarget.set(p)">
                   {{ p.archived ? 'Restore' : 'Archive' }}
                 </button>
               </td>
             </tr>
           } @empty {
-            <tr><td colspan="8"><div class="adm-empty">No products match. Try clearing the filters.</div></td></tr>
+            <tr><td colspan="9"><div class="adm-empty">No products match. Try clearing the filters.</div></td></tr>
           }
         </tbody>
       </table>
     </div>
   }
 </div>
+
+@if (bulkArchiveOpen()) {
+  <adm-confirm-modal
+    [title]="'Archive ' + selectedIds().size + ' selected products?'"
+    message="These products will disappear from the storefront immediately. Past orders keep their records. You can restore the products anytime."
+    confirmLabel="Archive selected"
+    tone="danger"
+    [busy]="busy()"
+    (confirmed)="confirmBulkArchive()"
+    (cancelled)="!busy() && bulkArchiveOpen.set(false)"
+  />
+}
 
 @if (archiveTarget(); as target) {
   <adm-confirm-modal

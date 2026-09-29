@@ -4,7 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminOrder, OrderFilters } from '../../../core/models/admin.model';
-import { badgeClass, orderCustomer } from '../shared/admin-ui';
+import { badgeClass, orderCustomer, orderSource } from '../shared/admin-ui';
 
 @Component({
   selector: 'app-admin-orders',
@@ -26,12 +26,15 @@ export class AdminOrders {
   protected status = '';
   protected type = '';
   protected payment = '';
+  protected source = '';
+  protected eventName = '';
   protected from = '';
   protected to = '';
   protected page = 1;
 
   protected readonly badgeClass = badgeClass;
   protected readonly orderCustomer = orderCustomer;
+  protected readonly orderSource = orderSource;
 
   private searchTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -41,6 +44,8 @@ export class AdminOrders {
     this.status = params.get('status') ?? '';
     this.type = params.get('type') ?? '';
     this.payment = params.get('payment') ?? '';
+    this.source = params.get('source') ?? '';
+    this.eventName = params.get('eventName') ?? '';
     this.from = params.get('from') ?? '';
     this.to = params.get('to') ?? '';
     this.page = Math.max(1, Number(params.get('page')) || 1);
@@ -54,6 +59,9 @@ export class AdminOrders {
       status: this.status || null,
       type: this.type || null,
       payment: this.payment || null,
+      amount: null,
+      source: this.source || null,
+      eventName: this.eventName || null,
       from: this.from || null,
       to: this.to || null,
       page: this.page > 1 ? this.page : null,
@@ -68,7 +76,7 @@ export class AdminOrders {
   }
 
   protected clearFilters() {
-    this.q = this.status = this.type = this.payment = this.from = this.to = '';
+    this.q = this.status = this.type = this.payment = this.source = this.eventName = this.from = this.to = '';
     this.apply();
   }
 
@@ -78,7 +86,7 @@ export class AdminOrders {
   }
 
   protected get hasFilters(): boolean {
-    return Boolean(this.q || this.status || this.type || this.payment || this.from || this.to);
+    return Boolean(this.q || this.status || this.type || this.payment || this.source || this.eventName || this.from || this.to);
   }
 
   private fetch() {
@@ -88,6 +96,8 @@ export class AdminOrders {
       status: (this.status as OrderFilters['status']) || undefined,
       type: (this.type as OrderFilters['type']) || undefined,
       payment: (this.payment as OrderFilters['payment']) || undefined,
+      source: (this.source as OrderFilters['source']) || undefined,
+      eventName: this.eventName || undefined,
       from: this.from || undefined,
       to: this.to || undefined,
       page: this.page,

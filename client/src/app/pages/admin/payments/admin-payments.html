@@ -48,7 +48,7 @@
               </td>
               <td>{{ p.user?.name || p.user?.phone || 'Guest' }}</td>
               <td class="num">₹{{ p.amount | number: '1.2-2' }}</td>
-              <td>{{ p.method || '—' }}</td>
+              <td>{{ p.method ? p.method.toUpperCase() : '—' }}</td>
               <td>
                 <span [class]="badge(p)">{{ statusLabel(p) }}</span>
                 @if (p.mock) {

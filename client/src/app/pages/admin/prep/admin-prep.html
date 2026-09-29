@@ -54,7 +54,7 @@
                   </td>
                   <td class="nowrap">{{ o.orderNumber }}<br /><span class="adm-badge adm-badge--type">{{ o.orderType }}</span></td>
                   <td>{{ who(o) }}</td>
-                  <td style="max-width: 340px">{{ itemsLine(o) }}</td>
+                  <td style="max-width: 340px">{{ itemsLine(o) }}@if (o.eventName) { <div class="muted">{{ o.eventName }}</div> }@if (o.notes) { <div style="white-space: pre-wrap"><strong>Note:</strong> {{ o.notes }}</div> }</td>
                 </tr>
               } @empty {
                 <tr><td colspan="4"><div class="adm-empty">No orders waiting.</div></td></tr>

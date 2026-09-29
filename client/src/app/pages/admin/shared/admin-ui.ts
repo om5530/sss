@@ -24,12 +24,18 @@ export function badgeClass(value: string): string {
 /** Who to show for an order — account holder, walk-in name, or Guest. */
 export function orderCustomer(order: AdminOrder): string {
   return (
+    order.customer?.name ||
+    order.customer?.phone ||
     order.user?.name ||
     order.user?.phone ||
     order.takeaway?.customerName ||
     order.dining?.customerName ||
     'Guest'
   );
+}
+
+export function orderSource(order: AdminOrder): string {
+  return { website: 'Website', phone: 'Phone order', 'walk-in': 'Walk-in', event: 'Event / Stall' }[order.source || 'website'];
 }
 
 /** Compact "how long ago" for queue cards: 4m · 1h 12m. */

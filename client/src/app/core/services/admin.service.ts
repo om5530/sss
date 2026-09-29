@@ -18,12 +18,15 @@ import {
   CustomerListResponse,
   DashboardStats,
   MessageListResponse,
+  ManualOrderPayload,
+  EventSalesReport,
   OrderFilters,
   OrderListResponse,
   PaymentListResponse,
   ProductReport,
   SalesReport,
 } from '../models/admin.model';
+import { CartQuote } from '../models/cart.model';
 
 /** Drops empty values so filters never send `status=` noise. */
 function toParams(obj: object): HttpParams {
@@ -39,7 +42,12 @@ export interface ManagedCategory { _id: string; name: string; group: 'bakery' | 
 export interface StoreSettings {
   taxRate: number; deliveryFee: number; currency: string; opensAt: string; closesAt: string;
   contactAddress: string; contactPhone: string; contactEmail: string;
+  defaultUpiRecipientId: string;
+  upiRecipients: UpiRecipient[];
 }
+
+export interface UpiRecipient { id: string; name: string; upiId: string; payeeName: string }
+export interface UpiPaymentRequest { recipientName: string; upiId: string; payeeName: string; amount: number; discount: number; currency: string; orderNumber: string; uri: string }
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
@@ -61,6 +69,26 @@ export class AdminService {
 
   orders(filters: OrderFilters = {}) {
     return this.http.get<OrderListResponse>(`${this.base}/orders`, { params: toParams(filters) });
+  }
+
+  quoteManualOrder(data: Pick<ManualOrderPayload, 'items' | 'orderType' | 'discount'>) {
+    return this.http.post<CartQuote>(`${this.base}/orders/quote`, data);
+  }
+
+  createManualOrder(data: ManualOrderPayload) {
+    return this.http.post<{ order: AdminOrder }>(`${this.base}/orders`, data).pipe(map((r) => r.order));
+  }
+
+  settleManual(id: string) {
+    return this.http.post<{ order: Order; payment: AdminPayment }>(`${this.base}/orders/${id}/settle-manual`, {});
+  }
+
+  orderUpiQr(id: string) {
+    return this.http.get<{ payment: UpiPaymentRequest }>(`${this.base}/orders/${id}/upi-qr`).pipe(map((r) => r.payment));
+  }
+
+  eventSales(eventName?: string) {
+    return this.http.get<EventSalesReport>(`${this.base}/reports/events`, { params: toParams({ eventName }) });
   }
 
   order(id: string) {

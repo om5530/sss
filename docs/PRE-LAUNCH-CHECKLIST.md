@@ -96,7 +96,6 @@ Server service account → `server/.env` `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT
 
 | Item | Activates | How to get it |
 |------|-----------|---------------|
-| **Resend** → `RESEND_API_KEY`, `NOTIFY_FROM`, `SHOP_EMAIL` | All order/enquiry/cake emails (B6). Without a key they log to the server console. | resend.com → sign up → Domains → add domain + DNS records → API Keys → create key. `NOTIFY_FROM` must be a verified sender; `SHOP_EMAIL` is where shop alerts go. |
 | **Cloudinary** → `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | CDN storage for uploaded photos (B5). **Required on Vercel** — the serverless filesystem is read-only, so the local-disk fallback only works in dev/VPS. | cloudinary.com → free account → Dashboard → cloud name, API key, API secret. |
 | **GA4** → `gaMeasurementId` in `client/src/environments/environment*.ts` | Traffic analytics with SPA page views (B15). Blank = no tracking script at all. | analytics.google.com → create property → Web stream → copy `G-XXXX` ID. |
 | **Google Maps embed** | Map card on the contact page — already written, commented next to the REAL CLIENT DATA block. | Nothing to get — uncomment at launch (keyless embed). |
@@ -110,16 +109,15 @@ Server service account → `server/.env` `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT
 
 1. [x] ~~**Real payment capture on the client**~~ ✅ **DONE (2026-07-02, Razorpay)** — full Razorpay rail: server creates amount-pinned Razorpay orders, client opens Checkout.js (UPI/cards/netbanking), payment confirmed via HMAC-verified endpoint **and** a signature-verified idempotent webhook backstop; refunds route through Razorpay; a **Complete payment** retry lives on the customer's order page for abandoned/failed attempts. Provider precedence: Razorpay → Stripe (legacy, no UI) → mock (dev). Needs only the A1 #5 keys to go live.
 2. [x] ~~**Cash on delivery / pay at counter**~~ ✅ **DONE (2026-07-02)** — checkout offers *Pay at counter / Pay at pickup / Cash on delivery* (cash is the default); cash orders skip the payment step; admin gets **Mark cash received** (audit-logged, refund-safe), a *collect cash* badge in the live queue, and an alert for completed-but-unrecorded cash.
-3. [x] ~~**Wire the contact form**~~ ✅ **DONE (2026-07-02)** — `POST /api/contact` (validated, rate-limited 5/15min/IP) stores enquiries; new admin **Enquiries** page with new/read/closed triage. Email notification to the shop still needs the optional email service (A3) — enquiries land in the admin panel either way.
+3. [x] ~~**Wire the contact form**~~ ✅ **DONE (2026-07-02)** — `POST /api/contact` (validated, rate-limited 5/15min/IP) stores enquiries; new admin **Enquiries** page with new/read/closed triage. Enquiries land in the admin panel.
 4. [x] ~~**Production hardening**~~ ✅ **DONE (2026-07-02)** — production refuses to boot on weak/dev `JWT_SECRET`, missing `MONGODB_URI`, localhost `CLIENT_URL`, or Stripe keys without a webhook secret; `environment.prod.ts` + `fileReplacements` added; rate limits on OTP verify / order create / payment endpoints / contact; `trust proxy` set in prod.
 
 ### 🟡 High value next — ✅ ALL DONE (2026-07-03)
 
 5. [x] **Product image upload** — "Upload photo" button in the admin product form (≤5 MB, JPEG/PNG/WebP). Stores to **Cloudinary when keys are set** (required on Vercel — the function filesystem is read-only), local `server/uploads` otherwise (dev).
-6. [x] **Order notifications** — email via **Resend** (key in A3; logs to console without it): order placed (customer + shop), payment confirmed, ready/completed/cancelled, refunds, new enquiries, new cake requests. All user input HTML-escaped.
-7. [x] **Custom cake order flow** — public `/custom-cakes` brief (occasion, servings, flavour, date, reference-photo upload) + admin **Cake requests** page with quote-and-status triage (new → quoted → accepted/declined → closed) + shop email alert.
+7. [x] **Custom cake order flow** — public `/custom-cakes` brief (occasion, servings, flavour, date, reference-photo upload) + admin **Cake requests** page with quote-and-status triage (new → quoted → accepted/declined → closed).
 8. [x] **Storefront filters** — dietary chips (Everything / Veg / Contains egg / Non-veg) on the menu, combined with live search.
-9. [x] **Coupons** — percent/flat codes with min-subtotal, max-discount, expiry and usage limits; admin **Coupons** page; coupon box in checkout; discount rows everywhere incl. emails. Slots are reserved atomically at order time and returned on cancellation (refunds keep the redemption). Note: an abandoned unpaid order holds its slot until staff cancel it.
+9. [x] **Coupons** — percent/flat codes with min-subtotal, max-discount, expiry and usage limits; admin **Coupons** page; coupon box in checkout; discount rows throughout the storefront and admin console. Slots are reserved atomically at order time and returned on cancellation (refunds keep the redemption). Note: an abandoned unpaid order holds its slot until staff cancel it.
 10. [x] **Stock tracking** — optional per-product daily count (blank = untracked): atomic claim on order, oversell → friendly 409, auto-hide at 0, cancel restocks exactly what was claimed, "Only X left" chips on cards.
 
 ### 🟢 Growth & polish — ✅ DONE except two deliberate deferrals

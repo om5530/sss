@@ -5,6 +5,8 @@ export type OrderStatus = 'placed' | 'confirmed' | 'preparing' | 'ready' | 'comp
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 /** 'cash' is settled in person (counter / pickup / delivery); 'online' via the gateway. */
 export type PaymentMethod = 'online' | 'cash';
+export type OrderSource = 'website' | 'phone' | 'walk-in' | 'event';
+export type ManualPaymentMethod = 'cash' | 'upi';
 
 export const ORDER_FLOW: OrderStatus[] = ['placed', 'confirmed', 'preparing', 'ready', 'completed'];
 
@@ -38,6 +40,11 @@ export interface Order {
   orderNumber: string;
   items: OrderItem[];
   orderType: OrderType;
+  source?: OrderSource;
+  eventName?: string;
+  upiRecipient?: { id: string; name: string; upiId: string; payeeName: string };
+  customer?: { name?: string; phone?: string };
+  notes?: string;
   dining?: { tableNumber?: string; customerName?: string };
   takeaway?: { customerName?: string; phone?: string };
   delivery?: { fullAddress?: string; area?: string; city?: string; pincode?: string; landmark?: string };
@@ -45,7 +52,7 @@ export interface Order {
   /** Scheduled pre-order time (ISO); null/absent = ASAP. */
   fulfilAt?: string | null;
   /** Optional: orders created before cash support have no paymentMethod. */
-  paymentMethod?: PaymentMethod;
+  paymentMethod?: PaymentMethod | ManualPaymentMethod | 'card';
   paymentStatus: PaymentStatus;
   orderStatus: OrderStatus;
   statusHistory: StatusEvent[];

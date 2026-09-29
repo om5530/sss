@@ -33,6 +33,14 @@
         <button type="button" class="clear-search-btn" (click)="searchQuery.set('')" aria-label="Clear search">✕</button>
       }
     </div>
+    <label class="inv-sort">
+      <span>Sort by</span>
+      <select class="input" [ngModel]="sortOrder()" (ngModelChange)="sortOrder.set($event)">
+        <option value="name">Name: A–Z</option>
+        <option value="stock-asc">Current stock: low to high</option>
+        <option value="stock-desc">Current stock: high to low</option>
+      </select>
+    </label>
     <div class="filter-pills" role="tablist" aria-label="Filter inventory by category">
       <button
         type="button"

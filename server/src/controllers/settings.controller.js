@@ -3,6 +3,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const ApiError = require('../utils/ApiError');
 const { audit } = require('../services/audit.service');
 const { getStoreSettings, updateStoreSettings } = require('../services/store-settings.service');
+const { UPI_ID_PATTERN } = require('../config/upi');
 
 function validTime(value) {
   if (typeof value !== 'string') return false;
@@ -18,10 +19,16 @@ const list = asyncHandler(async (req, res) => {
 
 const update = asyncHandler(async (req, res) => {
   const before = await getStoreSettings();
-  const fields = ['taxRate', 'deliveryFee', 'currency', 'opensAt', 'closesAt', 'contactAddress', 'contactPhone', 'contactEmail'];
+  const fields = ['taxRate', 'deliveryFee', 'currency', 'opensAt', 'closesAt', 'contactAddress', 'contactPhone', 'contactEmail', 'upiRecipients', 'defaultUpiRecipientId'];
   const changes = Object.fromEntries(fields.filter((key) => req.body[key] !== undefined).map((key) => [key, req.body[key]]));
   if (!Object.keys(changes).length) throw ApiError.badRequest('Provide at least one setting to update');
   if (changes.currency) changes.currency = String(changes.currency).toLowerCase();
+  const recipients = changes.upiRecipients || before.upiRecipients;
+  const defaultId = changes.defaultUpiRecipientId || before.defaultUpiRecipientId;
+  if (!recipients.some((r) => r.id === defaultId && UPI_ID_PATTERN.test(r.upiId))) {
+    throw ApiError.badRequest('Choose a default recipient with a configured UPI ID');
+  }
+  if (changes.upiRecipients) changes.upiRecipients = recipients.map(({ id, name, upiId, payeeName }) => ({ id, name, upiId, payeeName }));
   const settings = await updateStoreSettings(changes);
   audit(req, {
     action: 'settings.update', entity: 'settings', entityId: 'store', summary: 'Updated store settings',
@@ -40,6 +47,12 @@ const validators = [
   body('contactAddress').optional().isString().trim().isLength({ max: 240 }).withMessage('Address must be 240 characters or fewer'),
   body('contactPhone').optional().isString().trim().isLength({ max: 40 }).withMessage('Phone must be 40 characters or fewer'),
   body('contactEmail').optional().isString().bail().trim().isLength({ max: 240 }).bail().if((value) => value !== '').isEmail().withMessage('Enter a valid contact email'),
+  body('defaultUpiRecipientId').optional().isIn(['omkar', 'harshita', 'aarchita']).withMessage('Choose a valid default UPI recipient'),
+  body('upiRecipients').optional().isArray({ min: 3, max: 3 }).bail().custom((rows) =>
+    new Set(rows.map((r) => r?.id)).size === 3 && rows.every((r) => ['omkar', 'harshita', 'aarchita'].includes(r?.id))).withMessage('Configure Omkar, Harshita and Aarchita once each'),
+  body('upiRecipients.*.name').isString().bail().trim().isLength({ min: 1, max: 120 }),
+  body('upiRecipients.*.payeeName').isString().bail().trim().isLength({ min: 1, max: 120 }),
+  body('upiRecipients.*.upiId').isString().bail().trim().custom((v) => v === '' || UPI_ID_PATTERN.test(v)).withMessage('Enter a valid UPI ID or leave it blank until configured'),
 ];
 
 module.exports = { list, update, validators };

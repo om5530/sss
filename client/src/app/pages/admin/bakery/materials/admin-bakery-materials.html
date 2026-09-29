@@ -34,8 +34,8 @@
       <input
         class="input input--sm"
         placeholder="Search materials..."
-        [(ngModel)]="searchQuery"
-        (keyup.enter)="fetchMaterials()"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchMaterials($event)"
       />
     </div>
   </div>

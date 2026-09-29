@@ -3,16 +3,12 @@ const asyncHandler = require('../utils/asyncHandler');
 const ApiError = require('../utils/ApiError');
 const ContactMessage = require('../models/ContactMessage');
 const { audit } = require('../services/audit.service');
-const { notifyEnquiry } = require('../services/notify.service');
 
 /* ============ Public ============ */
 
 const submitMessage = asyncHandler(async (req, res) => {
   const { name, email, message } = req.body;
-  const saved = await ContactMessage.create({ name, email, message });
-
-  // Fire-and-forget shop alert (logs in dev when no email key is set).
-  await notifyEnquiry(saved);
+  await ContactMessage.create({ name, email, message });
 
   res.status(201).json({ success: true });
 });
@@ -75,7 +71,7 @@ const updateMessageStatus = asyncHandler(async (req, res) => {
 const validators = {
   submit: [
     body('name').trim().notEmpty().withMessage('Please tell us your name').isLength({ max: 100 }).withMessage('Name is too long'),
-    body('email').trim().isEmail().withMessage('Please enter a valid email').isLength({ max: 254 }),
+    body('email').trim().notEmpty().withMessage('Please enter your email address').bail().isLength({ max: 254 }).withMessage('Email must be 254 characters or fewer').bail().isEmail().withMessage('Please enter a valid email address, such as name@example.com'),
     body('message').trim().notEmpty().withMessage('Please write a message').isLength({ max: 2000 }).withMessage('Message is too long (2000 characters max)'),
   ],
   updateStatus: [body('status').isIn(['new', 'read', 'closed']).withMessage('Choose a valid status')],

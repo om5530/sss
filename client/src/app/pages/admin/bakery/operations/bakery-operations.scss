@@ -52,27 +52,6 @@
   font-size: 0.82rem;
   color: var(--muted);
 }
-.work-nav {
-  display: flex;
-  gap: 0.25rem;
-  flex-wrap: wrap;
-}
-.work-nav a {
-  padding: 0.35rem 0.6rem;
-  background: var(--white);
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  text-decoration: none;
-  color: var(--ink);
-  transition: border-color 0.15s, background 0.15s;
-
-  &:hover {
-    border-color: var(--gold);
-    background: #faf7f2;
-  }
-}
 .stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
@@ -153,6 +132,7 @@ input[type='checkbox'] {
 .batch-head {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
@@ -197,7 +177,6 @@ details summary {
   }
 }
 @media print {
-  .work-nav,
   form,
   .work-head .btn,
   .no-print {

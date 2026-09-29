@@ -89,7 +89,9 @@ exports.Movement = model("BakeryMovement", {
 });
 exports.Purchase = model("BakeryPurchase", {
   code: { type: String, required: true, unique: true },
-  supplierId: ref,
+  supplierId: { type: Schema.Types.ObjectId },
+  supplierName: String,
+  source: { type: String, enum: ["order", "direct"], default: "order" },
   status: {
     type: String,
     enum: ["draft", "ordered", "partially_received", "received", "cancelled"],
@@ -101,6 +103,7 @@ exports.Purchase = model("BakeryPurchase", {
 exports.Receipt = model("BakeryReceipt", {
   purchaseId: ref,
   operationKey: { type: String, required: true, unique: true },
+  requestSignature: String,
   lines: [Schema.Types.Mixed],
   receivedAt: Date,
 });

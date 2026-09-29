@@ -1,4 +1,5 @@
-import { Order, OrderStatus, OrderType, PaymentStatus } from './order.model';
+import { ManualPaymentMethod, Order, OrderSource, OrderStatus, OrderType, PaymentStatus } from './order.model';
+import { CartQuote } from './cart.model';
 
 /** Minimal account info the admin APIs attach to orders/payments. */
 export interface CustomerRef {
@@ -31,15 +32,43 @@ export interface OrderListResponse extends Paged {
 }
 
 export interface OrderFilters {
+  source?: OrderSource | '';
+  eventName?: string;
   status?: OrderStatus | '';
   type?: OrderType | '';
   payment?: PaymentStatus | '';
+  amount?: string;
   q?: string;
   from?: string;
   to?: string;
   page?: number;
   limit?: number;
   active?: boolean;
+}
+
+export interface ManualOrderPayload {
+  upiRecipientId?: string;
+  requestKey: string;
+  expectedQuote: CartQuote;
+  discount: number;
+  source: Exclude<OrderSource, 'website'>;
+  eventName?: string;
+  customer: { name: string; phone: string };
+  items: { productId: string; quantity: number }[];
+  orderType: OrderType;
+  paymentMethod: ManualPaymentMethod;
+  paymentStatus: 'pending' | 'paid';
+  orderStatus: 'confirmed' | 'completed';
+  fulfilAt?: string;
+  tableNumber?: string;
+  delivery?: Order['delivery'];
+  notes: string;
+}
+
+export interface EventSalesReport {
+  events: { eventName: string; orders: number; paidOrders: number; revenue: number; units: number;
+    pendingAmount: number; cash: number; upi: number; card: number; lastSaleAt: string }[];
+  products: { _id: string; name: string; quantity: number; subtotal: number }[];
 }
 
 export interface CustomerRow {

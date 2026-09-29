@@ -19,7 +19,6 @@ export class BakeryOperations {
   title: Record<string, string> = {
     dashboard: 'Bakery overview',
     production: 'Production',
-    purchasing: 'Purchasing',
     reports: 'Operations reports',
     migration: 'Import materials',
   };
@@ -31,24 +30,6 @@ export class BakeryOperations {
   purchasing = signal<any>({ suppliers: [], formats: [], purchases: [], prices: [] });
   materials = signal<any[]>([]);
   sheets = signal<any[]>([]);
-  supplier = { name: '', contact: '', notes: '' };
-  format: any = {
-    materialId: '',
-    supplierId: '',
-    packQuantity: '1',
-    packUom: 'kg',
-    purchasePrice: '',
-    minimumOrderPacks: '1',
-    leadTimeDays: 0,
-    preferred: false,
-  };
-  priceForm: any = {
-    formatId: '',
-    purchasePrice: '',
-    effectiveAt: new Date().toISOString().slice(0, 10),
-  };
-  purchaseForm: any = { supplierId: '', lines: [{ formatId: '', packs: '1' }], notes: '' };
-  receiving: any = null;
   completing: any = null;
   comparison: any = null;
   history: any = null;
@@ -116,65 +97,11 @@ export class BakeryOperations {
   supplierName(id: string) {
     return this.purchasing().suppliers.find((s: any) => s._id === id)?.name || '';
   }
-  formatsForSupplier() {
-    return this.purchasing().formats.filter(
-      (f: any) => f.supplierId === this.purchaseForm.supplierId,
-    );
-  }
   lowStock() {
     return (this.data().stock || []).filter(
       (m: any) =>
         this.number(m.currentStock) - this.number(m.allocatedStock) <=
         (this.number(m.reorderLevel) || this.number(m.minimumStock)),
-    );
-  }
-  saveSupplier() {
-    this.post(
-      '/suppliers',
-      this.supplier,
-      'Supplier added',
-      () => (this.supplier = { name: '', contact: '', notes: '' }),
-    );
-  }
-  saveFormat() {
-    this.post('/formats', this.format, 'Purchase format added');
-  }
-  savePrice() {
-    this.post(
-      '/formats/' + this.priceForm.formatId + '/prices',
-      this.priceForm,
-      'Price recorded. Projected recipe costs now use the effective price.',
-    );
-  }
-  createPurchase() {
-    this.post(
-      '/purchases',
-      this.purchaseForm,
-      'Draft purchase created',
-      () =>
-        (this.purchaseForm = { supplierId: '', lines: [{ formatId: '', packs: '1' }], notes: '' }),
-    );
-  }
-  beginReceipt(p: any) {
-    this.receiving = {
-      purchase: p,
-      operationKey: crypto.randomUUID(),
-      lines: p.lines
-        .filter((l: any) => Number(l.packs) > Number(l.received))
-        .map((l: any) => ({
-          ...l,
-          packs: String(Number(l.packs) - Number(l.received)),
-          lot: '',
-          expiry: '',
-        })),
-    };
-  }
-  receive() {
-    this.post(
-      '/purchases/' + this.receiving.purchase._id + '/receive',
-      { ...this.receiving, lines: this.receiving.lines.filter((l: any) => Number(l.packs) > 0) },
-      'Goods received and stock updated',
-      () => (this.receiving = null),
     );
   }
   beginBatch(s: any) {

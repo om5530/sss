@@ -5,7 +5,7 @@
       <h1>Orders</h1>
     </div>
     <div class="adm-head__actions">
-      <a routerLink="/admin/queue" class="btn btn--ghost btn--sm">Live queue</a>
+      <a routerLink="/admin/orders/new" class="btn btn--primary btn--sm">Add order</a>
     </div>
   </div>
 
@@ -13,7 +13,7 @@
     <input
       class="input"
       type="search"
-      placeholder="Search order #, name, phone…"
+      placeholder="Search order #, name, phone or total…"
       style="min-width: 220px"
       [(ngModel)]="q"
       (ngModelChange)="onSearch()"
@@ -42,6 +42,8 @@
       <option value="refunded">Refunded</option>
     </select>
     <input class="input" type="date" [(ngModel)]="from" (ngModelChange)="apply()" aria-label="From date" />
+    <select class="select" [(ngModel)]="source" (ngModelChange)="eventName = ''; apply()" aria-label="Filter by source"><option value="">All sources</option><option value="website">Website</option><option value="phone">Phone order</option><option value="walk-in">Walk-in</option><option value="event">Event / Stall</option></select>
+    @if (source === 'event' || eventName) { <input class="input" [(ngModel)]="eventName" (ngModelChange)="onSearch()" placeholder="Event / Stall name" aria-label="Filter by event name" /> }
     <input class="input" type="date" [(ngModel)]="to" (ngModelChange)="apply()" aria-label="To date" />
     @if (hasFilters) {
       <button type="button" class="btn btn--ghost btn--sm" (click)="clearFilters()">Clear</button>
@@ -59,6 +61,7 @@
             <th>Placed</th>
             <th>Customer</th>
             <th>Type</th>
+            <th>Source</th>
             <th class="num">Items</th>
             <th class="num">Total</th>
             <th>Payment</th>
@@ -77,6 +80,7 @@
                 }
               </td>
               <td><span class="adm-badge adm-badge--type">{{ o.orderType }}</span></td>
+              <td><span class="adm-badge adm-badge--type">{{ orderSource(o) }}</span>@if (o.eventName) { <div class="muted">{{ o.eventName }}</div> }</td>
               <td class="num">{{ o.items.length }}</td>
               <td class="num">₹{{ o.pricing.total | number: '1.2-2' }}</td>
               <td><span [class]="badgeClass(o.paymentStatus)">{{ o.paymentStatus }}</span></td>
@@ -84,7 +88,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="8">
+              <td colspan="9">
                 <div class="adm-empty">
                   No orders match these filters.
                   @if (hasFilters) {

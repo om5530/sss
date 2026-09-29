@@ -12,7 +12,7 @@ function errorHandler(err, req, res, next) {
   // Normalise common Mongoose errors into ApiError shapes.
   if (error.name === 'ValidationError') {
     const details = Object.values(error.errors).map((e) => ({ field: e.path, message: e.message }));
-    error = ApiError.badRequest('Validation failed', details);
+    error = ApiError.badRequest([...new Set(details.map((d) => d.message))].join(' '), details);
   } else if (error.code === 11000) {
     const field = Object.keys(error.keyValue || {}).join(', ');
     error = ApiError.conflict(`An account with this ${field} already exists`);

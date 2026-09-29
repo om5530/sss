@@ -20,12 +20,14 @@ export class AdminBakeryInventory implements OnInit {
   lowStockCount = signal<number>(0);
   loading = signal<boolean>(false);
   searchQuery = signal<string>('');
+  sortOrder = signal<'name' | 'stock-asc' | 'stock-desc'>('name');
   filterType = signal<'all' | 'low' | 'ingredient' | 'packaging'>('all');
   recentlyAdjusted = signal<Record<string, { type: 'inc' | 'dec'; label: string }>>({});
 
   filteredMaterials = computed(() => {
     const q = this.searchQuery().trim().toLowerCase();
     const filter = this.filterType();
+    const sort = this.sortOrder();
     return this.materials().filter((m) => {
       if (filter === 'low' && !this.low(m)) return false;
       if (filter === 'ingredient' && m.type !== 'ingredient') return false;
@@ -37,6 +39,11 @@ export class AdminBakeryInventory implements OnInit {
         (m.supplierName && m.supplierName.toLowerCase().includes(q)) ||
         (m.brand && m.brand.toLowerCase().includes(q))
       );
+    }).sort((a, b) => {
+      const byName = a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true });
+      if (sort === 'name') return byName;
+      const byStock = Number(a.currentStock ?? 0) - Number(b.currentStock ?? 0);
+      return (sort === 'stock-asc' ? byStock : -byStock) || byName;
     });
   });
 
@@ -107,6 +114,7 @@ export class AdminBakeryInventory implements OnInit {
     this.bakery.updateStock(m._id, Number(newStock), m.currentStock).subscribe({
       next: (res) => {
         m.currentStock = res.material.currentStock;
+        this.materials.update((items) => [...items]);
         this.toast.success(`Stock set to ${m.currentStock} ${m.baseUom}`);
         this.recentlyAdjusted.update((prev) => ({
           ...prev,

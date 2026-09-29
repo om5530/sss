@@ -11,7 +11,7 @@ Nothing here is committed work — it's a menu to pick from, roughly ordered by 
 
 | Idea | What it is | Impact | Effort |
 |---|---|---|---|
-| **WhatsApp order updates** | "Order confirmed / ready" via WhatsApp (Meta Cloud API or Interakt/Wati). In India this beats email 10-to-1. The notify.service hooks already exist — swap the channel. | ★★★ | M |
+| **WhatsApp order updates** | "Order confirmed / ready" via WhatsApp (Meta Cloud API or Interakt/Wati). In India this beats email 10-to-1. Requires a messaging integration. | ★★★ | M |
 | **Order scheduling / pre-orders** ✅ DONE 2026-07-03 | "Pick up at 6 pm" time slots; order tomorrow's bake today. Bakeries live on pre-orders; pairs beautifully with stock tracking (tomorrow's counts). | ★★★ | M |
 | **QR table ordering** ✅ DONE 2026-07-03 | Printed QR per table → menu opens with `?table=12` pre-filled → dine-in order without staff. The dine-in flow + table field already exist. | ★★★ | S–M |
 | **"Order again"** ✅ DONE 2026-07-03 | One tap on any past order re-fills the cart (order history already stores line items). | ★★ | S |
@@ -44,7 +44,7 @@ Nothing here is committed work — it's a menu to pick from, roughly ordered by 
 | Idea | What it is | Impact | Effort |
 |---|---|---|---|
 | **Festival pre-order pages** | Diwali hampers / Christmas cakes: a themed landing page + limited-window pre-orders + advance payment. India's bakery revenue spikes live here. | ★★★ | M |
-| **Campaign blasts** | Email (Resend is wired) and/or WhatsApp broadcast to opted-in customers: new menu, weekend specials. Needs opt-in flag + a small admin composer. | ★★ | M |
+| **Campaign blasts** | Email (requires a provider integration) and/or WhatsApp broadcast to opted-in customers: new menu, weekend specials. Needs opt-in flag + a small admin composer. | ★★ | M |
 | **Abandoned-cart nudge** | Cart is client-side today; persist carts for signed-in users → "your brownies are waiting" email after 24 h. | ★★ | M |
 | **Google Business Profile funnel** | "Loved it? Review us on Google" link after a completed order; GBP drives local discovery more than any SEO. | ★★ | S |
 | **Instagram feed on home** | Embed the shop's latest posts (Behold/LightWidget or Graph API) — bakeries sell through photos. | ★ | S |

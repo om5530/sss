@@ -41,11 +41,6 @@ const env = {
     apiKey: process.env.CLOUDINARY_API_KEY || '',
     apiSecret: process.env.CLOUDINARY_API_SECRET || '',
   },
-  notify: {
-    resendApiKey: process.env.RESEND_API_KEY || '',
-    from: process.env.NOTIFY_FROM || 'The Golden Batch <onboarding@resend.dev>',
-    shopEmail: process.env.SHOP_EMAIL || '',
-  },
   stripe: {
     secretKey: process.env.STRIPE_SECRET_KEY || '',
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',

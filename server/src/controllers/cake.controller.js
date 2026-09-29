@@ -3,7 +3,6 @@ const asyncHandler = require('../utils/asyncHandler');
 const ApiError = require('../utils/ApiError');
 const CakeRequest = require('../models/CakeRequest');
 const { audit } = require('../services/audit.service');
-const { notifyCakeRequest } = require('../services/notify.service');
 
 /* ============ Public ============ */
 
@@ -35,8 +34,6 @@ const submitRequest = asyncHandler(async (req, res) => {
     details: details || '',
     referenceImage: referenceImage || '',
   });
-
-  await notifyCakeRequest(request);
 
   res.status(201).json({ success: true, request: { _id: request._id, status: request.status } });
 });

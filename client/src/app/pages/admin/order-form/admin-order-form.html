@@ -1,0 +1,95 @@
+<div class="adm-page">
+  <div class="adm-head">
+    <div><a routerLink="/admin/orders" class="eyebrow eyebrow--bare">← All orders</a><h1>Add order</h1><p>Record phone orders, walk-ins and event stall sales.</p></div>
+  </div>
+  @if (loading()) {
+    <div class="skeleton" style="height: 320px" aria-hidden="true"></div>
+  } @else if (loadFailed()) {
+    <div class="adm-alert" role="alert">Products could not be loaded. <button type="button" class="btn btn--ghost btn--sm" (click)="loadProducts()">Retry</button></div>
+  } @else {
+    <form #sale="ngForm" (ngSubmit)="save(sale)">
+      <fieldset [disabled]="saving() || retryPending()">
+        <div class="sale-layout">
+          <div>
+            <section class="adm-card">
+              <h3>Order details</h3>
+              <div class="field"><label class="label" for="sale-source">Order source</label><select id="sale-source" class="select" name="source" [(ngModel)]="source" (ngModelChange)="sourceChanged()"><option value="phone">Phone order</option><option value="walk-in">Walk-in</option><option value="event">Event / Stall</option></select></div>
+              @if (source === 'event') {
+                <div class="field"><label class="label" for="sale-event">Event / Stall name *</label><input id="sale-event" class="input" name="eventName" [(ngModel)]="eventName" list="sale-events" placeholder="e.g. Diwali Fair 2026" maxlength="120" required /><small class="muted">Use the same name for every sale at this event.</small>@if (sale.controls['eventName']?.touched && sale.controls['eventName']?.invalid) { <small class="sale-field-error">Enter the event or stall name.</small> }<datalist id="sale-events">@for (event of events(); track event) { <option [value]="event"></option> }</datalist></div>
+              }
+              <button type="button" class="btn btn--ghost btn--sm sale-extra-toggle" [attr.aria-expanded]="showExtraDetails" (click)="showExtraDetails = !showExtraDetails">
+                {{ showExtraDetails ? 'Hide extra details' : (customerName || customerPhone || notes || tableNumber || delivery.landmark || orderType !== 'takeaway' || orderStatus !== (source === 'phone' ? 'confirmed' : 'completed') ? 'Edit extra details' : '+ Add extra details') }}
+              </button>
+              @if (showExtraDetails) {
+              <div id="sale-extra-details" class="sale-fields">
+                <div class="field"><label class="label" for="sale-type">Fulfilment</label><select id="sale-type" class="select" name="type" [ngModel]="orderType" (ngModelChange)="orderTypeChanged($event)"><option value="takeaway">Pickup / Counter</option><option value="dining">Dine-in</option><option value="delivery">Delivery</option></select></div>
+                <div class="field"><label class="label" for="sale-status">Preparation</label><select id="sale-status" class="select" name="status" [(ngModel)]="orderStatus"><option value="confirmed">Needs preparation — add to queue</option><option value="completed">Completed — already handed over</option></select></div>
+              </div>
+              <div class="sale-fields">
+                <div class="field"><label class="label" for="sale-name">Customer name (optional)</label><input id="sale-name" class="input" name="customerName" [(ngModel)]="customerName" maxlength="120" autocomplete="name" /></div>
+                <div class="field"><label class="label" for="sale-phone">Phone (optional)</label><input id="sale-phone" class="input" type="tel" name="customerPhone" [(ngModel)]="customerPhone" maxlength="20" autocomplete="tel" /></div>
+              </div>
+              @if (orderType === 'dining') {
+                <div class="field"><label class="label" for="sale-table">Table number (optional)</label><input id="sale-table" class="input" name="tableNumber" [(ngModel)]="tableNumber" maxlength="40" /></div>
+              }
+              @if (orderType === 'delivery') {
+                <div class="field"><label class="label" for="sale-address">Full delivery address *</label><input id="sale-address" class="input" name="address" [(ngModel)]="delivery.fullAddress" maxlength="240" required /></div>
+                <div class="sale-fields">
+                  <div class="field"><label class="label" for="sale-area">Area *</label><input id="sale-area" class="input" name="area" [(ngModel)]="delivery.area" maxlength="240" required /></div>
+                  <div class="field"><label class="label" for="sale-city">City *</label><input id="sale-city" class="input" name="city" [(ngModel)]="delivery.city" maxlength="240" required /></div>
+                  <div class="field"><label class="label" for="sale-pincode">Pincode *</label><input id="sale-pincode" class="input" name="pincode" [(ngModel)]="delivery.pincode" pattern="[1-9][0-9]{5}" maxlength="6" inputmode="numeric" required /></div>
+                </div>
+                <div class="field"><label class="label" for="sale-landmark">Landmark (optional)</label><input id="sale-landmark" class="input" name="landmark" [(ngModel)]="delivery.landmark" maxlength="240" /></div>
+              }
+              <div class="field"><label class="label" for="sale-notes">Special instructions (optional)</label><textarea id="sale-notes" class="textarea" name="notes" [(ngModel)]="notes" rows="2" maxlength="1000" placeholder="Packing, allergies or delivery instructions"></textarea></div>
+              }
+            </section>
+            <section class="adm-card">
+              <h3>Products</h3>
+              <div class="product-picker">
+                <select class="select" name="product" [ngModel]="selectedProduct" (ngModelChange)="addItem($event)" aria-label="Choose a product"><option value="">Choose a product</option>@for (p of availableProducts(); track p._id) { <option [value]="p._id">{{ p.name }} · ₹{{ p.price | number: '1.2-2' }}</option> }</select>
+              </div>
+              @for (line of lines(); track line.product._id) {
+                <div class="sale-line">
+                  <div><strong>{{ line.product.name }}</strong><small class="muted">₹{{ unitPrice(line) | number: '1.2-2' }} each @if (line.product.stockCount != null) { · {{ line.product.stockCount }} in stock }</small></div>
+                  <input class="input sale-quantity" type="number" min="1" max="10000" step="1" required [name]="'qty-' + line.product._id" [ngModel]="line.quantity" (ngModelChange)="setQuantity(line.product._id, $event)" [attr.aria-label]="'Quantity for ' + line.product.name" />
+                  <strong>₹{{ unitPrice(line) * line.quantity | number: '1.2-2' }}</strong>
+                  <button class="btn btn--ghost btn--sm" type="button" (click)="removeItem(line.product._id)" [attr.aria-label]="'Remove ' + line.product.name">Remove</button>
+                </div>
+              } @empty { <p class="adm-empty">Choose products to start this order.</p> }
+            </section>
+          </div>
+          <section class="adm-card sale-summary">
+            <h3>Payment & total</h3>
+            <div class="field"><label class="label" for="sale-method">Payment method</label><select id="sale-method" class="select" name="method" [(ngModel)]="paymentMethod"><option value="upi">UPI</option><option value="cash">Cash</option></select></div>
+            @if (paymentMethod === 'upi') {
+              <div class="field"><label class="label" for="sale-recipient">Receive payment in</label><select id="sale-recipient" class="select" name="upiRecipient" [(ngModel)]="upiRecipientId" required>@for (recipient of recipients(); track recipient.id) { <option [value]="recipient.id" [disabled]="!recipient.upiId">{{ recipient.name }}</option> }</select></div>
+            }
+            <div class="field"><label class="label" for="sale-discount">Discount (₹)</label><input id="sale-discount" class="input" type="number" name="discount" min="0" step="0.01" [ngModel]="discount" (ngModelChange)="discountChanged($event)" /></div>
+            @if (pricing()) { <p role="status">Calculating total…</p> }
+            @if (quote(); as q) {
+              <dl class="adm-kv">
+                <dt>Subtotal</dt><dd>₹{{ q.pricing.subtotal | number: '1.2-2' }}</dd>
+                @if (q.pricing.discount) { <dt>Discount</dt><dd>−₹{{ q.pricing.discount | number: '1.2-2' }}</dd> }
+                @if (q.pricing.tax) { <dt>Tax</dt><dd>₹{{ q.pricing.tax | number: '1.2-2' }}</dd> }
+                @if (q.pricing.deliveryFee) { <dt>Delivery fee</dt><dd>₹{{ q.pricing.deliveryFee | number: '1.2-2' }}</dd> }
+              </dl>
+              <div class="sale-total"><span>Total (INR)</span><strong>₹{{ q.pricing.total | number: '1.2-2' }}</strong></div>
+              <p class="muted">{{ orderStatus === 'completed' ? 'Will be saved as completed.' : 'Will appear in the live queue and the appropriate prep sheet.' }} Tracked product stock updates when saved.</p>
+            }
+          </section>
+        </div>
+      </fieldset>
+      @if (error()) { <div class="adm-alert" role="alert">{{ error() }} @if (!quote() && lines().length && !pricing() && !retryPending()) { <button type="button" class="btn btn--ghost btn--sm" (click)="reprice()">Recalculate</button> }</div> }
+      <div class="sale-actions">
+        <a routerLink="/admin/orders" class="btn btn--ghost">Cancel</a>
+        @if (retryPending()) {
+          <button type="submit" class="btn btn--primary" [disabled]="saving()">{{ saving() ? 'Checking…' : 'Retry this sale' }}</button>
+        } @else {
+          <button type="submit" class="btn btn--ghost" [disabled]="saving() || pricing() || !quote()" (click)="chooseSaveMode(true)">Save & add another</button>
+          <button type="submit" class="btn btn--primary" [disabled]="saving() || pricing() || !quote()" (click)="chooseSaveMode(false)">{{ saving() ? 'Saving…' : paymentMethod === 'upi' ? 'Save & show payment QR' : 'Save order' }}</button>
+        }
+      </div>
+    </form>
+  }
+</div>

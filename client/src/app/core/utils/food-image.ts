@@ -7,6 +7,14 @@ import { Product } from '../models/product.model';
  * Mirrors server/src/utils/seed.js — keep the two in sync.
  */
 const PRODUCT_IMAGES: Record<string, string> = {
+  'biscoff-cheesecake': '/images/products/biscoff-cheesecake.png',
+  'chocolate-cheesecake': '/images/products/chocolate-cheesecake.png',
+  'nutella-cheesecake': '/images/products/nutella-cheesecake.png',
+  'caramel-cheesecake': '/images/products/caramel-cheesecake.png',
+  'cookies': '/images/products/cookies.png',
+  'brown-butter-chocolate-chip-cookies': '/images/products/brown-butter-chocolate-chip-cookies.png',
+  'cinnamon-rolls': '/images/products/cinnamon-rolls.png',
+  'olympic-triple-chocolate-muffins': '/images/products/olympic-triple-chocolate-muffins.png',
   'classic-fudge-brownie': 'https://images.pexels.com/photos/7157867/pexels-photo-7157867.jpeg?auto=compress&cs=tinysrgb&w=600',
   'walnut-brownie': 'https://images.pexels.com/photos/33813613/pexels-photo-33813613.jpeg?auto=compress&cs=tinysrgb&w=600',
   'salted-caramel-brownie': 'https://images.pexels.com/photos/17701795/pexels-photo-17701795.jpeg?auto=compress&cs=tinysrgb&w=600',

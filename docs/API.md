@@ -71,6 +71,26 @@ Profile responses include `identityReadOnly`. When true, Google owns the name/em
 
 ## Orders
 
+### Staff-entered orders and event sales
+
+Admin console: **Orders → Add order** records phone orders, walk-ins and event/stall sales. **Event sales** shows all-time event totals, payment splits and products sold. Customer details are optional for counter sales; phone orders and delivery require a name and phone. Staff may schedule preparation outside website checkout's opening-hour and two-day limits. Completed counter sales skip the kitchen queue. Orders needing preparation start as `confirmed`; today's scheduled orders and ASAP orders appear in the prep sheet. Product stock is claimed at save time and released on cancellation.
+
+All following endpoints require an active admin session and return `Cache-Control: no-store`:
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/admin/orders/quote` | Quote `{ items: [{ productId, quantity }], orderType }` at current store prices, tax and delivery fee. |
+| POST | `/admin/orders` | Create a staff-entered order with the reviewed quote. |
+| POST | `/admin/orders/:id/settle-manual` | Record full payment received for an unpaid staff order. |
+| GET | `/admin/orders/:id/upi-qr` | Get an unpaid staff UPI order's amount-filled personal UPI request. |
+| GET | `/admin/reports/events` | Event totals and product subtotals. Optional exact, case-insensitive `eventName` filter. |
+
+Creation accepts `requestKey` (UUID v4), `expectedQuote: { items, pricing }`, `items`, `orderType` (`dining`, `takeaway`, `delivery`), `source` (`phone`, `walk-in`, `event`), optional `eventName` (required for event sales), `customer: { name, phone }`, `paymentMethod` (`upi` by default, or `cash`), `paymentStatus` (`pending`, `paid`), `orderStatus` (`confirmed`, `completed`), optional `fulfilAt`, `tableNumber`, `delivery` and `notes`. A scheduled time must be in the future and cannot accompany a completed sale. A changed quote returns `409 PRICE_CHANGED` before stock changes. Retries with the same request key and payload return the existing order; changed payloads under an already-used key return `409`.
+
+UPI creation accepts optional `upiRecipientId` (`harshita`, `omkar`, `aarchita`) and always starts unpaid, even if the submitted payment status is paid. Store settings expose `upiRecipients: [{ id, name, upiId, payeeName }]` and `defaultUpiRecipientId`, initially Harshita. PATCH settings requires all three unique recipients when replacing the list; an account may have a blank UPI ID but the default must be configured. Account details are copied into each saved order, so later settings changes do not redirect existing requests. The QR endpoint returns `{ success, payment: { recipientName, upiId, payeeName, amount, currency, orderNumber, uri } }` with the stored order total, including tax and delivery. Paid/cancelled orders cannot request another QR. QR generation does not verify receipt or mark an order paid; staff verifies the receiving account before settlement.
+
+`GET /admin/orders` also accepts `source` and `eventName`; search includes manual customer names/phones and event names. Legacy orders without a source are treated as website orders. Staff orders use `Payment.provider = manual`; Manual payments here are staff records of payments collected separately. Settlement and refunds do not charge or transfer money. Staff must return money before recording a manual refund. Sales totals and units exclude unpaid, cancelled and refunded orders; unpaid totals exclude cancelled/refunded orders. Product subtotals exclude tax and delivery fees. Staff orders cannot be fetched or paid through public guest-order endpoints.
+
 | Method | Path | Auth | Body | Description |
 |--------|------|------|------|-------------|
 | POST | `/orders` | Delivery only | `{ items, expectedQuote, orderType, paymentMethod?, couponCode?, fulfilAt?, dining?/takeaway?/delivery? }` | Create an order only when fresh server prices match the reviewed summary. |
@@ -124,8 +144,5 @@ All admin routes require an active admin account/session. Admin idle timeout def
 - `PATCH /admin/categories/order`: `{ group, ids }`; requires every active category ID in that group exactly once, in desired order.
 - `DELETE /admin/categories/:id`: rejects nonempty categories with 409, including archived products. Reassign products through product PATCH first.
 - Product creation and category/group changes must use an existing managed category. Product responses include `categoryId`, current category name and `categoryOrder`.
-- `GET /admin/notifications`: status counts and latest 20 permanent/exhausted failures.
-- `POST /admin/notifications/dispatch`: processes at most three due jobs; returns processed/sent/failed counts.
-- `GET /jobs/notifications`: same worker, protected by `Authorization: Bearer <CRON_SECRET>` instead of user auth. Configure an external scheduler for unattended retries. No secret configured means access denied.
 
-Paths above are relative to `/api`. Responses include `X-Request-ID`; error bodies include `requestId`. Unexpected production errors use a generic message; server logs retain the matching ID. Email work is queued before the response when persistence succeeds and attempted afterward; queue persistence failures are logged without undoing the business action. Mock mode skips sends. See [implementation priorities](IMPLEMENTATION-PRIORITIES.md) for retry limits and deployment requirements.
+Paths above are relative to `/api`. Responses include `X-Request-ID`; error bodies include `requestId`. Unexpected production errors use a generic message; server logs retain the matching ID.

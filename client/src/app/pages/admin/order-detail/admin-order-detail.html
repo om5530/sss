@@ -9,16 +9,18 @@
           {{ o.orderNumber }}
           <span [class]="badgeClass(o.orderStatus)">{{ o.orderStatus }}</span>
           <span [class]="badgeClass(o.paymentStatus)">{{ o.paymentStatus }}</span>
-          @if (o.paymentMethod === 'cash') {
-            <span class="adm-badge adm-badge--type" title="Cash order — collect on hand-over">cash</span>
+          @if (o.paymentMethod && o.paymentMethod !== 'online') {
+            <span class="adm-badge adm-badge--type">{{ o.paymentMethod }}</span>
           }
         </h1>
         <p>
           {{ o.createdAt | date: 'EEEE, MMM d, y · h:mm a' }} · <span style="text-transform: capitalize">{{ o.orderType }}</span>
           @if (o.fulfilAt) { · <strong>⏰ scheduled {{ o.fulfilAt | date: 'EEE, MMM d · h:mm a' }}</strong> }
         </p>
+        <p>{{ orderSource(o) }} @if (o.eventName) { · <strong>{{ o.eventName }}</strong> }</p>
       </div>
       <div class="adm-head__actions no-print">
+        @if (addAnother) { <a routerLink="/admin/orders/new" [queryParams]="nextSaleParams" class="btn btn--ghost btn--sm">Next sale</a> }
         <button type="button" class="btn btn--ghost btn--sm" onclick="window.print()">Print</button>
         @if (nextStatus(); as next) {
           <button type="button" class="btn btn--primary btn--sm" [disabled]="busy()" (click)="advance()">
@@ -34,6 +36,9 @@
           <button type="button" class="btn btn--primary btn--sm" [disabled]="busy()" (click)="modal.set('cash')">
             Mark cash received
           </button>
+        }
+        @if (manualDue()) {
+          <button type="button" class="btn btn--primary btn--sm" [disabled]="busy()" (click)="modal.set('manual')">Mark payment received</button>
         }
         @if (o.paymentStatus === 'paid') {
           <button type="button" class="btn btn--accent btn--sm" [disabled]="busy()" (click)="modal.set('refund')">
@@ -53,8 +58,11 @@
         This order is completed but its cash was never recorded — today's revenue is missing ₹{{ o.pricing.total | number: '1.2-2' }}. Use <strong>Mark cash received</strong> if the customer paid.
       </div>
     }
+    @if (manualDue() && o.orderStatus === 'completed') {
+      <div class="adm-alert" role="status">This order is completed with ₹{{ o.pricing.total | number: '1.2-2' }} unpaid. Use <strong>Mark payment received</strong> after collecting the payment.</div>
+    }
 
-    <div class="adm-cols" style="grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr)">
+    <div class="adm-cols" [style.grid-template-columns]="(manualDue() && o.paymentMethod === 'upi') || o.notes || o.orderType !== 'takeaway' ? 'minmax(0, 1.4fr) minmax(0, 1fr)' : 'minmax(0, 1fr)'">
       <div>
         <!-- Items & pricing -->
         <div class="adm-card" style="padding: 0">
@@ -82,7 +90,9 @@
               <dt>Discount{{ o.pricing.couponCode ? ' (' + o.pricing.couponCode + ')' : '' }}</dt>
               <dd class="num">−₹{{ o.pricing.discount | number: '1.2-2' }}</dd>
             }
-            <dt>Tax</dt><dd class="num">₹{{ o.pricing.tax | number: '1.2-2' }}</dd>
+            @if (o.pricing.tax) {
+              <dt>Tax</dt><dd class="num">₹{{ o.pricing.tax | number: '1.2-2' }}</dd>
+            }
             @if (o.pricing.deliveryFee) {
               <dt>Delivery fee</dt><dd class="num">₹{{ o.pricing.deliveryFee | number: '1.2-2' }}</dd>
             }
@@ -91,50 +101,21 @@
           </dl>
         </div>
 
-        <!-- Timeline -->
-        <div class="adm-card">
-          <h3>Status history</h3>
-          <ul class="adm-timeline">
-            @for (event of o.statusHistory.slice().reverse(); track $index) {
-              <li>
-                <div class="adm-timeline__status">{{ event.status }}</div>
-                <div class="adm-timeline__time">{{ event.at | date: 'MMM d · h:mm:ss a' }}</div>
-                @if (event.note) {
-                  <div class="adm-timeline__note">“{{ event.note }}”</div>
-                }
-              </li>
-            }
-          </ul>
-        </div>
       </div>
 
+      @if ((manualDue() && o.paymentMethod === 'upi') || o.notes || o.orderType !== 'takeaway') {
       <div>
-        <!-- Customer & fulfilment -->
-        <div class="adm-card">
-          <h3>Customer</h3>
-          <dl class="adm-kv">
-            <dt>Name</dt>
-            <dd>
-              @if (o.user) {
-                <a [routerLink]="['/admin/customers', o.user._id]" style="text-decoration: underline">{{ orderCustomer(o) }}</a>
-              } @else {
-                {{ orderCustomer(o) }} <span class="adm-badge adm-badge--mock">guest</span>
-              }
-            </dd>
-            @if (o.user?.phone) { <dt>Phone</dt><dd>{{ o.user!.phone }}</dd> }
-            @if (o.user?.email) { <dt>Email</dt><dd>{{ o.user!.email }}</dd> }
-          </dl>
-        </div>
+        @if (manualDue() && o.paymentMethod === 'upi') { <adm-upi-payment-qr [orderId]="o._id" /> }
 
+        @if (o.notes) { <div class="adm-card"><h3>Special instructions</h3><p style="white-space: pre-wrap">{{ o.notes }}</p></div> }
+
+        @if (o.orderType !== 'takeaway') {
         <div class="adm-card">
           <h3 style="text-transform: capitalize">{{ o.orderType }} details</h3>
           <dl class="adm-kv">
             @if (o.orderType === 'dining') {
               <dt>Table</dt><dd>{{ o.dining?.tableNumber || '—' }}</dd>
               <dt>Name</dt><dd>{{ o.dining?.customerName || '—' }}</dd>
-            } @else if (o.orderType === 'takeaway') {
-              <dt>Name</dt><dd>{{ o.takeaway?.customerName || '—' }}</dd>
-              <dt>Phone</dt><dd>{{ o.takeaway?.phone || '—' }}</dd>
             } @else {
               <dt>Address</dt><dd>{{ o.delivery?.fullAddress || '—' }}</dd>
               <dt>Area</dt><dd>{{ o.delivery?.area || '—' }}</dd>
@@ -143,36 +124,10 @@
             }
           </dl>
         </div>
+        }
 
-        <!-- Payment -->
-        <div class="adm-card">
-          <h3>Payment</h3>
-          @if (payment(); as p) {
-            <dl class="adm-kv">
-              <dt>Status</dt>
-              <dd>
-                <span [class]="badgeClass(o.paymentStatus)">{{ o.paymentStatus }}</span>
-                @if (p.mock) { <span class="adm-badge adm-badge--mock" style="margin-left: 0.3rem">mock</span> }
-              </dd>
-              <dt>Amount</dt><dd>₹{{ p.amount | number: '1.2-2' }} {{ p.currency.toUpperCase() }}</dd>
-              <dt>Provider</dt><dd>{{ p.provider }}</dd>
-              @if (p.method) { <dt>Method</dt><dd>{{ p.method }}</dd> }
-              @if (p.razorpayPaymentId || p.razorpayOrderId) {
-                <dt>Reference</dt><dd style="font-size: 0.8rem">{{ p.razorpayPaymentId || p.razorpayOrderId }}</dd>
-              } @else if (p.stripePaymentIntentId) {
-                <dt>Intent</dt><dd style="font-size: 0.8rem">{{ p.stripePaymentIntentId }}</dd>
-              }
-              <dt>Created</dt><dd>{{ p.createdAt | date: 'MMM d · h:mm a' }}</dd>
-            </dl>
-          } @else if (o.paymentMethod === 'cash') {
-            <div class="adm-empty" style="padding: 1rem 0">
-              Cash order — collect <strong>₹{{ o.pricing.total | number: '1.2-2' }}</strong> on hand-over, then use <strong>Mark cash received</strong>.
-            </div>
-          } @else {
-            <div class="adm-empty" style="padding: 1rem 0">No payment record yet.</div>
-          }
-        </div>
       </div>
+      }
     </div>
   } @else {
     <div class="adm-empty">Order not found. <a routerLink="/admin/orders" style="text-decoration: underline">Back to orders</a></div>
@@ -185,6 +140,8 @@
       [title]="
         kind === 'cancel'
           ? 'Cancel ' + o.orderNumber + '?'
+          : kind === 'manual'
+            ? 'Payment received for ' + o.orderNumber + '?'
           : kind === 'cash'
             ? 'Cash received for ' + o.orderNumber + '?'
             : 'Refund ₹' + o.pricing.total.toFixed(2) + '?'
@@ -192,15 +149,19 @@
       [message]="
         kind === 'cancel'
           ? 'The customer will see this order as cancelled.' + (o.paymentStatus === 'paid' ? ' It is already paid — you will be reminded to refund it.' : '')
+          : kind === 'manual'
+            ? 'Confirm you received the full ₹' + o.pricing.total.toFixed(2) + ' by ' + o.paymentMethod?.toUpperCase() + '. This records the payment and includes it in sales totals.'
           : kind === 'cash'
             ? 'Confirm you collected ₹' + o.pricing.total.toFixed(2) + ' in cash/UPI. The order is marked paid and counts toward today\'s revenue.'
+            : payment()?.provider === 'manual'
+              ? 'Return the full ₹' + o.pricing.total.toFixed(2) + ' to the customer using the original payment method, then confirm to record the refund. This cannot be undone.'
             : payment()?.provider === 'cash'
               ? 'Hand the full ₹' + o.pricing.total.toFixed(2) + ' back to the customer in cash — this only records it. This cannot be undone.'
               : 'The full amount goes back to the customer via ' + (payment()?.mock ? 'the mock provider' : payment()?.provider === 'razorpay' ? 'Razorpay' : 'Stripe') + '. This cannot be undone.'
       "
-      [confirmLabel]="kind === 'cancel' ? 'Cancel order' : kind === 'cash' ? 'Yes, cash received' : 'Refund now'"
-      [tone]="kind === 'cash' ? 'primary' : 'danger'"
-      [requireReason]="kind !== 'cash'"
+      [confirmLabel]="kind === 'cancel' ? 'Cancel order' : kind === 'manual' ? 'Yes, payment received' : kind === 'cash' ? 'Yes, cash received' : 'Refund now'"
+      [tone]="kind === 'cash' || kind === 'manual' ? 'primary' : 'danger'"
+      [requireReason]="kind !== 'cash' && kind !== 'manual'"
       [reasonLabel]="kind === 'cancel' ? 'Why is it being cancelled?' : 'Why is it being refunded?'"
       [busy]="busy()"
       (confirmed)="confirmModal($event)"

@@ -12,7 +12,7 @@ Real phone login: Firebase integration now uses runtime web configuration, recen
 | 1 | Prevent checkout from charging a changed price without review (US-3.3 / US-5.2) | Implemented. A reviewed quote is mandatory; the server compares all line prices/quantities and the price breakdown before reserving stock/coupons or creating an order. A mismatch returns a fresh summary for explicit acceptance. |
 | 2 | Address editing, valid delivery details and Google identity protection (US-4.4 / US-4.5, part of US-5.1) | Implemented. Edit saved addresses, choose a default, validate fields and 6-digit Indian pincodes, prevent changes to Google-owned names/emails. |
 | 2 | Admin inactivity expiry, unsaved-work warnings and customer deactivation (AS-1.4, AS-6.3) | Implemented. Server enforces a configurable 30-minute idle limit; product forms warn and preserve tab-local drafts; deactivation requires a reason, revokes sessions and blocks sign-in. |
-| 2 | Notification retries and error correlation IDs (US-7.4, US-9.2 / AS-10.2) | Implemented email queue, bounded retries, provider idempotency, failure dashboard and request IDs. Production scheduler/provider verification remains. |
+| 2 | Error correlation IDs (US-9.2 / AS-10.2) | Implemented request IDs. |
 | 3 | Managed categories and menu ordering (AS-5.1 / AS-5.2) | Implemented creation, rename, reassignment, nonempty deletion protection and per-group menu ordering. Existing categories migrate to stable references. |
 | 3 | Database-backed store settings (AS-9.1) | Implemented tax, delivery fee, daily IST hours and contact details at `/admin/settings`. INR only; multi-currency remains open. |
 | 4 | Cross-device carts, search URL/filter improvements, cart removal undo | Open. |
@@ -39,7 +39,7 @@ Real phone login: Firebase integration now uses runtime web configuration, recen
 
 - Backend: 22 tests pass, including new integration coverage for revoked bearer/cookie tokens, optional-auth ownership checks, stale/tampered/missing quotes, stock/coupon preservation, address validation/updates, and Google identity protection.
 - Angular production build passes. Existing `qrcode` CommonJS optimization warning remains.
-- Browser: tested initial changed-price acceptance, another price change after review, successful cash order after reconfirmation, invalid pincode feedback and saved-address editing. These used an isolated in-memory database with email/payment providers disabled.
+- Browser: tested initial changed-price acceptance, another price change after review, successful cash order after reconfirmation, invalid pincode feedback and saved-address editing. These used an isolated in-memory database with payment providers disabled.
 - Live provider configuration, full mobile/accessibility QA and performance targets are not certified by these checks.
 
 ## Compatibility and scope
@@ -53,15 +53,11 @@ Real phone login: Firebase integration now uses runtime web configuration, recen
 
 ## Second batch validation and deployment
 
-- Backend: all 30 tests pass, including category migration/rename/reorder, unchanged product edit timestamps, account deactivation and blocked sign-in, idle timeout/activity, request IDs, durable retries, concurrent workers and lease recovery.
+- Backend: all 30 tests pass, including category migration/rename/reorder, unchanged product edit timestamps, account deactivation and blocked sign-in, idle timeout/activity, request IDs.
 - Angular production build passes; the existing `qrcode` CommonJS warning remains.
 - `ADMIN_IDLE_MINUTES` defaults to 30. Previously issued admin tokens older than that window require a fresh login on first use after deployment.
-- Set `RESEND_API_KEY`, a verified `NOTIFY_FROM`, and `SHOP_EMAIL` for email delivery. Without a provider, notifications are skipped in mock mode.
-- Queued emails get an initial post-response attempt via Vercel `waitUntil`; new notifications and the open admin console also process due work. Configure a scheduler to call `GET /api/jobs/notifications` with `Authorization: Bearer <CRON_SECRET>` for unattended retries. Each call processes at most three jobs; choose cadence/capacity for expected traffic. No live scheduler was configured in this task.
-- Retries stop after eight attempts or a 23-hour retry window. Inspect provider logs before manually resending permanent/exhausted failures. Completed records expire after 30 days. Database enqueue failures are logged and do not undo an already-created order; a transactional event outbox remains a future reliability improvement.
-- Provider behavior references: [Resend idempotency](https://resend.com/docs/dashboard/emails/idempotency-keys), [Vercel post-response work](https://vercel.com/docs/functions/functions-api-reference/vercel-functions-package).
 - Category rename updates menu/product/report labels through stable references, with legacy string fallback for unmigrated products. Report amounts continue to use stored order lines.
-- No production deployment, real email send or live payment was performed.
+- No production deployment or live payment was performed.
 
 ## Reporting and inbox batch — 2026-09-09
 

@@ -18,17 +18,7 @@
       </div>
       <p>Plan your baking. Know your costs. Keep your kitchen stocked.</p>
     </div>
-    <a class="btn btn--accent" routerLink="/admin/bakery/calculator">Open calculator</a>
   </header>
-  <nav class="work-nav" aria-label="Bakery operations">
-    <a routerLink="/admin/bakery/dashboard">Overview</a
-    ><a routerLink="/admin/bakery/materials">Materials</a
-    ><a routerLink="/admin/bakery/recipes">Recipes</a
-    ><a routerLink="/admin/bakery/production">Production</a
-    ><a routerLink="/admin/bakery/inventory">Inventory</a
-    ><a routerLink="/admin/bakery/purchasing">Purchasing</a
-    ><a routerLink="/admin/bakery/waste">Waste</a><a routerLink="/admin/bakery/reports">Reports</a>
-  </nav>
   @if (error()) {
     <div class="error" role="alert">{{ error() }}</div>
   }
@@ -67,14 +57,30 @@
     </div>
     <div class="work-grid">
       <section class="card">
-        <h2 class="section-title">Upcoming production</h2>
-        @for (p of data().plans; track p._id) {
+        @if (data().overduePlans?.length) {
+          <h2 class="section-title">Overdue production</h2>
+          <p class="muted">These plans are past their scheduled date and still awaiting completion.</p>
+          @for (p of data().overduePlans; track p._id) {
+            <p>
+              <a routerLink="/admin/bakery/production">{{ p.referenceName || p.code }}</a> ·
+              {{ p.requiredDate | date: 'mediumDate' : '+0530' }} · <strong>Overdue</strong>
+            </p>
+          }
+        }
+        <h2 class="section-title">Today &amp; upcoming production</h2>
+        @for (p of data().upcomingPlans; track p._id) {
           <p>
             <a routerLink="/admin/bakery/production">{{ p.referenceName || p.code }}</a> ·
-            {{ p.requiredDate | date: 'mediumDate' }}
+            {{ p.requiredDate | date: 'mediumDate' : '+0530' }}
           </p>
         } @empty {
-          <p class="muted">Save a production plan from the calculator to begin.</p>
+          <p class="muted">No production scheduled for today or later.</p>
+        }
+        @if (data().undatedPlans?.length) {
+          <h2 class="section-title">Production without a date</h2>
+          @for (p of data().undatedPlans; track p._id) {
+            <p><a routerLink="/admin/bakery/production">{{ p.referenceName || p.code }}</a> · No date set</p>
+          }
         }
       </section>
       <section class="card">
@@ -114,368 +120,6 @@
         </table>
       </div>
     </section>
-  }
-  @if (view === 'purchasing') {
-    <div class="work-grid">
-      <form class="card" (ngSubmit)="saveSupplier()">
-        <h2 class="section-title">Add supplier</h2>
-        <label
-          >Name<input
-            class="input"
-            name="supplierName"
-            [(ngModel)]="supplier.name"
-            required /></label
-        ><label
-          >Phone or email<input
-            class="input"
-            name="contact"
-            [(ngModel)]="supplier.contact" /></label
-        ><label>Notes<input class="input" name="notes" [(ngModel)]="supplier.notes" /></label
-        ><button class="btn btn--accent" [disabled]="busy()">Save supplier</button>
-      </form>
-      <form class="card" (ngSubmit)="saveFormat()">
-        <h2 class="section-title">Add purchase format</h2>
-        <div class="fields">
-          <label
-            >Material<select
-              class="select"
-              name="material"
-              [(ngModel)]="format.materialId"
-              required
-            >
-              <option value="">Choose material</option>
-              @for (m of materials(); track m._id) {
-                <option [value]="m._id">{{ m.name }}</option>
-              }
-            </select></label
-          ><label
-            >Supplier<select
-              class="select"
-              name="supplier"
-              [(ngModel)]="format.supplierId"
-              required
-            >
-              <option value="">Choose supplier</option>
-              @for (s of purchasing().suppliers; track s._id) {
-                <option [value]="s._id">{{ s.name }}</option>
-              }
-            </select></label
-          ><label
-            >Pack quantity<input
-              class="input"
-              name="pack"
-              [(ngModel)]="format.packQuantity"
-              required /></label
-          ><label
-            >Pack unit<select class="select" name="uom" [(ngModel)]="format.packUom">
-              @for (
-                u of [
-                  'mg',
-                  'g',
-                  'kg',
-                  'ml',
-                  'L',
-                  'piece',
-                  'dozen',
-                  'box',
-                  'packet',
-                  'minute',
-                  'hour',
-                ];
-                track u
-              ) {
-                <option>{{ u }}</option>
-              }
-            </select></label
-          ><label
-            >Pack price (₹)<input
-              class="input"
-              name="price"
-              [(ngModel)]="format.purchasePrice"
-              required /></label
-          ><label
-            >Minimum packs<input
-              class="input"
-              name="moq"
-              [(ngModel)]="format.minimumOrderPacks" /></label
-          ><label
-            >Lead time (days)<input
-              class="input"
-              type="number"
-              min="0"
-              name="lead"
-              [(ngModel)]="format.leadTimeDays" /></label
-          ><label>Brand<input class="input" name="brand" [(ngModel)]="format.brand" /></label
-          ><label
-            >Supplier code<input class="input" name="code" [(ngModel)]="format.supplierCode"
-          /></label>
-        </div>
-        <label class="inline"
-          ><input type="checkbox" name="preferred" [(ngModel)]="format.preferred" />Use as preferred
-          format</label
-        ><button class="btn btn--accent" [disabled]="busy()">Save purchase format</button>
-      </form>
-    </div>
-    <section class="card">
-      <h2 class="section-title">Supplier formats</h2>
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Material</th>
-              <th>Supplier / pack</th>
-              <th>Price</th>
-              <th>Cost per base unit</th>
-              <th>Preference</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (f of purchasing().formats; track f._id) {
-              <tr>
-                <td>{{ name(f.materialId) }}</td>
-                <td>{{ f.supplierName }} · {{ f.packQuantity }} {{ f.packUom }}</td>
-                <td>{{ money(f.price?.purchasePrice) }}</td>
-                <td>{{ f.price?.unitCost | number: '1.2-6' }}</td>
-                <td>
-                  @if (f.preferred) {
-                    Preferred
-                  } @else {
-                    <button
-                      class="btn btn--outline"
-                      [disabled]="busy()"
-                      (click)="
-                        post('/formats/' + f._id + '/prefer', {}, 'Preferred supplier updated')
-                      "
-                    >
-                      Use this supplier
-                    </button>
-                  }
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="5">Add a supplier and purchase format to compare prices.</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </section>
-    <div class="work-grid">
-      <form class="card" (ngSubmit)="savePrice()">
-        <h2 class="section-title">Record new price</h2>
-        <label
-          >Purchase format<select
-            class="select"
-            name="format"
-            [(ngModel)]="priceForm.formatId"
-            required
-          >
-            <option value="">Choose format</option>
-            @for (f of purchasing().formats; track f._id) {
-              <option [value]="f._id">
-                {{ name(f.materialId) }} · {{ f.supplierName }} · {{ f.packQuantity }}
-                {{ f.packUom }}
-              </option>
-            }
-          </select></label
-        >
-        <div class="fields">
-          <label
-            >New pack price (₹)<input
-              class="input"
-              name="price"
-              [(ngModel)]="priceForm.purchasePrice"
-              required /></label
-          ><label
-            >Effective date<input
-              class="input"
-              type="date"
-              name="date"
-              [(ngModel)]="priceForm.effectiveAt"
-              required
-          /></label>
-        </div>
-        <button class="btn btn--accent" [disabled]="busy()">Record price</button>
-      </form>
-      <form class="card" (ngSubmit)="createPurchase()">
-        <h2 class="section-title">New purchase order</h2>
-        <label
-          >Supplier<select
-            class="select"
-            name="supplier"
-            [(ngModel)]="purchaseForm.supplierId"
-            required
-          >
-            <option value="">Choose supplier</option>
-            @for (s of purchasing().suppliers; track s._id) {
-              <option [value]="s._id">{{ s.name }}</option>
-            }
-          </select></label
-        >
-        @for (line of purchaseForm.lines; track $index) {
-          <div class="fields">
-            <label
-              >Format<select
-                class="select"
-                [name]="'format' + $index"
-                [(ngModel)]="line.formatId"
-                required
-              >
-                <option value="">Choose format</option>
-                @for (f of formatsForSupplier(); track f._id) {
-                  <option [value]="f._id">
-                    {{ name(f.materialId) }} · {{ f.packQuantity }} {{ f.packUom }}
-                  </option>
-                }
-              </select></label
-            ><label
-              >Number of packs<input
-                class="input"
-                [name]="'packs' + $index"
-                [(ngModel)]="line.packs"
-                required
-            /></label>
-          </div>
-        }
-        <button
-          type="button"
-          class="btn btn--outline"
-          (click)="purchaseForm.lines.push({ formatId: '', packs: '1' })"
-        >
-          Add line</button
-        ><button class="btn btn--accent" [disabled]="busy()">Create draft purchase</button>
-      </form>
-    </div>
-    <section class="card">
-      <h2 class="section-title">Purchase orders</h2>
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Reference</th>
-              <th>Supplier</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (p of purchasing().purchases; track p._id) {
-              <tr>
-                <td>{{ p.code }}</td>
-                <td>{{ supplierName(p.supplierId) }}</td>
-                <td>
-                  <span class="status">{{ p.status.replaceAll('_', ' ') }}</span>
-                </td>
-                <td>
-                  <div class="inline">
-                    @if (p.status === 'draft') {
-                      <button
-                        class="btn btn--outline"
-                        [disabled]="busy()"
-                        (click)="
-                          post(
-                            '/purchases/' + p._id + '/status',
-                            { status: 'ordered' },
-                            'Purchase marked ordered'
-                          )
-                        "
-                      >
-                        Mark ordered
-                      </button>
-                    }
-                    @if (p.status === 'ordered' || p.status === 'partially_received') {
-                      <button class="btn btn--accent" (click)="beginReceipt(p)">
-                        Receive goods
-                      </button>
-                    }
-                    @if (p.status !== 'received' && p.status !== 'cancelled') {
-                      <button
-                        class="btn btn--outline"
-                        [disabled]="busy()"
-                        (click)="
-                          post(
-                            '/purchases/' + p._id + '/status',
-                            { status: 'cancelled' },
-                            'Remaining purchase cancelled'
-                          )
-                        "
-                      >
-                        Cancel remaining
-                      </button>
-                    }
-                  </div>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </section>
-    @if (receiving) {
-      <form class="card" (ngSubmit)="receive()">
-        <h2 class="section-title">Receive {{ receiving.purchase.code }}</h2>
-        <p class="muted">Enter only what arrived. Stock changes when this receipt is saved.</p>
-        @for (l of receiving.lines; track l.lineId) {
-          <h3>{{ name(l.materialId) }}</h3>
-          <div class="fields">
-            <label
-              >Packs received<input
-                class="input"
-                [name]="'rp' + l.lineId"
-                [(ngModel)]="l.packs" /></label
-            ><label
-              >Actual pack price<input
-                class="input"
-                [name]="'price' + l.lineId"
-                [(ngModel)]="l.purchasePrice" /></label
-            ><label
-              >Lot (optional)<input
-                class="input"
-                [name]="'lot' + l.lineId"
-                [(ngModel)]="l.lot" /></label
-            ><label
-              >Expiry (optional)<input
-                class="input"
-                type="date"
-                [name]="'expiry' + l.lineId"
-                [(ngModel)]="l.expiry"
-            /></label>
-          </div>
-        }
-        <div class="inline">
-          <button class="btn btn--accent" [disabled]="busy()">Save receipt</button
-          ><button type="button" class="btn btn--outline" (click)="receiving = null">Close</button>
-        </div>
-      </form>
-    }
-    <details class="card">
-      <summary>Purchase price history</summary>
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Effective date</th>
-              <th>Material</th>
-              <th>Supplier</th>
-              <th>Pack</th>
-              <th>Price</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (p of purchasing().prices; track p._id) {
-              <tr>
-                <td>{{ p.effectiveAt | date: 'mediumDate' }}</td>
-                <td>{{ name(p.materialId) }}</td>
-                <td>{{ supplierName(p.supplierId) }}</td>
-                <td>{{ p.packQuantity }} {{ p.packUom }}</td>
-                <td>{{ money(p.purchasePrice) }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </details>
   }
   @if (view === 'production') {
     @for (s of sheets(); track s._id) {

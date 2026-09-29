@@ -19,6 +19,8 @@ export class AdminBakeryMaterials implements OnInit {
   private http = inject(HttpClient);
   private previewRequest?: Subscription;
   private previewTimer?: ReturnType<typeof setTimeout>;
+  private searchTimer?: ReturnType<typeof setTimeout>;
+  private materialsRequest?: Subscription;
   previewCost = signal<string | null>(null);
   previewError = signal('');
   saveError = signal('');
@@ -26,6 +28,8 @@ export class AdminBakeryMaterials implements OnInit {
     inject(DestroyRef).onDestroy(() => {
       this.previewRequest?.unsubscribe();
       clearTimeout(this.previewTimer);
+      clearTimeout(this.searchTimer);
+      this.materialsRequest?.unsubscribe();
     });
   }
   private toast = inject(ToastService);
@@ -81,17 +85,29 @@ export class AdminBakeryMaterials implements OnInit {
   }
 
   fetchMaterials() {
+    clearTimeout(this.searchTimer);
+    this.materialsRequest?.unsubscribe();
     this.loading.set(true);
     const typeParam = this.selectedType() === 'all' ? undefined : this.selectedType();
-    this.bakery
+    this.materialsRequest = this.bakery
       .getMaterials({ type: typeParam, search: this.searchQuery() || undefined })
       .subscribe({
         next: (res) => {
-          this.materials.set(res.materials);
+          this.materials.set([...res.materials].sort((a, b) =>
+            a.name.trim().localeCompare(b.name.trim(), 'en', { sensitivity: 'base', numeric: true }),
+          ));
           this.loading.set(false);
         },
         error: () => this.loading.set(false),
       });
+  }
+
+  searchMaterials(query: string) {
+    this.searchQuery.set(query);
+    clearTimeout(this.searchTimer);
+    this.materialsRequest?.unsubscribe();
+    this.loading.set(true);
+    this.searchTimer = setTimeout(() => this.fetchMaterials(), 250);
   }
 
   setType(t: string) {
@@ -112,8 +128,7 @@ export class AdminBakeryMaterials implements OnInit {
     const visible = this.materials().filter((item) => item._id !== material._id);
     if (material.isActive !== false && this.matchesCurrentView(material)) visible.push(material);
     visible.sort((a, b) =>
-      new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime() ||
-      String(b._id).localeCompare(String(a._id)),
+      a.name.trim().localeCompare(b.name.trim(), 'en', { sensitivity: 'base', numeric: true }),
     );
     this.materials.set(visible);
   }

@@ -1,11 +1,13 @@
 const mongoose = require("mongoose");
-const { randomUUID } = require("crypto");
+const { randomUUID, createHash } = require("crypto");
 const Material = require("../models/BakeryMaterial");
 const Recipe = require("../models/BakeryRecipe");
 const Waste = require("../models/BakeryWaste");
 const O = require("../models/BakeryOperations");
 const E = require("../services/bakeryCost.service");
 const ApiError = require("../utils/ApiError");
+const purchaseLedger = require("../services/purchase-ledger.service");
+const { groupProductionPlans } = require("../services/production-schedule.service");
 const { Decimal: D, dec } = E;
 const pick = (data, fields) =>
   Object.fromEntries(
@@ -995,6 +997,123 @@ exports.getPurchasing = handler(async () => {
     receipts: await O.Receipt.find().sort({ receivedAt: -1 }).lean(),
   };
 });
+
+// One save records goods already purchased and received; no draft/receiving steps.
+exports.recordPurchase = handler((req) => {
+  const b = req.body;
+  const operationKey = key(req);
+  const receivedAt = purchaseLedger.purchaseDate(b.purchasedAt);
+  if (!Array.isArray(b.lines) || !b.lines.length || b.lines.length > 50)
+    throw ApiError.badRequest("Add between 1 and 50 purchased items");
+  for (const field of ["supplierName", "notes"]) {
+    if (b[field] != null && (typeof b[field] !== "string" || b[field].length > (field === "notes" ? 1000 : 100)))
+      throw ApiError.badRequest(field === "notes" ? "Notes must be 1,000 characters or fewer" : "Supplier must be 100 characters or fewer");
+  }
+  const input = b.lines.map((line, index) => {
+    if (!line || !mongoose.isValidObjectId(line.materialId))
+      throw ApiError.badRequest(`Choose a material for item ${index + 1}`);
+    const quantity = dec(line.quantity, `Quantity for item ${index + 1}`, true);
+    const amount = dec(line.totalPaid, `Total paid for item ${index + 1}`);
+    if (quantity.gt('1e12') || quantity.decimalPlaces() > 12)
+      throw ApiError.badRequest(`Quantity for item ${index + 1} is too large or precise`);
+    if (amount.gt('1e12') || amount.decimalPlaces() > 2)
+      throw ApiError.badRequest(`Total paid for item ${index + 1} must have at most two decimal places and be no more than ₹1,000,000,000,000`);
+    if (typeof line.uom !== 'string' || line.uom.length > 10)
+      throw ApiError.badRequest(`Choose a unit for item ${index + 1}`);
+    return { materialId: String(line.materialId), quantity: quantity.toString(), uom: line.uom, totalPaid: amount.toString() };
+  });
+  const supplierName = (b.supplierName || '').trim();
+  const notes = (b.notes || '').trim();
+  const requestSignature = createHash('sha256').update(JSON.stringify({ input, receivedAt, supplierName, notes })).digest('hex');
+  return transaction(async (session) => {
+    const existing = await O.Receipt.findOne({ operationKey }).session(session);
+    if (existing) {
+      if (existing.requestSignature !== requestSignature)
+        throw ApiError.conflict("This purchase was already saved with different details. Refresh before recording another purchase.");
+      return { receipt: existing, purchase: await get(O.Purchase, existing.purchaseId, session) };
+    }
+    const lines = [];
+    for (const item of input) {
+      const m = await get(Material, item.materialId, session);
+      if (!m.isActive || !['ingredient', 'packaging'].includes(m.type))
+        throw ApiError.badRequest(`${m.name} is unavailable for inventory purchases. Choose an active ingredient or packaging material.`);
+      const quantity = E.convertUnits(item.quantity, item.uom, m.baseUom, m.densityGramPerMl);
+      lines.push({
+        lineId: randomUUID(), materialId: String(m._id), materialName: m.name,
+        packQuantity: item.quantity, packUom: item.uom,
+        packs: '1', received: '1', purchasePrice: item.totalPaid,
+        totalPaid: item.totalPaid, quantity, baseUom: m.baseUom,
+      });
+    }
+    const [purchase] = await O.Purchase.create([{
+      code: `PUR-${randomUUID().slice(0, 12)}`, source: 'direct',
+      supplierName, status: 'received', lines, notes,
+    }], { session });
+    for (const line of lines) {
+      await move(line.materialId, line.quantity, 'receipt', purchase.code, notes, req.user?._id, session);
+    }
+    const [receipt] = await O.Receipt.create([{
+      purchaseId: purchase._id, operationKey, requestSignature, lines, receivedAt,
+    }], { session });
+    return { purchase, receipt };
+  });
+});
+
+exports.purchaseHistory = handler(async (req) => {
+  const month = req.query.month || '';
+  const filter = month ? { receivedAt: purchaseLedger.monthRange(month) } : {};
+  const page = req.query.page === undefined ? 1 : Number(req.query.page);
+  if (!Number.isSafeInteger(page) || page < 1 || page > 1000000)
+    throw ApiError.badRequest("Please choose a valid purchase history page");
+  const limit = 20;
+  const [monthlyRows, receipts, count] = await Promise.all([
+    O.Receipt.aggregate([
+      { $set: { spend: { $reduce: {
+        input: '$lines', initialValue: { $toDecimal: '0' },
+        in: { $add: ['$$value', { $ifNull: [
+          { $toDecimal: '$$this.totalPaid' },
+          { $multiply: [{ $toDecimal: '$$this.purchasePrice' }, { $toDecimal: '$$this.packs' }] },
+        ] }] },
+      } } } },
+      { $group: {
+        _id: { $dateToString: { date: { $ifNull: ['$receivedAt', '$createdAt'] }, format: '%Y-%m', timezone: 'Asia/Kolkata' } },
+        total: { $sum: '$spend' }, count: { $sum: 1 },
+      } },
+      { $sort: { _id: -1 } },
+    ]),
+    O.Receipt.find(filter).sort({ receivedAt: -1, _id: -1 }).skip((page - 1) * limit).limit(limit).lean(),
+    O.Receipt.countDocuments(filter),
+  ]);
+  const months = monthlyRows.map(row => ({ month: row._id, total: row.total.toString(), count: row.count }));
+  const [purchases, materials, suppliers] = await Promise.all([
+    O.Purchase.find({ _id: { $in: receipts.map(r => r.purchaseId) } }).lean(),
+    Material.find({ _id: { $in: receipts.flatMap(r => r.lines.map(l => l.materialId)) } }).select('name baseUom').lean(),
+    O.Supplier.find().select('name').lean(),
+  ]);
+  const byPurchase = new Map(purchases.map(p => [String(p._id), p]));
+  const byMaterial = new Map(materials.map(m => [String(m._id), m]));
+  const bySupplier = new Map(suppliers.map(s => [String(s._id), s.name]));
+  return {
+    months, summary: purchaseLedger.summarizeMonths(months, month), total: count,
+    page, pages: Math.max(1, Math.ceil(count / limit)),
+    purchases: receipts.map(r => {
+      const p = byPurchase.get(String(r.purchaseId));
+      return {
+        _id: r._id, code: p?.code || '', purchasedAt: r.receivedAt || r.createdAt,
+        supplierName: p?.supplierName || bySupplier.get(String(p?.supplierId)) || '', notes: p?.notes || '',
+        totalPaid: purchaseLedger.receiptTotal(r),
+        lines: r.lines.map(l => {
+          const m = byMaterial.get(String(l.materialId));
+          return {
+            materialName: l.materialName || m?.name || 'Removed material',
+            quantity: dec(l.packQuantity).mul(l.packs).toString(), uom: l.packUom,
+            totalPaid: l.totalPaid ?? dec(l.purchasePrice).mul(l.packs).toString(),
+          };
+        }),
+      };
+    }),
+  };
+});
 exports.saveSupplier = handler((req) =>
   transaction(async (session) => {
     const [supplier] = await O.Supplier.create(
@@ -1363,6 +1482,9 @@ exports.reports = handler(async (req) => {
     recipes,
     batches,
     plans: sheets.filter((s) => s.status === "scheduled"),
+    ...groupProductionPlans(
+      sheets.filter((s) => s.status === "scheduled"),
+    ),
     waste: logs,
     wasteByReason: grouped,
     wasteCost: logs

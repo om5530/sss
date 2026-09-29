@@ -29,14 +29,22 @@ const statusEventSchema = new mongoose.Schema(
 const orderSchema = new mongoose.Schema(
   {
     orderNumber: { type: String, required: true, unique: true },
-    // Optional: dine-in and takeaway support guest checkout. Delivery orders
-    // always have a user (enforced in the order controller).
+    // Website delivery requires an account; staff-entered delivery does not.
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null, index: true },
     items: {
       type: [orderItemSchema],
       validate: { validator: (v) => Array.isArray(v) && v.length > 0, message: 'Order must contain at least one item' },
     },
     orderType: { type: String, enum: ['dining', 'takeaway', 'delivery'], required: true },
+    source: { type: String, enum: ['website', 'phone', 'walk-in', 'event'], default: 'website', index: true },
+    eventName: { type: String, trim: true, maxlength: 120, default: '', index: true },
+    upiRecipient: { id: String, name: String, upiId: String, payeeName: String },
+    customer: { name: { type: String, maxlength: 120 }, phone: { type: String, maxlength: 20 } },
+    notes: { type: String, maxlength: 1000, default: '' },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    // A retried staff submission must not create another sale or claim stock twice.
+    manualKey: { type: String, unique: true, sparse: true, select: false },
+    manualHash: { type: String, select: false },
     // Scheduled pre-order time; null = ASAP. Validated against opening hours.
     fulfilAt: { type: Date, default: null, index: true },
     dining: { tableNumber: String, customerName: String },
@@ -53,7 +61,7 @@ const orderSchema = new mongoose.Schema(
     },
     // 'online' goes through the payment gateway; 'cash' is settled in person
     // (counter / pickup / delivery) and marked paid by staff.
-    paymentMethod: { type: String, enum: ['online', 'cash'], default: 'online' },
+    paymentMethod: { type: String, enum: ['online', 'cash', 'upi', 'card'], default: 'online' },
     paymentStatus: { type: String, enum: ['pending', 'paid', 'failed', 'refunded'], default: 'pending' },
     orderStatus: { type: String, enum: ORDER_STATUSES, default: 'placed' },
     statusHistory: { type: [statusEventSchema], default: [] },

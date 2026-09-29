@@ -4,7 +4,7 @@ import { ToastService } from '../../../core/services/toast.service';
 import { AdminOrder } from '../../../core/models/admin.model';
 import { OrderStatus } from '../../../core/models/order.model';
 import { ConfirmModal } from '../shared/confirm-modal';
-import { NEXT_LABEL, NEXT_STATUS, elapsed, elapsedMinutes, itemsSummary, orderCustomer } from '../shared/admin-ui';
+import { NEXT_LABEL, NEXT_STATUS, elapsed, elapsedMinutes, itemsSummary, orderCustomer, orderSource } from '../shared/admin-ui';
 import { AdminOrderNotificationService } from '../../../core/services/admin-order-notification.service';
 
 const POLL_MS = 8_000;
@@ -37,6 +37,7 @@ export class AdminQueue {
   protected readonly elapsed = elapsed;
   protected readonly itemsSummary = itemsSummary;
   protected readonly orderCustomer = orderCustomer;
+  protected readonly orderSource = orderSource;
 
   private knownIds: Set<string> | null = null;
 

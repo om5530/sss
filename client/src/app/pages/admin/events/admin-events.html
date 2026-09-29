@@ -1,0 +1,24 @@
+<div class="adm-page">
+  <div class="adm-head">
+    <div><a routerLink="/admin/orders" class="eyebrow eyebrow--bare">← All orders</a><h1>Event sales</h1><p>Sales and products sold at your events and stalls, across all dates.</p></div>
+    <div class="adm-head__actions"><button class="btn btn--ghost btn--sm" type="button" (click)="load()">Refresh</button><button class="btn btn--ghost btn--sm" type="button" [disabled]="loading() || failed() || !report()?.events?.length" (click)="export()">Export CSV</button><a routerLink="/admin/orders/new" [queryParams]="{ source: 'event', eventName: eventName || null }" class="btn btn--primary btn--sm">Add stall sale</a></div>
+  </div>
+  <div class="adm-filters"><select class="select" [(ngModel)]="eventName" (ngModelChange)="apply()" aria-label="Select event"><option value="">All events</option>@for (name of names(); track name) { <option [value]="name">{{ name }}</option> }</select></div>
+  @if (loading()) { <div class="skeleton" style="height: 300px" aria-hidden="true"></div> }
+  @else if (failed()) { <div class="adm-alert" role="alert">Event sales could not be loaded. <button class="btn btn--ghost btn--sm" type="button" (click)="load()">Retry</button></div> }
+  @else if (report(); as r) {
+    <div class="adm-grid" style="margin-bottom: 1rem">
+      <div class="adm-card"><span class="muted">Paid sales</span><h2>₹{{ sum('revenue') | number: '1.2-2' }}</h2></div>
+      <div class="adm-card"><span class="muted">Paid orders</span><h2>{{ sum('paidOrders') }}</h2></div>
+      <div class="adm-card"><span class="muted">Units sold</span><h2>{{ sum('units') }}</h2></div>
+      <div class="adm-card"><span class="muted">Unpaid</span><h2>₹{{ sum('pendingAmount') | number: '1.2-2' }}</h2></div>
+    </div>
+    <div class="adm-table-wrap"><table class="adm-table"><thead><tr><th>Event / Stall</th><th class="num">Orders</th><th class="num">Units sold</th><th class="num">Paid sales</th><th class="num">Cash</th><th class="num">UPI</th><th class="num">Card</th><th class="num">Unpaid</th><th>Last sale</th><th>Actions</th></tr></thead><tbody>
+      @for (e of r.events; track e.eventName) {
+        <tr><td><strong>{{ e.eventName }}</strong></td><td class="num">{{ e.orders }}</td><td class="num">{{ e.units }}</td><td class="num">₹{{ e.revenue | number: '1.2-2' }}</td><td class="num">₹{{ e.cash | number: '1.2-2' }}</td><td class="num">₹{{ e.upi | number: '1.2-2' }}</td><td class="num">₹{{ e.card | number: '1.2-2' }}</td><td class="num">₹{{ e.pendingAmount | number: '1.2-2' }}</td><td class="nowrap">{{ e.lastSaleAt | date: 'MMM d, y' }}</td><td class="nowrap"><a routerLink="/admin/orders" [queryParams]="{ source: 'event', eventName: e.eventName }" class="btn btn--ghost btn--sm">Orders</a> <a routerLink="/admin/orders/new" [queryParams]="{ source: 'event', eventName: e.eventName }" class="btn btn--ghost btn--sm">Add sale</a></td></tr>
+      } @empty { <tr><td colspan="10"><div class="adm-empty">No event sales yet. Use “Add stall sale” to record your first sale.</div></td></tr> }
+    </tbody></table></div>
+    <p class="muted" style="margin: .75rem 0">Paid sales and units exclude cancelled and refunded orders. Product subtotals below exclude tax and delivery fees.</p>
+    <div class="adm-card"><h3>Products sold{{ eventName ? ' at ' + eventName : ' across all events' }}</h3><div class="adm-table-wrap"><table class="adm-table"><thead><tr><th>Product</th><th class="num">Units sold</th><th class="num">Product subtotal</th></tr></thead><tbody>@for (p of r.products; track p._id) { <tr><td>{{ p.name }}</td><td class="num">{{ p.quantity }}</td><td class="num">₹{{ p.subtotal | number: '1.2-2' }}</td></tr> } @empty { <tr><td colspan="3"><div class="adm-empty">No paid product sales for this selection.</div></td></tr> }</tbody></table></div></div>
+  }
+</div>

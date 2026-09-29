@@ -1,0 +1,44 @@
+fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.sale-layout { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(260px, 1fr); gap: 1rem; align-items: start; }
+.sale-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1rem; }
+.sale-fields--single { grid-template-columns: minmax(0, 1fr); }
+.sale-extra-toggle { margin: .25rem 0 .75rem; }
+.product-picker { margin-bottom: .75rem; }
+.sale-line { display: grid; grid-template-columns: minmax(0, 1fr) 96px 120px 82px; gap: .75rem; align-items: center; padding: .75rem 0; border-top: 1px solid var(--line); }
+.sale-line small { display: block; margin-top: .2rem; }
+.sale-line > .sale-quantity { width: 100%; min-width: 0; box-sizing: border-box; }
+.sale-line > strong { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.sale-summary .muted { font-size: .85rem; margin: .75rem 0; }
+.sale-total { display: flex; align-items: center; justify-content: space-between; gap: .75rem; border-top: 1px solid var(--line); padding-top: 1rem; margin-top: 1rem; }
+.sale-total strong { font-size: 1.5rem; }
+form { padding-bottom: 110px; }
+.sale-actions {
+  position: fixed;
+  inset: auto 0 0 210px;
+  z-index: 30;
+  display: flex;
+  justify-content: flex-end;
+  gap: .6rem;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 1rem clamp(12px, 2vw, 22px);
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  background: var(--cream);
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -4px 18px rgb(50 30 15 / 8%);
+}
+@media (max-width: 960px) { .sale-actions { left: 0; } }
+@media (max-width: 1000px) { .sale-layout { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 600px) {
+  form { padding-bottom: 180px; }
+  .sale-fields { grid-template-columns: minmax(0, 1fr); }
+  .sale-line { grid-template-columns: minmax(0, 1fr) 75px; gap: .5rem; }
+  .sale-line .btn { justify-self: end; }
+  .sale-actions .btn { flex: 1 1 auto; }
+}
+@media print {
+  form { padding-bottom: 0; }
+  .sale-actions { display: none; }
+}
+.sale-field-error { color: var(--danger, #a52b20); }
+.input.ng-touched.ng-invalid { border-color: var(--danger, #a52b20); }

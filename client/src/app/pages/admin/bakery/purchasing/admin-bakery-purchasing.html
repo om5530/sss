@@ -1,0 +1,136 @@
+<div class="purchasing">
+  <header class="purchase-header">
+    <div><h1>Purchasing</h1><p>Record what you bought, add it to inventory, and track your spending.</p></div>
+  </header>
+
+  @if (notice()) { <p class="purchase-notice" role="status">{{ notice() }}</p> }
+  @if (history(); as h) {
+    <section class="purchase-totals" aria-label="Purchase spending">
+      <div class="card"><span>All time</span><strong>{{ money(h.summary.allTime) }}</strong></div>
+      <div class="card"><span>This month</span><strong>{{ money(h.summary.thisMonth) }}</strong></div>
+      <div class="card"><span>This year</span><strong>{{ money(h.summary.thisYear) }}</strong></div>
+    </section>
+  }
+
+  <form class="card purchase-form" (ngSubmit)="savePurchase()" novalidate>
+    <div class="section-heading"><div><h2>Record purchase</h2><p>Choose ingredients or packaging from Materials. Saving adds the quantity directly to stock.</p></div><a routerLink="/admin/bakery/materials">Add a missing material</a></div>
+    @if (error()) { <p class="purchase-error" role="alert">{{ error() }}</p> }
+    @if (materialsError()) { <p class="purchase-error" role="alert">{{ materialsError() }} <button type="button" class="btn btn--outline btn--sm" (click)="loadMaterials()">Retry</button></p> }
+    @if (loadingMaterials()) { <p role="status">Loading materials…</p> }
+    <fieldset [disabled]="saving() || uncertainSave() || loadingMaterials()">
+      <legend class="visually-hidden">Purchased items</legend>
+      <div class="purchase-meta">
+        <label class="purchase-date-field">Purchase date<input class="input" type="date" name="purchasedAt" [(ngModel)]="form.purchasedAt" [max]="today" [attr.aria-invalid]="errors()['date'] ? true : null" aria-describedby="purchase-date-error" required />
+          @if (errors()['date']) { <small id="purchase-date-error" class="error-text" role="alert">{{ errors()['date'] }}</small> }
+        </label>
+        <label><span>Supplier / shop <span class="optional">Optional</span></span><input class="input" name="supplierName" [(ngModel)]="form.supplierName" placeholder="Where you bought it" [attr.aria-invalid]="errors()['supplier'] ? true : null" aria-describedby="purchase-supplier-error" />
+          @if (errors()['supplier']) { <small id="purchase-supplier-error" class="error-text" role="alert">{{ errors()['supplier'] }}</small> }
+        </label>
+        <label class="purchase-notes"><span>Notes <span class="optional">Optional</span></span><input class="input" name="notes" [(ngModel)]="form.notes" placeholder="Bill number or other details" [attr.aria-invalid]="errors()['notes'] ? true : null" aria-describedby="purchase-notes-error" />
+          @if (errors()['notes']) { <small id="purchase-notes-error" class="error-text" role="alert">{{ errors()['notes'] }}</small> }
+        </label>
+      </div>
+      @for (line of form.lines; track line; let i = $index) {
+        <div class="purchase-item">
+          <div class="item-title"><h3>Item {{ i + 1 }}</h3>@if (form.lines.length > 1) { <button type="button" class="item-remove" (click)="removeLine(i)" [attr.aria-label]="'Remove item ' + (i + 1)" title="Remove item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button> }</div>
+          <div class="item-fields">
+            <label class="material-field">Material<select class="select" [name]="'material' + i" [(ngModel)]="line.materialId" (ngModelChange)="chooseMaterial(line)" [attr.aria-invalid]="errors()[i + '-material'] ? true : null" [attr.aria-describedby]="'purchase-material-error-' + i" required>
+              <option value="">Choose material</option>
+              @for (m of materials(); track m._id) { <option [value]="m._id">{{ m.name }}</option> }
+            </select>
+              @if (errors()[i + '-material']) { <small [id]="'purchase-material-error-' + i" class="error-text" role="alert">{{ errors()[i + '-material'] }}</small> }
+              @if (material(line); as m) { <small class="muted">In stock: {{ m.currentStock | number:'1.0-3' }} {{ m.baseUom }}</small> }
+            </label>
+            <label>Quantity bought<input class="input" type="text" inputmode="decimal" [name]="'quantity' + i" [(ngModel)]="line.quantity" placeholder="e.g. 2" [attr.aria-invalid]="errors()[i + '-quantity'] ? true : null" [attr.aria-describedby]="'purchase-quantity-error-' + i" required />
+              @if (errors()[i + '-quantity']) { <small [id]="'purchase-quantity-error-' + i" class="error-text" role="alert">{{ errors()[i + '-quantity'] }}</small> }
+            </label>
+            <label>Unit<select class="select" [name]="'unit' + i" [(ngModel)]="line.uom" [attr.aria-invalid]="errors()[i + '-unit'] ? true : null" [attr.aria-describedby]="'purchase-unit-error-' + i" required>
+              <option value="">Choose unit</option>@for (u of units(line); track u) { <option [value]="u">{{ u }}</option> }
+            </select>
+              @if (errors()[i + '-unit']) { <small [id]="'purchase-unit-error-' + i" class="error-text" role="alert">{{ errors()[i + '-unit'] }}</small> }
+            </label>
+            <label>Total paid (₹)<input class="input" type="text" inputmode="decimal" [name]="'amount' + i" [(ngModel)]="line.totalPaid" placeholder="e.g. 250" [attr.aria-invalid]="errors()[i + '-amount'] ? true : null" [attr.aria-describedby]="'purchase-amount-error-' + i" required />
+              <small class="visually-hidden">Amount for the entire quantity</small>
+              @if (errors()[i + '-amount']) { <small [id]="'purchase-amount-error-' + i" class="error-text" role="alert">{{ errors()[i + '-amount'] }}</small> }
+            </label>
+          </div>
+        </div>
+      }
+      <button type="button" class="btn btn--outline btn--sm" (click)="addLine()" [disabled]="form.lines.length >= 50">+ Add another item</button>
+    </fieldset>
+    <footer class="save-purchase"><div><span>Total purchase</span><strong>{{ money(totalPaid()) }}</strong></div><button class="btn btn--accent" type="submit" [disabled]="saving() || loadingMaterials() || !!materialsError() || !materials().length">{{ saving() ? 'Saving…' : uncertainSave() ? 'Retry save' : 'Save purchase & update inventory' }}</button></footer>
+    @if (!loadingMaterials() && !materialsError() && !materials().length) { <p class="muted">Add an ingredient or packaging material in Materials to record your first purchase.</p> }
+  </form>
+
+  <section id="purchase-history" class="card purchase-history" aria-labelledby="purchase-history-title">
+    <div class="history-heading">
+      <div>
+        <span class="section-kicker">YOUR PURCHASES</span>
+        <h2 id="purchase-history-title">Purchase history</h2>
+        <p>What you bought, how much you paid, and where you bought it.</p>
+      </div>
+      <label class="history-filter">
+        <span>Show purchases</span>
+        <select class="select" aria-label="Purchase period" [ngModel]="month()" (ngModelChange)="filterMonth($event)">
+          <option value="">All time</option>
+          @for (period of availableMonths(); track period) {
+            <option [value]="period">{{ monthLabel(period) }}{{ period === today.slice(0, 7) ? ' · This month' : '' }}</option>
+          }
+        </select>
+      </label>
+    </div>
+    @if (historyError()) {
+      <p class="purchase-error" role="alert">{{ historyError() }} <button type="button" class="btn btn--outline btn--sm" (click)="loadHistory()">Retry</button></p>
+    }
+    @if (loadingHistory()) { <p class="history-loading" role="status">Loading purchases…</p> }
+    @if (!loadingHistory() && !historyError()) {
+      @if (history(); as h) {
+        <div class="history-total">
+          <div class="history-period"><strong>{{ selectedMonthLabel() }}</strong><span>{{ h.total }} {{ h.total === 1 ? 'purchase' : 'purchases' }} recorded</span></div>
+          <div class="history-spend"><span>Total spent</span><strong>{{ money(h.summary.selectedTotal) }}</strong></div>
+        </div>
+        <div class="table-wrap history-table-wrap">
+          <table class="data-table purchase-table">
+            <colgroup><col class="date-col" /><col class="items-col" /><col class="supplier-col" /><col class="amount-col" /></colgroup>
+            <thead><tr><th scope="col">Purchased on</th><th scope="col">Items bought</th><th scope="col">Supplier &amp; notes</th><th scope="col" class="num">Amount paid</th></tr></thead>
+            <tbody>
+              @for (p of h.purchases; track p._id) {
+                <tr>
+                  <td class="purchase-date"><time [attr.datetime]="p.purchasedAt">{{ p.purchasedAt | date:'dd MMM yyyy':'+0530' }}</time><small class="purchase-reference">{{ p.code }}</small></td>
+                  <td class="purchase-materials">
+                    @for (line of p.lines; track $index) {
+                      <div class="history-item"><strong>{{ line.materialName }}</strong><div class="item-detail"><span class="quantity-badge">{{ line.quantity | number:'1.0-3' }} {{ line.uom }}</span>@if (p.lines.length > 1) { <span class="item-cost">{{ money(line.totalPaid) }}</span> }</div></div>
+                    }
+                  </td>
+                  <td class="purchase-source"><span class="mobile-label">Supplier &amp; notes</span><span [class.no-supplier]="!p.supplierName">{{ p.supplierName || '—' }}</span>@if (p.notes) { <small class="purchase-note">{{ p.notes }}</small> }</td>
+                  <td class="purchase-amount num"><span class="mobile-label">Amount paid</span><strong>{{ money(p.totalPaid) }}</strong></td>
+                </tr>
+              } @empty {
+                <tr class="empty-row"><td colspan="4" class="empty-state"><span class="empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6"/></svg></span><strong>{{ month() ? 'No purchases in this month' : 'Your purchase history starts here' }}</strong><p>{{ month() ? 'Choose another month or select All time.' : 'Record a purchase above to track your spending and stock.' }}</p></td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        @if (h.pages > 1) { <nav class="history-pages" aria-label="Purchase history pages"><button type="button" class="btn btn--outline btn--sm" [disabled]="h.page <= 1" (click)="loadHistory(h.page - 1)">Previous</button><span>Page {{ h.page }} of {{ h.pages }}</span><button type="button" class="btn btn--outline btn--sm" [disabled]="h.page >= h.pages" (click)="loadHistory(h.page + 1)">Next</button></nav> }
+      }
+    }
+  </section>
+  @if (history(); as h) {
+    @if (h.months.length) {
+      <section class="card monthly-spending" aria-labelledby="monthly-spending-title">
+        <div class="monthly-heading"><div><span class="section-kicker">SPENDING OVER TIME</span><h2 id="monthly-spending-title">Spending by month</h2><p>Choose a month to view its purchases.</p></div><span class="month-count">{{ h.months.length }} {{ h.months.length === 1 ? 'month' : 'months' }}</span></div>
+        <div class="monthly-list" role="group" aria-label="Monthly purchase spending">
+          <div class="monthly-labels" aria-hidden="true"><span>Month</span><span>Purchases</span><span>Total spent</span><span></span></div>
+          @for (row of h.months; track row.month) {
+            <button type="button" class="monthly-row" [class.selected]="month() === row.month" [attr.aria-pressed]="month() === row.month" [attr.aria-label]="monthLabel(row.month) + ', ' + row.count + (row.count === 1 ? ' purchase, ' : ' purchases, ') + money(row.total) + '. View purchases'" (click)="viewMonth(row.month)">
+              <span class="monthly-name"><span class="month-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4M16 3v4M4 10h16M8 14h3M8 17h3"/></svg></span><span>{{ monthLabel(row.month) }}</span></span>
+              <span class="monthly-count"><span>{{ row.count }}</span><span class="mobile-count">{{ row.count === 1 ? 'purchase' : 'purchases' }}</span></span>
+              <strong class="monthly-amount">{{ money(row.total) }}</strong>
+              <svg class="month-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+            </button>
+          }
+        </div>
+      </section>
+    }
+  }
+</div>

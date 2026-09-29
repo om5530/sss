@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const env = require('../config/env');
 const StoreSettings = require('../models/StoreSettings');
+const { DEFAULT_UPI } = require('../config/upi');
 
 const DEFAULTS = {
   _id: 'store',
@@ -12,6 +13,7 @@ const DEFAULTS = {
   contactAddress: '',
   contactPhone: '',
   contactEmail: '',
+  ...DEFAULT_UPI,
 };
 
 function fallbackSettings() {
@@ -23,7 +25,7 @@ async function getStoreSettings() {
   // that create orders still pass through dbReady before querying products.
   if (mongoose.connection.readyState !== 1) return fallbackSettings();
   const current = await StoreSettings.findById('store').lean();
-  if (current) return current;
+  if (current) return { ...DEFAULTS, ...current };
   try {
     return (await StoreSettings.create(DEFAULTS)).toObject();
   } catch (err) {

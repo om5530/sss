@@ -36,6 +36,8 @@ router.get('/costing-sheets/:id/recalculate', ctrl.recalculateSheet);
 router.post('/costing-sheets/:id/complete', ctrl.completeProduction);
 router.get('/recipes/:id/versions', ctrl.revisions);
 router.get('/purchasing', ctrl.getPurchasing);
+router.get('/purchase-history', ctrl.purchaseHistory);
+router.post('/purchases/record', ctrl.recordPurchase);
 router.post('/suppliers', ctrl.saveSupplier);
 router.post('/formats', ctrl.saveFormat);
 router.post('/formats/:id/prefer', ctrl.preferFormat);

@@ -46,6 +46,7 @@
 
                 <div class="adm-qcard__meta">
                   <span class="adm-badge adm-badge--type">{{ order.orderType }}</span>
+                  @if (order.source && order.source !== 'website') { <span class="adm-badge">{{ orderSource(order) }}{{ order.eventName ? ' · ' + order.eventName : '' }}</span> }
                   <span class="adm-badge">{{ orderCustomer(order) }}</span>
                   <span class="adm-badge adm-badge--{{ order.paymentStatus }}">{{ order.paymentStatus }}</span>
                   @if (order.paymentMethod === 'cash' && order.paymentStatus === 'pending') {
@@ -57,6 +58,7 @@
                 </div>
 
                 <p class="adm-qcard__items">{{ itemsSummary(order) }}</p>
+                @if (order.notes) { <p style="white-space: pre-wrap; font-size: .85rem"><strong>Note:</strong> {{ order.notes }}</p> }
 
                 <div class="adm-qcard__foot">
                   <span class="adm-qcard__total">₹{{ order.pricing.total.toFixed(2) }}</span>

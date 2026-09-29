@@ -12,7 +12,6 @@ const razorpayService = require('../services/razorpay.service');
 const { audit } = require('../services/audit.service');
 const { resolveCategory, decorateProducts } = require('../services/category.service');
 const Category = require('../models/Category');
-const { emailForOrder, notifyOrderStatus, notifyRefund } = require('../services/notify.service');
 
 // The store's day runs on IST (AS-8.1); the server may not.
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
@@ -136,13 +135,27 @@ const listOrders = asyncHandler(async (req, res) => {
   if (status) filter.orderStatus = status;
   if (type) filter.orderType = type;
   if (payment) filter.paymentStatus = payment;
+  if (req.query.amount !== undefined && req.query.amount !== '') {
+    const amount = String(req.query.amount);
+    if (!/^(?:0|[1-9]\d*)(?:\.\d{1,2})?$/.test(amount) || Number(amount) > 10000000) {
+      throw ApiError.badRequest('Enter a valid order total with up to two decimal places');
+    }
+    const total = Number(amount);
+    filter['pricing.total'] = { $gte: total - 0.005, $lt: total + 0.005 };
+  }
+  if (req.query.source === 'website') filter.$and = [{ $or: [{ source: 'website' }, { source: { $exists: false } }] }];
+  else if (['phone', 'walk-in', 'event'].includes(req.query.source)) filter.source = req.query.source;
+  if (typeof req.query.eventName === 'string' && req.query.eventName.trim()) {
+    filter.eventName = new RegExp(`^${escapeRegex(req.query.eventName.trim())}$`, 'i');
+  }
   if (req.query.from || req.query.to) {
     const { start, endExclusive } = parseRange(req.query);
     filter.createdAt = { $gte: start, $lt: endExclusive };
   }
 
   if (q && q.trim()) {
-    const rx = new RegExp(escapeRegex(q.trim()), 'i');
+    const term = q.trim();
+    const rx = new RegExp(escapeRegex(term), 'i');
     // Match account holders too, so staff can search by profile name/phone.
     const users = await User.find({ $or: [{ name: rx }, { phone: rx }, { email: rx }] }).select('_id');
     filter.$or = [
@@ -150,8 +163,16 @@ const listOrders = asyncHandler(async (req, res) => {
       { 'dining.customerName': rx },
       { 'takeaway.customerName': rx },
       { 'takeaway.phone': rx },
+      { 'customer.name': rx },
+      { 'customer.phone': rx },
+      { eventName: rx },
       { user: { $in: users.map((u) => u._id) } },
     ];
+    const amountTerm = term.replace(/^₹\s*/, '');
+    if (/^(?:0|[1-9]\d*)(?:\.\d{1,2})?$/.test(amountTerm)) {
+      const total = Number(amountTerm);
+      filter.$or.push({ 'pricing.total': { $gte: total - 0.005, $lt: total + 0.005 } });
+    }
   }
 
   const [orders, total] = await Promise.all([
@@ -222,10 +243,6 @@ const settleCashOrder = asyncHandler(async (req, res) => {
     after: { paymentStatus: 'paid' },
   });
 
-  if (order.orderStatus === 'confirmed') {
-    await emailForOrder(order).then((email) => notifyOrderStatus(order, 'confirmed', email));
-  }
-
   res.json({ success: true, order, payment });
 });
 
@@ -254,7 +271,7 @@ const refundOrder = asyncHandler(async (req, res) => {
       paymentId: payment.razorpayPaymentId,
       isMockPayment: payment.mock,
     });
-  } else if (payment.provider !== 'cash') {
+  } else if (payment.provider !== 'cash' && payment.provider !== 'manual') {
     await stripeService.createRefund({
       paymentIntentId: payment.stripePaymentIntentId,
       isMockPayment: payment.mock,
@@ -274,8 +291,6 @@ const refundOrder = asyncHandler(async (req, res) => {
     before: { paymentStatus: 'paid' },
     after: { paymentStatus: 'refunded', reason },
   });
-
-  await emailForOrder(order).then((email) => notifyRefund(order, email));
 
   res.json({ success: true, order, payment });
 });
@@ -697,7 +712,7 @@ const prepSheet = asyncHandler(async (req, res) => {
     ]),
     Order.find(match)
       .sort({ fulfilAt: 1, createdAt: 1 })
-      .select('orderNumber orderType orderStatus fulfilAt items dining takeaway delivery paymentMethod paymentStatus')
+      .select('orderNumber orderType orderStatus fulfilAt items dining takeaway delivery paymentMethod paymentStatus source eventName customer notes')
       .populate('user', 'name phone'),
   ]);
 

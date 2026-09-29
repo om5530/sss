@@ -1,14 +1,13 @@
-const crypto = require('crypto');
+const generateOrderNumber = require('../utils/orderNumber');
 const { body } = require('express-validator');
 const asyncHandler = require('../utils/asyncHandler');
 const ApiError = require('../utils/ApiError');
 const Order = require('../models/Order');
-const Product = require('../models/Product');
+const { claimStock, releaseStock } = require('../services/order-stock.service');
 const Coupon = require('../models/Coupon');
 const { priceCart } = require('../services/pricing.service');
 const { quoteMatches } = require('../services/quote.service');
 const { audit } = require('../services/audit.service');
-const { emailForOrder, notifyOrderPlaced, notifyOrderStatus } = require('../services/notify.service');
 const { isOpenAt } = require('../services/shop.service');
 const { getStoreSettings } = require('../services/store-settings.service');
 
@@ -39,71 +38,6 @@ function resolveFulfilAt(raw, settings) {
     throw ApiError.badRequest('That time is outside our opening hours — pick a time we’re open');
   }
   return when;
-}
-
-/**
- * Atomically claims stock for every tracked product in the order.
- * Returns the list of successful decrements so a later failure can roll back.
- * Untracked products (stockCount: null) are skipped entirely.
- */
-async function claimStock(lineItems) {
-  const claimed = [];
-  try {
-    for (const item of lineItems) {
-      const res = await Product.updateOne(
-        { _id: item.product, stockCount: { $ne: null, $gte: item.quantity } },
-        { $inc: { stockCount: -item.quantity } },
-      );
-      if (res.matchedCount === 0) {
-        // Either untracked (fine) or insufficient stock (conflict).
-        const p = await Product.findById(item.product).select('name stockCount');
-        if (p && p.stockCount != null) {
-          throw ApiError.conflict(
-            p.stockCount > 0
-              ? `Only ${p.stockCount} × "${p.name}" left today — please adjust your cart`
-              : `"${p.name}" just sold out — please remove it from your cart`,
-          );
-        }
-        continue; // untracked
-      }
-      claimed.push(item);
-      // Sold out → hide from the menu automatically.
-      await Product.updateOne({ _id: item.product, stockCount: { $lte: 0 } }, { $set: { available: false } });
-    }
-    return claimed;
-  } catch (err) {
-    await releaseStock(claimed);
-    throw err;
-  }
-}
-
-/** Returns claimed stock (order failed to persist, or was cancelled). */
-async function releaseStock(lineItems) {
-  for (const item of lineItems) {
-    // Read the BEFORE state so we only undo what the sell-out rule itself did:
-    // a product an admin hid by hand (stock still > 0) must stay hidden.
-    const prev = await Product.findOneAndUpdate(
-      { _id: item.product, stockCount: { $ne: null } },
-      { $inc: { stockCount: item.quantity } },
-    )
-      .select('stockCount archived')
-      .catch((err) => {
-        console.error('[stock] release failed:', err.message);
-        return null;
-      });
-    if (prev && prev.stockCount <= 0 && !prev.archived) {
-      await Product.updateOne(
-        { _id: item.product, stockCount: { $gt: 0 } },
-        { $set: { available: true } },
-      ).catch(() => {});
-    }
-  }
-}
-
-function generateOrderNumber() {
-  const ts = Date.now().toString(36).toUpperCase();
-  const rand = crypto.randomBytes(2).toString('hex').toUpperCase();
-  return `BC-${ts}-${rand}`;
 }
 
 function buildFulfilment(orderType, payload) {
@@ -202,8 +136,6 @@ const createOrder = asyncHandler(async (req, res) => {
     throw err;
   }
 
-  await emailForOrder(order).then((email) => notifyOrderPlaced(order, email));
-
   res.status(201).json({ success: true, order });
 });
 
@@ -215,6 +147,10 @@ const listMyOrders = asyncHandler(async (req, res) => {
 const getOrder = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id).populate('items.product', 'name image slug');
   if (!order) throw ApiError.notFound('Order not found');
+
+  if (order.source && order.source !== 'website' && req.user?.role !== 'admin') {
+    throw ApiError.forbidden('Staff-entered orders are only available in the admin console');
+  }
 
   if (order.user) {
     // Orders tied to an account are private to their owner (or an admin).
@@ -280,11 +216,6 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
     before: { orderStatus: previous },
     after: { orderStatus: status },
   });
-
-  // Let the customer know about the moves they care about.
-  if (['confirmed', 'preparing', 'ready', 'completed', 'cancelled'].includes(status)) {
-    await emailForOrder(order).then((email) => notifyOrderStatus(order, status, email));
-  }
 
   res.json({ success: true, order });
 });

@@ -15,7 +15,7 @@
 - **Aggregator pain is real and worsening.** Zomato/Swiggy all-in take is **25–35% per order** (2025, commissions + fees + GST); both moved to tiered commissions and paid priority listing in 2025; Zomato raised the consumer platform fee 19% to ₹14.90 in March 2026. On a ₹300 brownie box, the bakery loses ~₹75–105 — lethal at bakery margins.
 - **The market is big and fragmented.** India's bakery market: **USD 12–15B in 2025 → ~USD 32B by 2034** (~9% CAGR, IMARC/EMR 2025). Cafés & bars: USD 18.8B (2025), and **76% of outlets are independents** — exactly the long tail a self-serve SaaS targets.
 - **WhatsApp + UPI are the tailwinds.** F&B brands report **20–30% higher repeat orders** via WhatsApp reorder flows (2025); UPI has **0% MDR by mandate** (reaffirmed 2025) plus a 0.15% government incentive on small-merchant transactions ≤₹2,000. High-repeat, low-AOV bakery purchases are the perfect shape for messaging + UPI.
-- **We already have the product.** The SSS codebase is a working v1: storefront, cart/checkout (cash + Razorpay), coupons, stock, reviews, custom-cake briefs, admin console, notifications, PWA, tests. Competitors would need to build what we can generalize.
+- **We already have the product.** The SSS codebase is a working v1: storefront, cart/checkout (cash + Razorpay), coupons, stock, reviews, custom-cake briefs, admin console, incoming-order alerts, PWA, tests. Competitors would need to build what we can generalize.
 
 ## 3. Who it's for
 
@@ -91,7 +91,7 @@ Market anchors: small-bakery "normal software spend" ≈ ₹800–1,000/mo; Wati
 - **Redis (Upstash) for rate limits, caches, queues** — the current in-memory stores are per-lambda; multi-tenant makes this mandatory, not optional.
 - **CI + Sentry + E2E tests** — before any second tenant.
 - **Tenant-isolation test suite** — the single most important test file in the product: prove tenant A can never read/write tenant B, for every route.
-- Notifications: per-tenant sender identities (Resend domains / WhatsApp numbers); Cloudinary folders per tenant.
+- Future messaging integrations: per-tenant sender identities; Cloudinary folders per tenant.
 
 ### Migration path (phases, rough effort)
 | Phase | What | Effort |

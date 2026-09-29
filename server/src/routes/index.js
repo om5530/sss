@@ -17,7 +17,6 @@ const contactRoutes = require('./contact.routes');
 const cakeRoutes = require('./cake.routes');
 const adminRoutes = require('./admin.routes');
 const bakeryRoutes = require('./bakery.routes');
-const notifications = require('../controllers/notification.controller');
 
 const router = express.Router();
 
@@ -41,7 +40,6 @@ router.get('/shop', asyncHandler(async (req, res) => {
 
 // Everything below requires a live database connection.
 router.use(dbReady);
-router.get('/jobs/notifications', notifications.requireJobSecret, notifications.dispatch);
 router.use('/auth', authRoutes);
 router.use('/products', productRoutes);
 router.use('/cart', cartRoutes);

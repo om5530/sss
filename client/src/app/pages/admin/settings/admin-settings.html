@@ -9,11 +9,20 @@
   } @else {
     <form class="adm-card" (ngSubmit)="save()">
       <h2>Pricing</h2>
-      <div class="adm-cols" style="grid-template-columns: repeat(3, 1fr); gap: 0 1rem">
+      <div class="adm-cols" style="grid-template-columns: repeat(2, 1fr); gap: 0 1rem">
         <div class="field"><label class="label" for="s-tax">Tax rate (%)</label><input id="s-tax" class="input" type="number" min="0" max="100" step="0.01" [(ngModel)]="taxPercent" name="taxRate" required /></div>
         <div class="field"><label class="label" for="s-delivery">Delivery fee</label><input id="s-delivery" class="input" type="number" min="0" step="0.01" [(ngModel)]="deliveryFee" name="deliveryFee" required /></div>
-        <div class="field"><label class="label" for="s-currency">Currency</label><select id="s-currency" class="select" [(ngModel)]="currency" name="currency"><option value="inr">INR — Indian rupee</option></select><small>INR is currently supported.</small></div>
       </div>
+      <h2>UPI payments</h2>
+      <p class="muted">Choose who receives UPI payments. Each order’s QR uses the selected account and exact total.</p>
+      <div class="field"><label class="label" for="s-upi-default">Default recipient</label><select id="s-upi-default" class="select" name="defaultUpiRecipientId" [(ngModel)]="defaultUpiRecipientId">@for (r of upiRecipients; track r.id) { <option [value]="r.id" [disabled]="!r.upiId">{{ r.name }}</option> }</select></div>
+      @for (r of upiRecipients; track r.id) {
+        <h3>{{ r.name }}</h3>
+        <div class="adm-cols">
+          <div class="field"><label class="label" [for]="'s-upi-' + r.id">UPI ID</label><input [id]="'s-upi-' + r.id" class="input" [(ngModel)]="r.upiId" [name]="'upi-' + r.id" maxlength="320" placeholder="Enter UPI ID to enable this recipient" /></div>
+          <div class="field"><label class="label" [for]="'s-upi-name-' + r.id">Account holder name</label><input [id]="'s-upi-name-' + r.id" class="input" [(ngModel)]="r.payeeName" [name]="'upi-name-' + r.id" maxlength="120" required /></div>
+        </div>
+      }
       <h2>Opening hours</h2>
       <p class="muted">Times use India Standard Time. Use 00:00–24:00 for all day, or the same time to keep the shop closed.</p>
       <div class="adm-cols" style="grid-template-columns: repeat(2, 1fr); gap: 0 1rem">
