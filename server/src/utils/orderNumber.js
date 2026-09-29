@@ -1,5 +1,10 @@
-const crypto = require('crypto');
+const Counter = require('../models/Counter');
 
-module.exports = function generateOrderNumber() {
-  return `BC-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(2).toString('hex').toUpperCase()}`;
+module.exports = async function generateOrderNumber() {
+  const counter = await Counter.findByIdAndUpdate(
+    'order-number',
+    { $inc: { value: 1 } },
+    { upsert: true, new: true },
+  );
+  return `TGB-${String(counter.value).padStart(6, '0')}`;
 };

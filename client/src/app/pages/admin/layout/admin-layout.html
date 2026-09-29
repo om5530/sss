@@ -84,6 +84,7 @@
               <span>Calculator</span>
             </a>
             <a routerLink="/admin/bakery/production" routerLinkActive="active" class="adm-side__sub-link" aria-label="Production">Production</a>
+            <a routerLink="/admin/prep" routerLinkActive="active" class="adm-side__sub-link" aria-label="Prep sheet">Prep sheet</a>
             <a routerLink="/admin/bakery/inventory" routerLinkActive="active" class="adm-side__sub-link" aria-label="Inventory">
               <span>Inventory</span>
             </a>
@@ -99,11 +100,11 @@
         }
       </div>
 
-      <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="adm-side__link" aria-label="Dashboard">
+      <a routerLink="/admin/orders" routerLinkActive="active" class="adm-side__link" aria-label="Orders">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-          <path d="M4 13h6V4H4v9Zm10 7h6v-9h-6v9ZM4 20h6v-4H4v4Zm10-12h6V4h-6v4Z" stroke-linejoin="round" />
+          <path d="M6 3h12v18l-2-1.4L14 21l-2-1.4L10 21l-2-1.4L6 21V3Z" stroke-linejoin="round" /><path d="M9 8h6M9 12h6" stroke-linecap="round" />
         </svg>
-        Dashboard
+        Orders
       </a>
       <a routerLink="/admin/queue" routerLinkActive="active" class="adm-side__link" aria-label="Live queue">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
@@ -111,45 +112,11 @@
         </svg>
         Live queue
       </a>
-      <a routerLink="/admin/prep" routerLinkActive="active" class="adm-side__link" aria-label="Prep sheet">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-          <path d="M8 3.5h8v4H8v-4Z" stroke-linejoin="round" /><path d="M5 7.5h14V20a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7.5Z" stroke-linejoin="round" /><path d="M9 12h6M9 16h4" stroke-linecap="round" />
-        </svg>
-        Prep sheet
-      </a>
-      <a routerLink="/admin/orders" routerLinkActive="active" class="adm-side__link" aria-label="Orders">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-          <path d="M6 3h12v18l-2-1.4L14 21l-2-1.4L10 21l-2-1.4L6 21V3Z" stroke-linejoin="round" /><path d="M9 8h6M9 12h6" stroke-linecap="round" />
-        </svg>
-        Orders
-      </a>
-      <a routerLink="/admin/events" routerLinkActive="active" class="adm-side__link" aria-label="Event sales">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 10h16M5 10v10h14V10M3 10l2-6h14l2 6M9 20v-6h6v6" stroke-linejoin="round" /></svg>
-        Event sales
-      </a>
       <a routerLink="/admin/products" routerLinkActive="active" class="adm-side__link" aria-label="Products">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
           <path d="M4 8.5 12 4l8 4.5v7L12 20l-8-4.5v-7Z" stroke-linejoin="round" /><path d="M4 8.5 12 13l8-4.5M12 13v7" stroke-linejoin="round" />
         </svg>
         Products
-      </a>
-      <a routerLink="/admin/categories" routerLinkActive="active" class="adm-side__link" aria-label="Categories">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-          <rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" />
-        </svg>
-        Categories
-      </a>
-      <a routerLink="/admin/customers" routerLinkActive="active" class="adm-side__link" aria-label="Customers">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-          <circle cx="9" cy="8.5" r="3.2" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0M15.5 12a3.2 3.2 0 1 0-2.2-5.5M15 15.6c2.8.4 5 1.8 5.5 3.4" stroke-linecap="round" />
-        </svg>
-        Customers
-      </a>
-      <a routerLink="/admin/cake-requests" routerLinkActive="active" class="adm-side__link" aria-label="Custom orders">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-          <path d="M4 20h16M5 20v-6.5A2.5 2.5 0 0 1 7.5 11h9a2.5 2.5 0 0 1 2.5 2.5V20" stroke-linecap="round" stroke-linejoin="round" /><path d="M12 11V8.5" stroke-linecap="round" /><path d="M12 8.5a1.6 1.6 0 0 0 1.6-1.6c0-.9-1.6-2.9-1.6-2.9s-1.6 2-1.6 2.9A1.6 1.6 0 0 0 12 8.5Z" stroke-linejoin="round" /><path d="M5 15.5c1.2 1 2.3 1 3.5 0s2.3-1 3.5 0 2.3 1 3.5 0 2.3-1 3.5 0" stroke-linecap="round" />
-        </svg>
-        Custom orders
       </a>
       <div class="adm-side__dropdown">
         <button
@@ -177,6 +144,34 @@
         <div id="admin-more-tools" [hidden]="!toolsOpen()">
           @if (toolsOpen()) {
             <div class="adm-side__sub-menu">
+            <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="adm-side__sub-link" aria-label="Dashboard">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M4 13h6V4H4v9Zm10 7h6v-9h-6v9ZM4 20h6v-4H4v4Zm10-12h6V4h-6v4Z" stroke-linejoin="round" />
+              </svg>
+              Dashboard
+            </a>
+            <a routerLink="/admin/events" routerLinkActive="active" class="adm-side__sub-link" aria-label="Event sales">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 10h16M5 10v10h14V10M3 10l2-6h14l2 6M9 20v-6h6v6" stroke-linejoin="round" /></svg>
+              Event sales
+            </a>
+            <a routerLink="/admin/categories" routerLinkActive="active" class="adm-side__sub-link" aria-label="Categories">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" />
+              </svg>
+              Categories
+            </a>
+            <a routerLink="/admin/customers" routerLinkActive="active" class="adm-side__sub-link" aria-label="Customers">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <circle cx="9" cy="8.5" r="3.2" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0M15.5 12a3.2 3.2 0 1 0-2.2-5.5M15 15.6c2.8.4 5 1.8 5.5 3.4" stroke-linecap="round" />
+              </svg>
+              Customers
+            </a>
+            <a routerLink="/admin/cake-requests" routerLinkActive="active" class="adm-side__sub-link" aria-label="Custom orders">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M4 20h16M5 20v-6.5A2.5 2.5 0 0 1 7.5 11h9a2.5 2.5 0 0 1 2.5 2.5V20" stroke-linecap="round" stroke-linejoin="round" /><path d="M12 11V8.5" stroke-linecap="round" /><path d="M12 8.5a1.6 1.6 0 0 0 1.6-1.6c0-.9-1.6-2.9-1.6-2.9s-1.6 2-1.6 2.9A1.6 1.6 0 0 0 12 8.5Z" stroke-linejoin="round" /><path d="M5 15.5c1.2 1 2.3 1 3.5 0s2.3-1 3.5 0 2.3 1 3.5 0 2.3-1 3.5 0" stroke-linecap="round" />
+              </svg>
+              Custom orders
+            </a>
             <a routerLink="/admin/activity" routerLinkActive="active" class="adm-side__sub-link" aria-label="Activity">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                 <path d="M3 12h4l2.5-6 4 12L16 12h5" stroke-linecap="round" stroke-linejoin="round" />

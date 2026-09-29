@@ -7,6 +7,7 @@ const { MongoMemoryServer } = require('mongodb-memory-server');
 const Order = require('../src/models/Order');
 const Product = require('../src/models/Product');
 const Payment = require('../src/models/Payment');
+const generateOrderNumber = require('../src/utils/orderNumber');
 let mongod, server, base, adminToken, customerToken, product, adminId;
 const json = (method, path, body, token = adminToken) => fetch(base + path, {
   method, headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
@@ -50,6 +51,14 @@ before(async () => {
 });
 after(async () => { await new Promise((resolve) => server.close(resolve)); await mongoose.disconnect(); await mongod.stop(); });
 
+test('short order numbers stay unique when generated concurrently', async () => {
+  const numbers = await Promise.all(Array.from({ length: 20 }, () => generateOrderNumber()));
+  assert.ok(numbers.every((number) => /^TGB-\d{6}$/.test(number)));
+  assert.equal(new Set(numbers).size, numbers.length);
+  const values = numbers.map((number) => Number(number.slice(3))).sort((a, b) => a - b);
+  assert.deepEqual(values, Array.from({ length: 20 }, (_, index) => values[0] + index));
+});
+
 test('manual creation, quotes, settlement and event reports require admin access', async () => {
   for (const token of [null, customerToken]) {
     for (const [method, path, body] of [
@@ -63,6 +72,7 @@ test('manual creation, quotes, settlement and event reports require admin access
 test('event counter sale has optional customer details, authoritative INR prices and a manual payment record', async () => {
   const order = await create({ pricing: { total: 1 }, paymentMethod: undefined });
   assert.equal(order.source, 'event'); assert.equal(order.eventName, 'Diwali Fair 2026');
+  assert.match(order.orderNumber, /^TGB-\d{6}$/);
   assert.equal(order.user, null); assert.equal(order.createdBy, adminId);
   assert.equal(order.pricing.total, 210); assert.equal(order.pricing.currency, 'inr');
   assert.equal(order.orderStatus, 'completed'); assert.equal(order.paymentStatus, 'paid');

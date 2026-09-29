@@ -116,7 +116,7 @@ const createOrder = asyncHandler(async (req, res) => {
   let order;
   try {
     order = await Order.create({
-      orderNumber: generateOrderNumber(),
+      orderNumber: await generateOrderNumber(),
       user: req.user ? req.user._id : null,
       items: pricedItems,
       orderType,

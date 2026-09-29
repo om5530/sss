@@ -85,13 +85,14 @@ const create = asyncHandler(async (req, res) => {
     upiPaymentForOrder({ pricing, orderNumber: 'CHECK' }, recipient);
     upiRecipient = { ...recipient };
   }
+  const orderNumber = await generateOrderNumber();
   const claimed = await claimStock(items);
   const claimedSet = new Set(claimed);
   for (const item of items) item.stockClaimed = claimedSet.has(item);
 
   const now = new Date();
   const order = new Order({
-    orderNumber: generateOrderNumber(), user: null, createdBy: req.user._id,
+    orderNumber, user: null, createdBy: req.user._id,
     source: req.body.source, eventName, ...details, notes: req.body.notes || '', upiRecipient,
     items, pricing, fulfilAt, orderType: req.body.orderType, paymentMethod: req.body.paymentMethod,
     paymentStatus: req.body.paymentMethod === 'upi' ? 'pending' : req.body.paymentStatus,
