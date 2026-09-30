@@ -16,7 +16,7 @@
 
   <!-- Category Filter Pills -->
   <div class="filter-pills">
-    @for (cat of categories(); track cat) {
+    @for (cat of filterCategories(); track cat) {
       <button
         type="button"
         class="filter-pill"
@@ -54,7 +54,7 @@
         <div class="recipe-card">
           <div class="card-header">
             <div>
-              <span class="category-badge">{{ r.category }}</span>
+              <span class="category-badge">{{ displayCategory(r) }}</span>
               @if (r.isSubRecipe) {
                 <span class="sub-recipe-badge">Sub-recipe</span>
               }

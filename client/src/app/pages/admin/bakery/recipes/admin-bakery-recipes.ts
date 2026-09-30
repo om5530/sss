@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, DestroyRef } from '@angular/core';
+import { Component, computed, inject, signal, OnInit, DestroyRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { CommonModule, CurrencyPipe, DecimalPipe } from '@angular/common';
@@ -99,7 +99,10 @@ export class AdminBakeryRecipes implements OnInit {
 
   selectedCategory = signal<string>('All');
   recipeView = signal<'main' | 'sub'>('main');
-  categories = signal<string[]>(['All', 'Cakes', 'Brownies', 'Cookies', 'Pastries', 'Frostings']);
+  categories = signal<string[]>(['All', 'Cakes', 'Brownies', 'Cookies', 'Filling']);
+  filterCategories = computed(() => this.categories().filter((category) =>
+    !['pastries', 'frostings', 'dessert', 'biscuits'].includes(category.toLocaleLowerCase()),
+  ));
   addingCategory = signal(false);
   newCategoryName = '';
   editingComponentType = signal<number | null>(null);
@@ -132,8 +135,16 @@ export class AdminBakeryRecipes implements OnInit {
     const cat = this.selectedCategory();
     const isSubRecipe = this.recipeView() === 'sub';
     return this.recipes().filter(
-      (r) => Boolean(r.isSubRecipe) === isSubRecipe && (cat === 'All' || r.category === cat),
+      (r) => Boolean(r.isSubRecipe) === isSubRecipe && (cat === 'All' || this.displayCategory(r) === cat),
     );
+  }
+
+  displayCategory(recipe: BakeryRecipe): string {
+    if (recipe.isSubRecipe && /\bfilling\b/i.test(recipe.name)
+      && ['dessert', 'frostings'].includes(recipe.category.trim().toLocaleLowerCase())) {
+      return 'Filling';
+    }
+    return recipe.category;
   }
 
   subRecipes(excludeId?: string): BakeryRecipe[] {
@@ -172,7 +183,7 @@ export class AdminBakeryRecipes implements OnInit {
 
   editRecipe(recipe: BakeryRecipe) {
     this.resetCategoryEditor();
-    this.editingRecipe.set(JSON.parse(JSON.stringify(recipe)));
+    this.editingRecipe.set({ ...JSON.parse(JSON.stringify(recipe)), category: this.displayCategory(recipe) });
     this.preview();
   }
 
