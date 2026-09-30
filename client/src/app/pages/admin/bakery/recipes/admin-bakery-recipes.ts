@@ -165,6 +165,7 @@ export class AdminBakeryRecipes implements OnInit {
       baseBatchUnits: 1,
       yieldQuantity: 1,
       yieldUom: 'cake',
+      piecesPerBatch: 1,
       finishedWeightGrams: 500,
       targetMarkupPercent: 50,
       instructions: [''],
@@ -339,6 +340,10 @@ export class AdminBakeryRecipes implements OnInit {
       this.toast.error('Recipe name is required');
       return;
     }
+    if (!Number.isInteger(Number(recipe.piecesPerBatch)) || Number(recipe.piecesPerBatch) < 1) {
+      this.toast.error('Enter a whole number of pieces per batch');
+      return;
+    }
     this.saving.set(true);
     if (recipe._id) {
       this.bakery.updateRecipe(recipe._id, recipe).subscribe({
@@ -359,6 +364,7 @@ export class AdminBakeryRecipes implements OnInit {
           this.toast.success('Recipe created');
           this.editingRecipe.set(null);
           this.upsertRecipe(res.recipe);
+          this.fetchRecipes();
         },
         error: () => { this.saving.set(false); this.toast.error('Failed to create recipe'); },
       });

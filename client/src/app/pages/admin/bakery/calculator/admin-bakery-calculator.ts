@@ -25,7 +25,7 @@ export class AdminBakeryCalculator {
   productionPlanSaved = signal(false);
   error = signal('');
   notice = signal('');
-  items: any[] = [{ recipeId: '', quantity: '1', uom: '', options: [] }];
+  items: any[] = [{ recipeId: '', quantity: '1', uom: 'batch', options: [] }];
   pricingMode = 'markup';
   percent = '50';
   referenceName = '';
@@ -53,7 +53,6 @@ export class AdminBakeryCalculator {
     return this.recipes().find((r) => r._id === item.recipeId);
   }
   change(item: any) {
-    item.uom = '';
     item.options = [];
     this.calculate();
   }
@@ -61,7 +60,7 @@ export class AdminBakeryCalculator {
     this.items.push({
       recipeId: this.recipes()[0]?._id || '',
       quantity: '1',
-      uom: '',
+      uom: 'batch',
       options: [],
     });
     this.calculate();
@@ -90,7 +89,8 @@ export class AdminBakeryCalculator {
     this.error.set('');
     this.busy.set(true);
     this.timer = setTimeout(() => {
-      if (this.items.some((i) => !i.recipeId || !(Number(i.quantity) > 0))) {
+      if (this.items.some((i) => !i.recipeId || !Number.isInteger(Number(i.quantity)) || !(Number(i.quantity) > 0))) {
+        this.error.set('Enter a whole number of batches for each recipe');
         this.busy.set(false);
         return;
       }

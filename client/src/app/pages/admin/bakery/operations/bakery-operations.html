@@ -40,7 +40,7 @@
         <li>Use <strong>Purchase requirements</strong> if stock is short. When the batch is ready, select <strong>Record production</strong>.</li>
         <li>Enter what was actually used and the finished output. Completing the batch deducts the recorded ingredients from inventory.</li>
       </ol>
-      <p class="production-example"><strong>Example:</strong> Plan 20 Tiramisu portions in the calculator and save the plan. If it needs more mascarpone than you have, use Purchase requirements first. After making 19 good portions with 1 portion wasted, record those actual figures and complete the batch; the used ingredients are then removed from stock.</p>
+      <p class="production-example"><strong>Example:</strong> Select 2 Tiramisu batches in the calculator and save the plan. The kitchen plan lists ingredients for both full batches. If stock is short, use Purchase requirements before production.</p>
     </section>
   }
   @if (view === 'dashboard') {
@@ -137,6 +137,11 @@
         <div class="inline">
           <strong>{{ money(s.snapshot.totalCost) }} production cost</strong
           ><span>{{ money(s.snapshot.suggestedSellingPrice) }} suggested price</span>
+        </div>
+        <div class="inline">
+          @for (p of s.snapshot.products; track p.lineId) {
+            <span>{{ p.recipeName }} · @if (p.batches) { {{ p.batches }} batch(es) · } expected {{ p.targetUnits }} {{ p.yieldUom }}</span>
+          }
         </div>
         <div class="no-print inline">
           @if (s.status === 'scheduled') {

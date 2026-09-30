@@ -84,6 +84,35 @@ test("Markup and margin are distinct and invalid margins rejected", () => {
   );
   assert.throws(() => E.calculatePriceFromMargin(292, 100));
 });
+
+test("A recipe batch keeps its full ingredients and splits batch pricing across pieces", () => {
+  const materials = new Map([["cream", {
+    name: "Cream", type: "ingredient", baseUom: "g",
+    packQuantity: 1, packUom: "kg", purchasePrice: 1000,
+    currentStock: 5000,
+  }]]);
+  const recipe = {
+    _id: "cheesecake", name: "Cheesecake", yieldQuantity: 16, yieldUom: "piece",
+    piecesPerBatch: 16, targetMarkupPercent: 50, manualSellingPrice: 1200,
+    components: [{ materialId: "cream", quantity: 800, uom: "g" }],
+  };
+  const cost = E.evaluateRecipeCost(recipe, materials);
+  assert.equal(cost.totalBatchCost, "800");
+  assert.equal(cost.suggestedSellingPrice, "1200");
+  assert.equal(cost.sellingPricePerBatch, "1200");
+  assert.equal(cost.costPerPiece, "50");
+  assert.equal(cost.sellingPricePerPiece, "75");
+  assert.equal(E.evaluateRecipeCost({ ...recipe, piecesPerBatch: undefined }, materials).piecesPerBatch, "16");
+
+  const plan = E.aggregateMultiProductRequirements(
+    [{ recipe, quantity: 2, uom: "batch" }], materials,
+  );
+  assert.equal(plan.products[0].batches, "2");
+  assert.equal(plan.products[0].targetUnits, "32");
+  assert.equal(plan.ingredients[0].quantity, "1600");
+  assert.equal(plan.totalCost, "1600");
+  assert.throws(() => E.scaleRecipeForQuantity(recipe, 1.5, materials, new Map(), { uom: "batch" }), /whole number/);
+});
 test("Hourly oven cost scales by capacity, not by a multiplied hourly rate", () => {
   const m = new Map([
     [

@@ -68,6 +68,7 @@ const bakeryRecipeSchema = new mongoose.Schema(
     baseBatchUnits: { type: Number, required: true, default: 1, min: 0.01 },
     yieldQuantity: { type: Number, required: true, default: 1, min: 0.01 },
     yieldUom: { type: String, required: true, default: 'cake' },
+    piecesPerBatch: { type: Number, min: 1 },
     finishedWeightGrams: { type: Number, default: 0, min: 0 },
 
     components: [recipeComponentSchema],
@@ -101,7 +102,7 @@ bakeryRecipeSchema.pre('validate', function (next) {
   next();
 });
 
-require('./bakeryDecimal')(bakeryRecipeSchema, ['baseBatchUnits', 'yieldQuantity', 'finishedWeightGrams', 'ingredientCost', 'packagingCost', 'labourCost', 'resourceCost', 'totalBatchCost', 'costPerUnit', 'targetMarkupPercent', 'suggestedSellingPrice', 'manualSellingPrice']);
+require('./bakeryDecimal')(bakeryRecipeSchema, ['baseBatchUnits', 'yieldQuantity', 'piecesPerBatch', 'finishedWeightGrams', 'ingredientCost', 'packagingCost', 'labourCost', 'resourceCost', 'totalBatchCost', 'costPerUnit', 'targetMarkupPercent', 'suggestedSellingPrice', 'manualSellingPrice']);
 bakeryRecipeSchema.index({ name: 1, category: 1 });
 bakeryRecipeSchema.index({ isSubRecipe: 1 });
 

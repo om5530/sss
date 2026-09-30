@@ -122,6 +122,10 @@ function rate(m) {
 }
 function targetCount(recipe, qty, uom) {
   const q = dec(qty, "Requested quantity", true);
+  if (unit(uom) === "batch") {
+    if (!q.isInteger()) throw ApiError.badRequest("Batches must be a whole number");
+    return q.mul(dec(recipe.yieldQuantity ?? recipe.baseBatchUnits ?? 1, "Recipe yield", true));
+  }
   if (!uom || unit(uom) === unit(recipe.yieldUom || "piece")) return q;
   if (
     ["g", "kg", "mg"].includes(unit(uom)) &&
@@ -310,13 +314,22 @@ function evaluateRecipeCost(recipe, materials, recipes) {
     materials,
     recipes,
   );
+  const pieceUnits = new Set(["piece", "pieces", "slice", "slices", "portion", "portions", "serving", "servings", "pc", "pcs"]);
+  const inferredPieces = pieceUnits.has(String(recipe.yieldUom || "").toLowerCase())
+    ? recipe.yieldQuantity ?? recipe.baseBatchUnits ?? 1
+    : 1;
+  const pieces = dec(recipe.piecesPerBatch ?? inferredPieces, "Pieces per batch", true);
+  if (!pieces.isInteger()) throw ApiError.badRequest("Pieces per batch must be a whole number");
+  const selling = dec(recipe.manualSellingPrice ?? 0).gt(0)
+    ? dec(recipe.manualSellingPrice)
+    : dec(r.suggestedSellingPrice);
   return {
     ...r,
     totalBatchCost: r.totalCost,
-    suggestedSellingPrice: calculatePricing(
-      r.costPerUnit,
-      recipe.targetMarkupPercent ?? 50,
-    ).suggestedSellingPrice,
+    piecesPerBatch: pieces.toString(),
+    sellingPricePerBatch: selling.toString(),
+    costPerPiece: dec(r.totalCost).div(pieces).toString(),
+    sellingPricePerPiece: selling.div(pieces).toString(),
   };
 }
 function aggregateMultiProductRequirements(
@@ -340,6 +353,7 @@ function aggregateMultiProductRequirements(
       recipeId: String(plan.recipe._id),
       recipeName: plan.recipe.name,
       version: plan.recipe.version,
+      batches: plan.uom === "batch" ? dec(plan.quantity, "Batches", true).toString() : null,
       quantity: r.targetUnits,
       ...r,
     });

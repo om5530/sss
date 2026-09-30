@@ -107,55 +107,63 @@
     <div class="section__head section__head--row" appReveal>
       <div>
         <span class="eyebrow">Cravings, catalogued</span>
-        <h2>Ten ways to say <em class="serif-italic">treat yourself</em></h2>
+        <h2>Explore what’s <em class="serif-italic">on the menu</em></h2>
       </div>
       <a routerLink="/menu" class="btn btn--ghost">Full menu →</a>
     </div>
 
-    <div class="showcase__grid">
-      <ul class="showcase__list" appReveal="group">
-        @for (cat of showcase; track cat.name; let i = $index) {
-          <li>
-            <a
-              class="showcase__item"
+    @if (showcaseLoading()) {
+      <p class="muted" role="status">Loading the menu…</p>
+    } @else if (showcaseError()) {
+      <p class="muted" role="alert">The menu is unavailable right now. Please try again later.</p>
+    } @else if (!showcase().length) {
+      <p class="muted">No products are currently available.</p>
+    } @else {
+      <div class="showcase__grid">
+        <ul class="showcase__list" appReveal="group">
+          @for (cat of showcase(); track cat.name; let i = $index) {
+            <li>
+              <a
+                class="showcase__item"
+                [class.is-active]="activeCat() === i"
+                [routerLink]="['/menu']"
+                [fragment]="cat.name"
+                (mouseenter)="setActiveCat(i)"
+                (focus)="setActiveCat(i)"
+              >
+                <span class="showcase__index">{{ i + 1 < 10 ? '0' + (i + 1) : i + 1 }}</span>
+                <span class="showcase__name">{{ cat.name }}</span>
+                <span class="showcase__note">{{ cat.note }}</span>
+                <span class="showcase__arrow" aria-hidden="true">→</span>
+              </a>
+            </li>
+          }
+        </ul>
+
+        <div class="showcase__panel" appReveal="zoom" aria-hidden="true">
+          @for (cat of showcase(); track cat.name; let i = $index) {
+            <img
+              [src]="cat.image"
+              [alt]="cat.name"
+              class="showcase__img"
               [class.is-active]="activeCat() === i"
-              [routerLink]="['/menu']"
-              [fragment]="cat.name"
-              (mouseenter)="setActiveCat(i)"
-              (focus)="setActiveCat(i)"
-            >
-              <span class="showcase__index">{{ i + 1 < 10 ? '0' + (i + 1) : i + 1 }}</span>
-              <span class="showcase__name">{{ cat.name }}</span>
-              <span class="showcase__note">{{ cat.note }}</span>
-              <span class="showcase__arrow" aria-hidden="true">→</span>
-            </a>
-          </li>
-        }
-      </ul>
-
-      <div class="showcase__panel" appReveal="zoom" aria-hidden="true">
-        @for (cat of showcase; track cat.name; let i = $index) {
-          <img
-            [src]="cat.image"
-            [alt]="cat.name"
-            class="showcase__img"
-            [class.is-active]="activeCat() === i"
-            [attr.loading]="i === 0 ? 'eager' : 'lazy'"
-          />
-        }
-        <span class="showcase__panel-label">{{ showcase[activeCat()].name }}</span>
+              [attr.loading]="i === 0 ? 'eager' : 'lazy'"
+            />
+          }
+          <span class="showcase__panel-label">{{ showcase()[activeCat()].name }}</span>
+        </div>
       </div>
-    </div>
 
-    <!-- Mobile: swipeable category cards -->
-    <div class="showcase__scroller" appReveal>
-      @for (cat of showcase; track cat.name) {
-        <a class="showcase__chip" [routerLink]="['/menu']" [fragment]="cat.name">
-          <img [src]="cat.image" [alt]="cat.name" loading="lazy" />
-          <span>{{ cat.name }}</span>
-        </a>
-      }
-    </div>
+      <!-- Mobile: swipeable category cards -->
+      <div class="showcase__scroller" appReveal>
+        @for (cat of showcase(); track cat.name) {
+          <a class="showcase__chip" [routerLink]="['/menu']" [fragment]="cat.name">
+            <img [src]="cat.image" [alt]="cat.name" loading="lazy" />
+            <span>{{ cat.name }}</span>
+          </a>
+        }
+      </div>
+    }
   </div>
 </section>
 
@@ -301,6 +309,7 @@
 </section>
 
 <!-- ============ 10 · GALLERY (dark act) ============ -->
+@if (showcase().length) {
 <section class="gallery grain">
   <div class="container gallery__head" appReveal>
     <span class="eyebrow">Fresh out of the ovens</span>
@@ -312,22 +321,25 @@
       <div class="marquee__track">
         @for (i of [0, 1]; track i) {
           <div class="gallery__set">
-            @for (img of galleryTop; track img) { <img [src]="img" alt="" loading="lazy" /> }
+            @for (img of galleryTop(); track $index) { <img [src]="img" alt="" loading="lazy" /> }
           </div>
         }
       </div>
     </div>
+    @if (galleryBottom().length) {
     <div class="marquee gallery__row gallery__row--reverse">
       <div class="marquee__track">
         @for (i of [0, 1]; track i) {
           <div class="gallery__set">
-            @for (img of galleryBottom; track img) { <img [src]="img" alt="" loading="lazy" /> }
+            @for (img of galleryBottom(); track $index) { <img [src]="img" alt="" loading="lazy" /> }
           </div>
         }
       </div>
     </div>
+    }
   </div>
 </section>
+}
 
 <!-- ============ 11 · FAQ ============ -->
 <section class="section faq">

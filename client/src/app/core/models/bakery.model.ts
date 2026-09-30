@@ -60,6 +60,7 @@ export interface BakeryRecipe {
   baseBatchUnits: number;
   yieldQuantity: number;
   yieldUom: string;
+  piecesPerBatch?: number;
   finishedWeightGrams?: number;
   components: RecipeComponent[];
   ingredientCost: number;
@@ -71,6 +72,9 @@ export interface BakeryRecipe {
   targetMarkupPercent: number;
   suggestedSellingPrice: number;
   manualSellingPrice?: number;
+  sellingPricePerBatch?: number;
+  costPerPiece?: number;
+  sellingPricePerPiece?: number;
   instructions?: string[];
   notes?: string;
   isActive?: boolean;

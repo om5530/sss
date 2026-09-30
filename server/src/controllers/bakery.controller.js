@@ -443,6 +443,7 @@ const recipeFields = [
   "baseBatchUnits",
   "yieldQuantity",
   "yieldUom",
+  "piecesPerBatch",
   "finishedWeightGrams",
   "components",
   "targetMarkupPercent",

@@ -3,7 +3,7 @@
     <div>
       <div class="eyebrow">BAKERY OPERATIONS</div>
       <h1 class="calc-title">Batch calculator</h1>
-      <p class="calc-sub">Your recipes, scaled to the quantity you need.</p>
+      <p class="calc-sub">Choose how many full recipe batches to make. Ingredients scale from the full batch formula.</p>
     </div>
   </header>
   @if (error()) {
@@ -32,23 +32,18 @@
           </div>
           <div class="form-row">
             <label class="field"
-              ><span class="label">Quantity</span
+              ><span class="label">Number of batches</span
               ><input
                 class="input"
-                inputmode="decimal"
+                type="number"
+                inputmode="numeric"
+                min="1"
+                step="1"
                 [(ngModel)]="item.quantity"
                 (ngModelChange)="calculate()" /></label
-            ><label class="field"
-              ><span class="label">Unit</span
-              ><select class="select" [(ngModel)]="item.uom" (ngModelChange)="calculate()">
-                <option value="">{{ recipe(item)?.yieldUom || 'units' }}</option>
-                @if (positive(recipe(item)?.finishedWeightGrams)) {
-                  <option value="g">g finished weight</option>
-                  <option value="kg">kg finished weight</option>
-                }
-              </select></label
             >
           </div>
+          <small>1 batch makes {{ recipe(item)?.piecesPerBatch || 1 }} pieces. Ingredients are entered for 1 batch.</small>
           @if (recipe(item)?.options?.length) {
             <div>
               <span class="label">Custom options</span>
@@ -129,7 +124,7 @@
             [disabled]="busy() || saving() || productionPlanSaved() || !result()"
             (click)="save('production_plan')"
           >
-            {{ productionPlanSaved() ? 'Added to production' : (saving() ? 'Saving…' : 'Save production plan') }}
+            {{ productionPlanSaved() ? 'Added to production' : (saving() ? 'Saving…' : 'Save to Production') }}
           </button>
         </div>
       </details>
@@ -240,7 +235,8 @@
           @for (p of r.products; track $index) {
             <details open>
               <summary>
-                {{ p.recipeName }} · {{ p.targetUnits }} {{ p.yieldUom }} ·
+                {{ p.recipeName }} · {{ p.batches }} {{ p.batches === '1' ? 'batch' : 'batches' }}
+                ({{ p.targetUnits }} {{ p.yieldUom }}) ·
                 {{ p.totalCost | currency: 'INR' }}
               </summary>
               <p>

@@ -4,7 +4,7 @@
     <div>
       <h1 class="recipes-title">Recipes</h1>
       <p class="recipes-sub">
-        Formulas, ingredient costs, packaging, labour and suggested selling prices.
+        Full batch recipes with cost and selling price per batch and per piece.
       </p>
     </div>
     <div class="actions">
@@ -59,62 +59,21 @@
                 <span class="sub-recipe-badge">Sub-recipe</span>
               }
               <h3 class="recipe-name">{{ r.name }}</h3>
-              <small class="recipe-yield"
-                >Yield: {{ r.yieldQuantity }} {{ r.yieldUom }} ({{ r.finishedWeightGrams }}g)</small
-              >
-            </div>
-            <div class="price-bubble">
-              <span class="price-val">{{
-                r.suggestedSellingPrice | currency: 'INR' : 'symbol' : '1.0-0'
-              }}</span>
-              <small class="price-label">Suggested</small>
+              <small class="recipe-yield">1 batch makes {{ r.piecesPerBatch }} pieces · {{ r.yieldQuantity }} {{ r.yieldUom }}</small>
             </div>
           </div>
           @if (r.costingError) {
             <p role="alert">{{ r.costingError }}</p>
           }
 
-          <!-- Cost Breakdown Summary -->
-          <div class="cost-summary-list">
-            <div class="cost-item">
-              <span class="cost-label">Ingredients</span>
-              <span class="cost-num">{{
-                r.ingredientCost | currency: 'INR' : 'symbol' : '1.2-2'
-              }}</span>
+          <div class="recipe-prices">
+            <div class="recipe-prices__row">
+              <div><span>Cost / batch</span><strong>{{ r.totalBatchCost | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
+              <div><span>Sell / batch</span><strong>{{ r.sellingPricePerBatch | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
             </div>
-            <div class="cost-item">
-              <span class="cost-label">Packaging</span>
-              <span class="cost-num">{{
-                r.packagingCost | currency: 'INR' : 'symbol' : '1.2-2'
-              }}</span>
-            </div>
-            <div class="cost-item">
-              <span class="cost-label">Labour</span>
-              <span class="cost-num">{{
-                r.labourCost | currency: 'INR' : 'symbol' : '1.2-2'
-              }}</span>
-            </div>
-            <div class="cost-item">
-              <span class="cost-label">Oven / Energy</span>
-              <span class="cost-num">{{
-                r.resourceCost | currency: 'INR' : 'symbol' : '1.2-2'
-              }}</span>
-            </div>
-          </div>
-
-          <!-- Total Batch Cost Highlight -->
-          <div class="total-batch-bar">
-            <div>
-              <span class="bar-label">Total Cost / Batch:</span>
-              <strong class="bar-num">{{
-                r.totalBatchCost | currency: 'INR' : 'symbol' : '1.2-2'
-              }}</strong>
-            </div>
-            <div>
-              <span class="bar-label">Cost per {{ r.yieldUom }}:</span>
-              <strong class="bar-num">{{
-                r.costPerUnit | currency: 'INR' : 'symbol' : '1.2-2'
-              }}</strong>
+            <div class="recipe-prices__row recipe-prices__row--piece">
+              <div><span>Cost / piece</span><strong>{{ r.costPerPiece | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
+              <div><span>Sell / piece</span><strong>{{ r.sellingPricePerPiece | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
             </div>
           </div>
 
@@ -222,18 +181,24 @@
 
         <div class="field">
           <div class="label-with-help">
-            <label class="label">Yield Quantity</label>
-            <button type="button" class="field-help" aria-label="About yield quantity" data-tooltip="How many finished units this recipe makes. Example: enter 2 if one batch makes two cakes.">i</button>
+            <label class="label">Finished yield per batch</label>
+            <button type="button" class="field-help" aria-label="About yield quantity" data-tooltip="How much finished product the listed ingredients make in one full batch. Example: 1 cake or 16 pieces.">i</button>
           </div>
           <input class="input" type="number" inputmode="decimal" min="1" step="any" [(ngModel)]="form.yieldQuantity" />
         </div>
 
         <div class="field">
           <div class="label-with-help">
-            <label class="label">Yield Unit (e.g. cake, piece)</label>
+            <label class="label">Finished yield unit (e.g. cake, piece)</label>
             <button type="button" class="field-help" aria-label="About yield unit" data-tooltip="The name of one finished unit. Example: use “cake” for whole cakes or “piece” for individual slices.">i</button>
           </div>
           <input class="input" [(ngModel)]="form.yieldUom" placeholder="cake" />
+        </div>
+
+        <div class="field">
+          <label class="label" for="pieces-per-batch">Pieces / portions in one batch</label>
+          <input id="pieces-per-batch" class="input" type="number" inputmode="numeric" min="1" step="1" [(ngModel)]="form.piecesPerBatch" />
+          <small>Example: one cheesecake cut into 16 pieces → enter 16. Recipe ingredients above are for the whole batch.</small>
         </div>
 
         <div class="field">
@@ -242,6 +207,11 @@
             <button type="button" class="field-help" aria-label="About target markup" data-tooltip="The percentage added to cost to calculate a suggested selling price. Example: 100% markup turns a ₹250 cost into a ₹500 selling price.">i</button>
           </div>
           <input class="input" type="number" inputmode="decimal" min="0" step="any" [(ngModel)]="form.targetMarkupPercent" />
+        </div>
+        <div class="field">
+          <label class="label" for="batch-selling-price">Selling price for one batch (₹)</label>
+          <input id="batch-selling-price" class="input" type="number" inputmode="decimal" min="0" step="any" [(ngModel)]="form.manualSellingPrice" placeholder="Leave blank to use suggested price" />
+          <small>Leave blank or enter 0 to use the markup suggestion.</small>
         </div>
         <div class="field">
           <div class="label-with-help"><label class="label">Finished batch weight (g)</label><button type="button" class="field-help" aria-label="About finished batch weight" data-tooltip="The weight of the completed batch after baking or cooking. Example: enter 900 for a finished 900 g loaf.">i</button></div>
@@ -473,11 +443,9 @@
       }
       @if (previewResult(); as p) {
         <section class="card">
-          <h3>Current batch cost · {{ p.totalBatchCost | currency: 'INR' }}</h3>
-          <p>
-            Cost per unit {{ p.costPerUnit | currency: 'INR' }} · Suggested unit price
-            {{ p.suggestedSellingPrice | currency: 'INR' }}
-          </p>
+          <h3>One batch · {{ p.piecesPerBatch }} pieces</h3>
+          <p>Cost / batch {{ p.totalBatchCost | currency: 'INR' }} · Sell / batch {{ p.sellingPricePerBatch | currency: 'INR' }}</p>
+          <p>Cost / piece {{ p.costPerPiece | currency: 'INR' }} · Sell / piece {{ p.sellingPricePerPiece | currency: 'INR' }}</p>
           <div class="table-wrap">
             <table class="data-table">
               <thead>

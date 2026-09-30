@@ -16,6 +16,7 @@ dist/
 # Locally-stored uploads (product photos, cake references)
 /server/uploads/
 /output/
+.codex-remote-attachments/
 
 # Logs
 *.log

@@ -98,7 +98,7 @@ export class AdminOrderForm {
     if (!product || !product.available || product.archived || product.stockCount === 0) return;
     const existing = this.lines().find((l) => l.product._id === product._id);
     if (existing) this.setQuantity(product._id, existing.quantity + 1);
-    else { this.lines.update((lines) => [...lines, { product, quantity: 1 }]); this.reprice(); }
+    else { this.lines.update((lines) => [{ product, quantity: 1 }, ...lines]); this.reprice(); }
     this.selectedProduct = '';
   }
 

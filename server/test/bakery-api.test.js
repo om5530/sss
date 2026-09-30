@@ -311,3 +311,34 @@ test("Stock adjustment and Waste logging updates stock and tracks financial loss
   const reloaded = await BakeryMaterial.findById(eggs._id);
   assert.equal(reloaded.currentStock, "84"); // 90 - 6 = 84
 });
+
+test("Saved production plan uses full batch quantities for a 16-piece recipe", async () => {
+  const BakeryMaterial = require("../src/models/BakeryMaterial");
+  const cream = await BakeryMaterial.create({
+    name: "Cheesecake Cream", type: "ingredient", baseUom: "g",
+    packQuantity: 1, packUom: "kg", purchasePrice: 1000, currentStock: 5000,
+  });
+  const created = await json("POST", "/admin/bakery/recipes", {
+    name: "16-piece Cheesecake", yieldQuantity: 16, yieldUom: "piece",
+    piecesPerBatch: 16, manualSellingPrice: 1200, targetMarkupPercent: 50,
+    components: [{ materialId: cream._id, quantity: 800, uom: "g" }],
+  });
+  assert.equal(created.status, 200);
+  const recipe = (await created.json()).recipe;
+  const listed = await json("GET", "/admin/bakery/recipes");
+  const card = (await listed.json()).recipes.find((r) => r._id === recipe._id);
+  assert.equal(card.totalBatchCost, "800");
+  assert.equal(card.sellingPricePerBatch, "1200");
+  assert.equal(card.costPerPiece, "50");
+  assert.equal(card.sellingPricePerPiece, "75");
+
+  const saved = await json("POST", "/admin/bakery/costing-sheets", {
+    type: "production_plan", referenceName: "Two cheesecakes",
+    items: [{ recipeId: recipe._id, quantity: 2, uom: "batch" }],
+  });
+  assert.equal(saved.status, 200);
+  const plan = (await saved.json()).sheet;
+  assert.equal(plan.snapshot.products[0].batches, "2");
+  assert.equal(plan.snapshot.products[0].targetUnits, "32");
+  assert.equal(plan.snapshot.requirements.find((r) => r.materialId === String(cream._id)).quantity, "1600");
+});

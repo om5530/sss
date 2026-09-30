@@ -1,14 +1,14 @@
-import { Component, ElementRef, OnDestroy, afterNextRender, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ProductService } from '../../core/services/product.service';
-import { Product } from '../../core/models/product.model';
+import { Menu, Product } from '../../core/models/product.model';
 import { ProductCard } from '../../shared/components/product-card/product-card';
 import { RevealOnScroll } from '../../shared/directives/reveal.directive';
 import { Parallax } from '../../shared/directives/parallax.directive';
 import { Tilt } from '../../shared/directives/tilt.directive';
 import { Counter } from '../../shared/directives/counter.directive';
 import { Magnetic } from '../../shared/directives/magnetic.directive';
-import { categoryImage } from '../../core/utils/food-image';
+import { categoryImage, foodImage, isPlaceholderImage } from '../../core/utils/food-image';
 import { loadGsap, prefersReducedMotion } from '../../shared/motion/gsap';
 import type { HeroScene } from '../../shared/motion/hero-scene';
 
@@ -33,6 +33,9 @@ export class Home implements OnDestroy {
 
   protected readonly featured = signal<Product[]>([]);
   protected readonly loading = signal(true);
+  protected readonly showcase = signal<ShowcaseCategory[]>([]);
+  protected readonly showcaseLoading = signal(true);
+  protected readonly showcaseError = signal(false);
   /** Index of the category whose photo fills the showcase panel. */
   protected readonly activeCat = signal(0);
   /** Which FAQ is expanded (-1 ⇒ none). */
@@ -42,19 +45,6 @@ export class Home implements OnDestroy {
   private gsapCtx?: { revert: () => void };
 
   /* ---------------- Content ---------------- */
-
-  protected readonly showcase: ShowcaseCategory[] = [
-    { name: 'Brownies', note: 'Gooey-centred, crackle-topped', image: categoryImage('Brownies') },
-    { name: 'Cookies', note: 'Bent, chewy, still warm', image: categoryImage('Cookies') },
-    { name: 'Cakes', note: 'Layered slow, iced by hand', image: categoryImage('Cakes') },
-    { name: 'Tiramisu', note: 'Espresso-soaked, cloud-light', image: categoryImage('Tiramisu') },
-    { name: 'Cupcakes', note: 'Small bakes, big buttercream', image: categoryImage('Cupcakes') },
-    { name: 'Pastries', note: 'Laminated at dawn, 27 layers', image: categoryImage('Pastries') },
-    { name: 'Pizza', note: 'Wood-fired, blistered edges', image: categoryImage('Pizza') },
-    { name: 'Burgers', note: 'Brioche buns baked in-house', image: categoryImage('Burgers') },
-    { name: 'Sandwiches', note: 'On today’s sourdough', image: categoryImage('Sandwiches') },
-    { name: 'Snacks', note: 'Golden, crisp, shareable', image: categoryImage('Snacks') },
-  ];
 
   protected readonly heroCards = [
     { label: 'Butter Croissant', tag: 'Laminated · 27 layers', image: categoryImage('Pastries') },
@@ -101,13 +91,21 @@ export class Home implements OnDestroy {
     { q: 'Do you take custom orders?', a: 'Yes — brownies, cakes, hampers, snacks and more. Send a request through Custom Orders at least a day ahead, and we’ll discuss availability and a quote.' },
   ];
 
-  protected readonly galleryTop: string[];
-  protected readonly galleryBottom: string[];
+  protected readonly galleryTop = computed(() => this.showcase().slice(0, 5).map((category) => category.image));
+  protected readonly galleryBottom = computed(() => this.showcase().slice(5).map((category) => category.image));
 
   constructor() {
-    const images = this.showcase.map((c) => c.image);
-    this.galleryTop = images.slice(0, 5);
-    this.galleryBottom = images.slice(5);
+    this.products.getMenu().subscribe({
+      next: (menu) => {
+        this.showcase.set(this.categoriesInStock(menu));
+        this.activeCat.set(0);
+        this.showcaseLoading.set(false);
+      },
+      error: () => {
+        this.showcaseError.set(true);
+        this.showcaseLoading.set(false);
+      },
+    });
 
     this.products.list({ featured: true }).subscribe({
       next: (products) => {
@@ -121,6 +119,23 @@ export class Home implements OnDestroy {
       void this.initHero();
       void this.initScene();
     });
+  }
+
+  private categoriesInStock(menu: Menu): ShowcaseCategory[] {
+    return (['bakery', 'savoury'] as const).flatMap((group) =>
+      Object.entries(menu[group] ?? {}).flatMap(([name, products]) => {
+        const available = products.filter((product) =>
+          product.available && (product.stockCount == null || product.stockCount > 0),
+        );
+        if (!available.length) return [];
+        const product = available[0];
+        return [{
+          name,
+          note: `${available.length} item${available.length === 1 ? '' : 's'} available`,
+          image: product.image && !isPlaceholderImage(product.image) ? product.image : foodImage(product),
+        }];
+      }),
+    );
   }
 
   protected setActiveCat(i: number): void {

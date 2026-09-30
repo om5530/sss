@@ -107,72 +107,28 @@
   font-size: 0.76rem;
 }
 
-.price-bubble {
-  background: rgba(223, 167, 87, 0.12);
-  border: 1px solid rgba(223, 167, 87, 0.3);
+.recipe-prices {
+  border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 0.35rem 0.6rem;
-  text-align: right;
-  flex-shrink: 0;
-
-  .price-val {
-    display: block;
-    font-weight: 800;
-    font-size: 1rem;
-    color: var(--caramel-dark);
-    line-height: 1;
-  }
-
-  .price-label {
-    font-size: 0.64rem;
-    color: var(--muted);
-    text-transform: uppercase;
-  }
+  overflow: hidden;
 }
 
-.cost-summary-list {
+.recipe-prices__row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.35rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  padding: 0.65rem;
   background: var(--surface);
-  border-radius: 8px;
-  padding: 0.55rem;
-}
 
-.cost-item {
-  display: flex;
-  flex-direction: column;
-
-  .cost-label {
-    font-size: 0.66rem;
-    color: var(--muted);
-    text-transform: uppercase;
+  &--piece {
+    border-top: 1px dashed var(--line);
+    background: var(--white);
   }
 
-  .cost-num {
-    font-size: 0.82rem;
-    font-weight: 700;
-    font-family: monospace;
-    color: var(--night);
-  }
-}
-
-.total-batch-bar {
-  display: flex;
-  justify-content: space-between;
-  border-top: 1px dashed var(--line);
-  padding-top: 0.5rem;
-
-  .bar-label {
-    display: block;
-    font-size: 0.68rem;
-    color: var(--muted);
-  }
-
-  .bar-num {
-    font-size: 0.95rem;
-    font-family: var(--font-display);
-  }
+  > div { min-width: 0; }
+  span, strong { display: block; }
+  span { color: var(--muted); font-size: 0.7rem; }
+  strong { color: var(--night); font-size: 0.98rem; overflow-wrap: anywhere; }
 }
 
 .card-actions {
