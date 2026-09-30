@@ -69,17 +69,18 @@
 .nav__links a.active::after { transform: scaleX(1); transform-origin: left; }
 
 /* ---- Actions cluster ---- */
-.nav__actions { display: flex; align-items: center; gap: 1rem; }
+.nav__actions { display: flex; flex: none; align-items: center; gap: 1rem; }
 
 .nav__signin { font-weight: 600; font-size: 0.92rem; color: var(--d-muted); transition: color 0.25s ease; }
 .nav__signin:hover { color: var(--gold-bright); }
 
-.nav__cart { display: inline-flex; position: relative; color: var(--d-text); transition: color 0.25s ease, transform 0.3s var(--ease-out); }
+.nav__cart { display: inline-flex; flex: none; position: relative; width: 44px; height: 44px; align-items: center; justify-content: center; color: var(--d-text); transition: color 0.25s ease, transform 0.3s var(--ease-out); }
+.nav__cart svg { display: block; flex: none; }
 .nav__cart:hover { color: var(--gold-bright); transform: translateY(-1px); }
 .nav__badge {
   position: absolute;
-  top: -8px;
-  right: -10px;
+  top: 1px;
+  right: 0;
   min-width: 18px;
   height: 18px;
   padding: 0 4px;
