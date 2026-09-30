@@ -2,6 +2,7 @@ import { Injectable, inject, signal, computed, DestroyRef } from '@angular/core'
 import { AdminService } from './admin.service';
 import { ToastService } from './toast.service';
 import { AdminOrder } from '../models/admin.model';
+import { ReplaySubject, Subscription } from 'rxjs';
 
 const POLL_INTERVAL_MS = 8_000;
 const MUTE_STORAGE_KEY = 'gb_admin_order_chime_muted';
@@ -32,6 +33,10 @@ export class AdminOrderNotificationService {
   private initialLoadDone = false;
   private audioCtx: AudioContext | null = null;
   private remainingRepeats = 0;
+  private pollInFlight = false;
+  private pollRequest?: Subscription;
+  private readonly orderUpdates = new ReplaySubject<{ orders: AdminOrder[]; offline: boolean }>(1);
+  readonly orderUpdates$ = this.orderUpdates.asObservable();
 
   constructor() {
     this.setupUserGestureUnlock();
@@ -86,6 +91,12 @@ export class AdminOrderNotificationService {
       clearInterval(this.pollTimer);
       this.pollTimer = null;
     }
+    this.pollRequest?.unsubscribe();
+    this.pollRequest = undefined;
+    this.pollInFlight = false;
+    this.knownOrderIds.clear();
+    this.initialLoadDone = false;
+    this.orderUpdates.next({ orders: [], offline: true });
     this.silenceAlarm();
   }
 
@@ -151,8 +162,11 @@ export class AdminOrderNotificationService {
    * Polls the active orders API and triggers loud alerts if any new placed order is detected.
    */
   private poll() {
-    this.admin.orders({ active: true, limit: 30 }).subscribe({
+    if (this.pollInFlight) return;
+    this.pollInFlight = true;
+    this.pollRequest = this.admin.orders({ active: true, limit: 100 }).subscribe({
       next: (res) => {
+        this.orderUpdates.next({ orders: res.orders, offline: false });
         if (!this.initialLoadDone) {
           // Record current active order IDs on first fetch to prevent ringing for historical orders
           for (const o of res.orders) {
@@ -178,8 +192,11 @@ export class AdminOrderNotificationService {
         }
       },
       error: () => {
+        this.pollInFlight = false;
+        this.orderUpdates.next({ orders: [], offline: true });
         // Suppress network poll errors to avoid toast spam in offline scenarios
       },
+      complete: () => { this.pollInFlight = false; },
     });
   }
 

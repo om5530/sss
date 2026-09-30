@@ -92,6 +92,16 @@ test("Server validates recipes, prices and zero markup", async () => {
     400,
   );
 });
+test("Bakery overview returns current status without historical report lists", async () => {
+  const overview = await api("GET", "/reports?scope=overview");
+  assert.equal(overview.status, 200);
+  assert.equal(overview.recipes[0].name, "Flour bake");
+  assert.equal(overview.stock[0].name, "Flour");
+  assert.equal(overview.wasteCost, "0");
+  assert.deepEqual(overview.plans, []);
+  assert.equal("movements" in overview, false);
+  assert.equal("receipts" in overview, false);
+});
 test("Saved plan recalculates tampered totals and allocates packaging/material stock", async () => {
   const r = await api("POST", "/costing-sheets", {
     type: "production_plan",
@@ -105,6 +115,9 @@ test("Saved plan recalculates tampered totals and allocates packaging/material s
   const inv = await api("GET", "/inventory");
   assert.equal(inv.materials[0].allocatedStock, "1000");
   assert.equal(inv.materials[0].available, "1000");
+  const overview = await api("GET", "/reports?scope=overview");
+  assert.equal(overview.plans[0]._id, plan._id);
+  assert.equal(overview.stock[0].allocatedStock, "1000");
 });
 test("Effective price updates projection but preserves historical snapshot", async () => {
   let r = await api("POST", `/formats/${formatId}/prices`, {
@@ -378,6 +391,8 @@ test("Reports include the entire India calendar day and reject reversed ranges",
   assert.equal(r.status, 200);
   assert.ok(r.batches.length > 0);
   assert.ok(r.receipts.length > 0);
+  assert.ok(r.materialNames.some((material) => material._id === flour._id && material.name === "Flour"));
+  assert.ok(r.suppliers.some((supplier) => supplier._id === supplierId));
   assert.equal(
     (await api("GET", "/reports?from=2026-12-31&to=2026-01-01")).status,
     400,

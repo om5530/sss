@@ -160,6 +160,12 @@ test('stock is claimed once across retries and returned on cancellation', async 
   assert.equal(first.status, 201); const order = (await first.json()).order;
   assert.equal((await Product.findById(tracked._id)).stockCount, 0);
   assert.equal((await Product.findById(tracked._id)).available, false);
+  assert.equal((await Product.findById(tracked._id)).stockSoldOut, true);
+  const menu = await (await json('GET', '/products/menu', undefined, null)).json();
+  assert.equal(menu.menu.bakery.Bakes.find((p) => p._id === String(tracked._id)).available, false);
+  const adminProducts = await (await json('GET', '/admin/products')).json();
+  assert.equal(adminProducts.products.find((p) => p._id === String(tracked._id)).stockCount, 0);
+  assert.equal((await json('POST', '/admin/orders/quote', { items: [{ productId: String(tracked._id), quantity: 1 }], orderType: 'takeaway' })).status, 409);
   const retry = await json('POST', '/admin/orders', body);
   assert.equal(retry.status, 200); assert.equal((await retry.json()).order._id, order._id);
   assert.equal(await Payment.countDocuments({ order: order._id }), 1);
@@ -169,7 +175,21 @@ test('stock is claimed once across retries and returned on cancellation', async 
   assert.equal(cancelled.status, 200);
   assert.equal((await Product.findById(tracked._id)).stockCount, 2);
   assert.equal((await Product.findById(tracked._id)).available, true);
+  assert.equal((await Product.findById(tracked._id)).stockSoldOut, false);
   assert.equal((await json('POST', '/admin/orders/' + order._id + '/settle-manual', {})).status, 409);
+});
+
+test('entering fresh daily stock restores an automatically sold-out product to the order menu', async () => {
+  const tracked = await Product.create({ name: 'Daily Bake', slug: 'daily-bake', group: 'bakery', category: 'Bakes', price: 50,
+    available: false, stockCount: 0, stockSoldOut: true });
+  const response = await json('PATCH', '/admin/products/' + tracked._id, { stockCount: 5, available: false });
+  assert.equal(response.status, 200);
+  const updated = (await response.json()).product;
+  assert.equal(updated.stockCount, 5);
+  assert.equal(updated.available, true);
+  assert.equal(updated.stockSoldOut, false);
+  const menu = await (await json('GET', '/products/menu', undefined, null)).json();
+  assert.equal(menu.menu.bakery.Bakes.find((p) => p._id === String(tracked._id)).available, true);
 });
 
 test('changed prices and invalid manual fields never create orders or claim stock', async () => {
@@ -222,6 +242,8 @@ test('event reports group event names and split received payments, excluding unp
   assert.equal((await json('PATCH', '/admin/orders/' + cancelled._id + '/status', { status: 'cancelled', note: 'Cancelled' })).status, 200);
   const report = await (await json('GET', '/admin/reports/events?eventName=Annual%20Fair')).json();
   assert.equal(report.events.length, 1); const event = report.events[0];
+  assert.equal(report.eventNames.length, 2);
+  assert.ok(report.eventNames.some((name) => name.toLowerCase() === 'annual fair'));
   assert.equal(event.orders, 6); assert.equal(event.paidOrders, 3); assert.equal(event.units, 6);
   assert.equal(event.revenue, 630); assert.equal(event.cash, 210); assert.equal(event.upi, 420); assert.equal(event.card, 0);
   assert.equal(event.pendingAmount, 210); assert.equal(report.products[0].quantity, 6); assert.equal(report.products[0].subtotal, 600);

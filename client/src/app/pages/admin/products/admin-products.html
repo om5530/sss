@@ -10,7 +10,7 @@
   </div>
 
   <div class="adm-filters">
-    @if (category) { <span>Category: {{ category }}</span><button class="btn btn--ghost btn--sm" (click)="category = ''; allArchives = false; fetch()">Clear category filter</button> }
+    @if (category) { <span>Category: {{ category }}</span> }
     <input
       class="input"
       type="search"
@@ -35,6 +35,7 @@
       <input type="checkbox" [disabled]="busy()" [(ngModel)]="showArchived" (ngModelChange)="allArchives = false; fetch()" />
       Show archived
     </label>
+    @if (hasFilters()) { <button type="button" class="btn btn--ghost btn--sm" [disabled]="busy()" (click)="clearFilters()">Clear filters</button> }
   </div>
 
   @if (loading()) {
@@ -79,6 +80,9 @@
                 <strong>{{ p.name }}</strong>
                 @if (p.archived) {
                   <span class="adm-badge adm-badge--mock" style="margin-left: 0.4rem">archived</span>
+                }
+                @if (p.stockCount === 0 && !p.archived) {
+                  <span class="adm-badge adm-badge--mock" style="margin-left: 0.4rem">sold out</span>
                 }
                 <div class="muted" style="font-size: 0.78rem; text-transform: capitalize">{{ p.group }}</div>
               </td>

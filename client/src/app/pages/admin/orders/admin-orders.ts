@@ -1,7 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminOrder, OrderFilters } from '../../../core/models/admin.model';
 import { badgeClass, orderCustomer, orderSource } from '../shared/admin-ui';
@@ -37,8 +38,13 @@ export class AdminOrders {
   protected readonly orderSource = orderSource;
 
   private searchTimer: ReturnType<typeof setTimeout> | undefined;
+  private listRequest?: Subscription;
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => {
+      clearTimeout(this.searchTimer);
+      this.listRequest?.unsubscribe();
+    });
     const params = this.route.snapshot.queryParamMap;
     this.q = params.get('q') ?? '';
     this.status = params.get('status') ?? '';
@@ -90,6 +96,7 @@ export class AdminOrders {
   }
 
   private fetch() {
+    this.listRequest?.unsubscribe();
     this.loading.set(true);
     const filters: OrderFilters = {
       q: this.q || undefined,
@@ -102,7 +109,7 @@ export class AdminOrders {
       to: this.to || undefined,
       page: this.page,
     };
-    this.admin.orders(filters).subscribe({
+    this.listRequest = this.admin.orders(filters).subscribe({
       next: (res) => {
         this.orders.set(res.orders);
         this.total.set(res.total);

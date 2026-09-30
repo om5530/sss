@@ -9,7 +9,7 @@ import { BakeryMaterial } from '../../../../core/models/bakery.model';
 
 interface PurchaseLine { materialId: string; quantity: string; uom: string; totalPaid: string }
 interface PurchaseEntry {
-  _id: string; code: string; purchasedAt: string; supplierName: string; notes: string; totalPaid: string;
+  _id: string; code: string; canDelete: boolean; purchasedAt: string; supplierName: string; notes: string; totalPaid: string;
   lines: { materialName: string; quantity: string; uom: string; totalPaid: string }[];
 }
 interface PurchaseHistory {
@@ -17,7 +17,7 @@ interface PurchaseHistory {
   months: { month: string; total: string; count: number }[];
   summary: { allTime: string; thisMonth: string; thisYear: string; selectedTotal: string; count: number };
 }
-interface PurchasePayload { operationKey: string; purchasedAt: string; supplierName: string; notes: string; lines: PurchaseLine[] }
+interface PurchasePayload { operationKey: string; purchasedAt: string; supplierName: string; lines: PurchaseLine[] }
 
 @Component({
   selector: 'app-admin-bakery-purchasing',
@@ -37,6 +37,8 @@ export class AdminBakeryPurchasing {
   loadingMaterials = signal(false);
   loadingHistory = signal(false);
   saving = signal(false);
+  deletingId = signal('');
+  deleteError = signal('');
   uncertainSave = signal(false);
   error = signal('');
   historyError = signal('');
@@ -44,7 +46,7 @@ export class AdminBakeryPurchasing {
   notice = signal('');
   errors = signal<Record<string, string>>({});
   month = signal('');
-  form = { purchasedAt: this.today, supplierName: '', notes: '', lines: [this.newLine()] };
+  form = { purchasedAt: this.today, supplierName: '', lines: [this.newLine()] };
   selectedMonthLabel = computed(() => this.month() ? this.monthLabel(this.month()) : 'All time');
   availableMonths = computed(() => [...new Set([
     this.today.slice(0, 7),
@@ -81,6 +83,25 @@ export class AdminBakeryPurchasing {
     });
   }
   filterMonth(value: string) { this.month.set(value); this.loadHistory(); }
+  deletePurchase(purchase: PurchaseEntry) {
+    if (this.deletingId() || !window.confirm(`Delete purchase ${purchase.code}? This will remove it from spending history and subtract its items from inventory.`)) return;
+    this.deletingId.set(purchase._id);
+    this.deleteError.set('');
+    this.notice.set('');
+    this.http.delete(this.base + '/purchases/' + purchase._id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.deletingId.set('');
+        this.notice.set('Purchase deleted. Spending history and inventory have been updated.');
+        const page = this.history()?.page || 1;
+        this.loadHistory(this.history()?.purchases.length === 1 && page > 1 ? page - 1 : page);
+        this.loadMaterials();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.deletingId.set('');
+        this.deleteError.set(err.error?.message || 'Could not delete the purchase. Please try again.');
+      },
+    });
+  }
   viewMonth(value: string) {
     this.filterMonth(value);
     document.getElementById('purchase-history')?.scrollIntoView({
@@ -123,7 +144,6 @@ export class AdminBakeryPurchasing {
         errors['date'] = 'Please choose a valid purchase date.';
       else if (date > this.today) errors['date'] = 'Purchase date cannot be in the future.';
       if (this.form.supplierName.length > 100) errors['supplier'] = 'Supplier must be 100 characters or fewer.';
-      if (this.form.notes.length > 1000) errors['notes'] = 'Notes must be 1,000 characters or fewer.';
       this.form.lines.forEach((line, i) => {
         if (!this.material(line)) errors[i + '-material'] = 'Please choose a material.';
         if (!line.quantity.trim() || !Number.isFinite(Number(line.quantity)) || Number(line.quantity) <= 0 || Number(line.quantity) > 1e12)
@@ -145,7 +165,7 @@ export class AdminBakeryPurchasing {
         this.uncertainSave.set(false);
         this.pendingPurchase = undefined;
         this.errors.set({});
-        this.form = { purchasedAt: this.today, supplierName: '', notes: '', lines: [this.newLine()] };
+        this.form = { purchasedAt: this.today, supplierName: '', lines: [this.newLine()] };
         this.notice.set('Purchase saved. The quantities have been added to inventory.');
         this.loadMaterials();
         this.loadHistory();

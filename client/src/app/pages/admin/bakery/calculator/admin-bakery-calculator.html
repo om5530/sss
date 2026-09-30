@@ -126,10 +126,10 @@
             Save costing sheet</button
           ><button
             class="btn btn--accent"
-            [disabled]="busy() || saving() || !result()"
+            [disabled]="busy() || saving() || productionPlanSaved() || !result()"
             (click)="save('production_plan')"
           >
-            Save production plan
+            {{ productionPlanSaved() ? 'Added to production' : (saving() ? 'Saving…' : 'Save production plan') }}
           </button>
         </div>
       </details>

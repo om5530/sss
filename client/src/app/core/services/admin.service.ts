@@ -113,7 +113,10 @@ export class AdminService {
   /* ---- Products ---- */
   categories() { return this.http.get<{ categories: ManagedCategory[] }>(`${this.base}/categories`).pipe(map((r) => r.categories)); }
   saveCategory(data: { name: string; group: string }, id?: string) {
-    return id ? this.http.patch(`${this.base}/categories/${id}`, data) : this.http.post(`${this.base}/categories`, data);
+    const request = id
+      ? this.http.patch<{ category: ManagedCategory }>(`${this.base}/categories/${id}`, data)
+      : this.http.post<{ category: ManagedCategory }>(`${this.base}/categories`, data);
+    return request.pipe(map((response) => response.category));
   }
   deleteCategory(id: string) { return this.http.delete(`${this.base}/categories/${id}`); }
   reorderCategories(group: string, ids: string[]) { return this.http.patch(`${this.base}/categories/order`, { group, ids }); }

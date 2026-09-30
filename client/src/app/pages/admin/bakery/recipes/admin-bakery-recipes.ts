@@ -27,10 +27,12 @@ export class AdminBakeryRecipes implements OnInit {
   revisions = signal<any[]>([]);
   historyRecipe = signal<BakeryRecipe | null>(null);
   private previewRequest?: Subscription;
+  private recipesRequest?: Subscription;
   private previewTimer?: ReturnType<typeof setTimeout>;
   constructor() {
     inject(DestroyRef).onDestroy(() => {
       this.previewRequest?.unsubscribe();
+      this.recipesRequest?.unsubscribe();
       clearTimeout(this.previewTimer);
     });
   }
@@ -92,6 +94,7 @@ export class AdminBakeryRecipes implements OnInit {
   recipes = signal<BakeryRecipe[]>([]);
   materials = signal<BakeryMaterial[]>([]);
   loading = signal<boolean>(false);
+  saving = signal(false);
   editingRecipe = signal<Partial<BakeryRecipe> | null>(null);
 
   selectedCategory = signal<string>('All');
@@ -110,8 +113,12 @@ export class AdminBakeryRecipes implements OnInit {
     this.bakery.getMaterials().subscribe({
       next: (res) => this.materials.set(res.materials),
     });
+    this.fetchRecipes();
+  }
 
-    this.bakery.getRecipes().subscribe({
+  private fetchRecipes() {
+    this.recipesRequest?.unsubscribe();
+    this.recipesRequest = this.bakery.getRecipes().subscribe({
       next: (res) => {
         this.recipes.set(res.recipes);
         this.mergeRecipeCategories(res.recipes);
@@ -316,30 +323,41 @@ export class AdminBakeryRecipes implements OnInit {
 
   saveRecipe() {
     const recipe = this.editingRecipe();
+    if (this.saving()) return;
     if (!recipe || !recipe.name?.trim()) {
       this.toast.error('Recipe name is required');
       return;
     }
-
+    this.saving.set(true);
     if (recipe._id) {
       this.bakery.updateRecipe(recipe._id, recipe).subscribe({
-        next: () => {
+        next: (res) => {
+          this.saving.set(false);
           this.toast.success('Recipe updated');
           this.editingRecipe.set(null);
-          this.fetchData();
+          this.upsertRecipe(res.recipe);
+          // An edited sub-recipe can change the costs of its parent recipes.
+          this.fetchRecipes();
         },
-        error: () => this.toast.error('Failed to update recipe'),
+        error: () => { this.saving.set(false); this.toast.error('Failed to update recipe'); },
       });
     } else {
       this.bakery.createRecipe(recipe).subscribe({
-        next: () => {
+        next: (res) => {
+          this.saving.set(false);
           this.toast.success('Recipe created');
           this.editingRecipe.set(null);
-          this.fetchData();
+          this.upsertRecipe(res.recipe);
         },
-        error: () => this.toast.error('Failed to create recipe'),
+        error: () => { this.saving.set(false); this.toast.error('Failed to create recipe'); },
       });
     }
+  }
+
+  private upsertRecipe(recipe: BakeryRecipe) {
+    this.recipesRequest?.unsubscribe();
+    this.recipes.update((recipes) => [recipe, ...recipes.filter((item) => item._id !== recipe._id)]);
+    this.mergeRecipeCategories([recipe]);
   }
 
   deleteRecipe(id: string) {
@@ -347,7 +365,8 @@ export class AdminBakeryRecipes implements OnInit {
     this.bakery.deleteRecipe(id).subscribe({
       next: () => {
         this.toast.success('Recipe archived');
-        this.fetchData();
+        this.recipesRequest?.unsubscribe();
+        this.recipes.update((recipes) => recipes.filter((recipe) => recipe._id !== id));
       },
       error: () => this.toast.error('Failed to delete recipe'),
     });

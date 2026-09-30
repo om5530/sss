@@ -66,6 +66,7 @@ export interface ManualOrderPayload {
 }
 
 export interface EventSalesReport {
+  eventNames: string[];
   events: { eventName: string; orders: number; paidOrders: number; revenue: number; units: number;
     pendingAmount: number; cash: number; upi: number; card: number; lastSaleAt: string }[];
   products: { _id: string; name: string; quantity: number; subtotal: number }[];

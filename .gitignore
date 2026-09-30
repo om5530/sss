@@ -15,6 +15,7 @@ dist/
 
 # Locally-stored uploads (product photos, cake references)
 /server/uploads/
+/output/
 
 # Logs
 *.log

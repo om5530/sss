@@ -68,7 +68,7 @@ async function transaction(fn) {
     return fn(session);
   });
 }
-async function maps(session, at = new Date(), excludePlanId, includeRecipes = true) {
+async function maps(session, at = new Date(), excludePlanId, includeRecipes = true, includePlans = true) {
   const pricesQuery = O.Price.find({ effectiveAt: { $lte: at } })
     .sort({ effectiveAt: -1, _id: -1 })
     .session(session || null)
@@ -84,7 +84,7 @@ async function maps(session, at = new Date(), excludePlanId, includeRecipes = tr
       pricesQuery,
       read(O.Format, {}, session),
       read(O.Supplier, {}, session),
-      read(O.Sheet, plansQuery, session),
+      includePlans ? read(O.Sheet, plansQuery, session) : Promise.resolve([]),
       includeRecipes ? read(Recipe, {}, session) : Promise.resolve([]),
     ]);
   const materials = new Map(
@@ -123,6 +123,7 @@ async function maps(session, at = new Date(), excludePlanId, includeRecipes = tr
     }
   return {
     materials,
+    plans,
     recipes: new Map(recipeRows.map((r) => [String(r._id), r])),
     latest,
     formats,
@@ -406,7 +407,7 @@ exports.deleteMaterial = handler((req) =>
   }),
 );
 exports.getRecipes = handler(async () => {
-  const m = await maps();
+  const m = await maps(undefined, new Date(), undefined, true, false);
   const recipes = [...m.recipes.values()]
     .filter((r) => r.isActive)
     .map((r) => {
@@ -423,7 +424,7 @@ exports.getRecipes = handler(async () => {
   return { recipes, count: recipes.length };
 });
 exports.getRecipeById = handler(async (req) => {
-  const m = await maps(),
+  const m = await maps(undefined, new Date(), undefined, true, false),
     r = m.recipes.get(id(req.params.id));
   if (!r) throw ApiError.notFound();
   return {
@@ -473,7 +474,7 @@ async function saveRecipe(req, session, creating) {
     throw ApiError.badRequest("Expected loss must be below 100%");
   if (!r.components.length || r.components.length > 200)
     throw ApiError.badRequest("Recipe needs between 1 and 200 components");
-  const m = await maps(session);
+  const m = await maps(session, new Date(), undefined, true, false);
   for (const component of [
     ...r.components,
     ...(r.options || []).flatMap((option) => option.components || []),
@@ -560,7 +561,7 @@ exports.deleteRecipe = handler((req) =>
   }),
 );
 exports.simulateRecipe = handler(async (req) => {
-  const m = await maps(),
+  const m = await maps(undefined, new Date(), undefined, true, false),
     r = m.recipes.get(id(req.body.recipeId));
   if (!r || !r.isActive) throw ApiError.notFound("Recipe unavailable");
   return {
@@ -577,7 +578,7 @@ exports.simulateMultiProduct = handler(async (req) => ({
   aggregated: await simulate(req.body),
 }));
 exports.previewRecipe = handler(async (req) => {
-  const m = await maps(),
+  const m = await maps(undefined, new Date(), undefined, true, false),
     r = new Recipe(pick(req.body, recipeFields));
   if (req.body._id) r._id = id(req.body._id);
   await r.validate();
@@ -981,7 +982,7 @@ exports.logWaste = handler((req) =>
 );
 
 exports.getPurchasing = handler(async () => {
-  const m = await maps();
+  const m = await maps(undefined, new Date(), undefined, false, false);
   return {
     suppliers: [...m.suppliers.values()],
     formats: [...m.formats.values()].map((f) => ({
@@ -994,7 +995,7 @@ exports.getPurchasing = handler(async () => {
     })),
     prices: await O.Price.find().sort({ effectiveAt: -1 }).lean(),
     purchases: await O.Purchase.find().sort({ createdAt: -1 }).lean(),
-    receipts: await O.Receipt.find().sort({ receivedAt: -1 }).lean(),
+    receipts: await O.Receipt.find({ voidedAt: null }).sort({ receivedAt: -1 }).lean(),
   };
 });
 
@@ -1028,6 +1029,8 @@ exports.recordPurchase = handler((req) => {
   return transaction(async (session) => {
     const existing = await O.Receipt.findOne({ operationKey }).session(session);
     if (existing) {
+      if (existing.voidedAt)
+        throw ApiError.conflict('This purchase was deleted. Record a new purchase to add it again.');
       if (existing.requestSignature !== requestSignature)
         throw ApiError.conflict("This purchase was already saved with different details. Refresh before recording another purchase.");
       return { receipt: existing, purchase: await get(O.Purchase, existing.purchaseId, session) };
@@ -1059,15 +1062,41 @@ exports.recordPurchase = handler((req) => {
   });
 });
 
+exports.deletePurchase = handler((req) => transaction(async (session) => {
+  const receipt = await get(O.Receipt, req.params.id, session);
+  if (receipt.voidedAt) throw ApiError.conflict('This purchase was already deleted.');
+  const purchase = await get(O.Purchase, receipt.purchaseId, session);
+  if (purchase.source !== 'direct')
+    throw ApiError.badRequest('Only purchases recorded on this page can be deleted.');
+  for (const line of receipt.lines) {
+    await move(
+      line.materialId,
+      new D(line.quantity).neg().toString(),
+      'adjustment',
+      purchase.code,
+      'Deleted purchase — inventory reversed',
+      req.user?._id,
+      session,
+    );
+  }
+  receipt.voidedAt = new Date();
+  receipt.voidedBy = req.user?._id;
+  await receipt.save({ session });
+  purchase.status = 'cancelled';
+  await purchase.save({ session });
+  return { deleted: true };
+}));
+
 exports.purchaseHistory = handler(async (req) => {
   const month = req.query.month || '';
-  const filter = month ? { receivedAt: purchaseLedger.monthRange(month) } : {};
+  const filter = { voidedAt: null, ...(month ? { receivedAt: purchaseLedger.monthRange(month) } : {}) };
   const page = req.query.page === undefined ? 1 : Number(req.query.page);
   if (!Number.isSafeInteger(page) || page < 1 || page > 1000000)
     throw ApiError.badRequest("Please choose a valid purchase history page");
   const limit = 20;
   const [monthlyRows, receipts, count] = await Promise.all([
     O.Receipt.aggregate([
+      { $match: { voidedAt: null } },
       { $set: { spend: { $reduce: {
         input: '$lines', initialValue: { $toDecimal: '0' },
         in: { $add: ['$$value', { $ifNull: [
@@ -1099,7 +1128,7 @@ exports.purchaseHistory = handler(async (req) => {
     purchases: receipts.map(r => {
       const p = byPurchase.get(String(r.purchaseId));
       return {
-        _id: r._id, code: p?.code || '', purchasedAt: r.receivedAt || r.createdAt,
+        _id: r._id, code: p?.code || '', canDelete: p?.source === 'direct', purchasedAt: r.receivedAt || r.createdAt,
         supplierName: p?.supplierName || bySupplier.get(String(p?.supplierId)) || '', notes: p?.notes || '',
         totalPaid: purchaseLedger.receiptTotal(r),
         lines: r.lines.map(l => {
@@ -1422,29 +1451,8 @@ exports.receivePurchase = handler((req) =>
     return { receipt, purchase: p };
   }),
 );
-exports.reports = handler(async (req) => {
-  const m = await maps(),
-    sheets = await read(O.Sheet),
-    waste = await read(Waste),
-    prices = await read(O.Price),
-    movements = await read(O.Movement);
-  const dayBoundary = (value, end) =>
-    /^\d{4}-\d{2}-\d{2}$/.test(value)
-      ? date(value + (end ? "T23:59:59.999+05:30" : "T00:00:00+05:30"))
-      : date(value);
-  const since = req.query.from
-      ? dayBoundary(req.query.from, false)
-      : new Date(0),
-    until = req.query.to ? dayBoundary(req.query.to, true) : new Date();
-  if (since > until)
-    throw ApiError.badRequest("The start date must precede the end date");
-  const batches = sheets.filter(
-    (s) =>
-      s.status === "completed" &&
-      s.completedAt >= since &&
-      s.completedAt <= until,
-  );
-  const recipes = [...m.recipes.values()]
+function recipeCostChanges(m) {
+  return [...m.recipes.values()]
     .filter((r) => r.isActive)
     .map((r) => {
       try {
@@ -1472,6 +1480,50 @@ exports.reports = handler(async (req) => {
         return { name: r.name, error: e.message };
       }
     });
+}
+exports.reports = handler(async (req) => {
+  if (req.query.scope === "overview") {
+    const [m, wasteCost] = await Promise.all([
+      maps(),
+      Waste.aggregate([
+        { $group: { _id: null, total: { $sum: { $toDecimal: "$totalCostLost" } } } },
+      ]),
+    ]);
+    const plans = m.plans;
+    return {
+      recipes: recipeCostChanges(m),
+      plans,
+      ...groupProductionPlans(plans),
+      wasteCost: wasteCost[0]?.total?.toString() || "0",
+      stock: [...m.materials.values()].filter((material) =>
+        ["ingredient", "packaging"].includes(material.type),
+      ),
+    };
+  }
+  const [m, sheets, waste, prices, movements] = await Promise.all([
+    maps(),
+    read(O.Sheet),
+    read(Waste),
+    read(O.Price),
+    read(O.Movement),
+  ]);
+  const dayBoundary = (value, end) =>
+    /^\d{4}-\d{2}-\d{2}$/.test(value)
+      ? date(value + (end ? "T23:59:59.999+05:30" : "T00:00:00+05:30"))
+      : date(value);
+  const since = req.query.from
+      ? dayBoundary(req.query.from, false)
+      : new Date(0),
+    until = req.query.to ? dayBoundary(req.query.to, true) : new Date();
+  if (since > until)
+    throw ApiError.badRequest("The start date must precede the end date");
+  const batches = sheets.filter(
+    (s) =>
+      s.status === "completed" &&
+      s.completedAt >= since &&
+      s.completedAt <= until,
+  );
+  const recipes = recipeCostChanges(m);
   const logs = waste.filter((w) => w.date >= since && w.date <= until),
     grouped = {};
   for (const w of logs) {
@@ -1480,6 +1532,14 @@ exports.reports = handler(async (req) => {
   }
   return {
     recipes,
+    materialNames: [...m.materials.values()].map((material) => ({
+      _id: material._id,
+      name: material.name,
+    })),
+    suppliers: [...m.suppliers.values()].map((supplier) => ({
+      _id: supplier._id,
+      name: supplier.name,
+    })),
     batches,
     plans: sheets.filter((s) => s.status === "scheduled"),
     ...groupProductionPlans(
@@ -1525,7 +1585,7 @@ exports.reports = handler(async (req) => {
     purchases: (await read(O.Purchase)).filter(
       (p) => p.createdAt >= since && p.createdAt <= until,
     ),
-    receipts: (await read(O.Receipt)).filter(
+    receipts: (await read(O.Receipt, { voidedAt: null })).filter(
       (r) => r.receivedAt >= since && r.receivedAt <= until,
     ),
   };

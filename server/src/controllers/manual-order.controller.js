@@ -157,7 +157,7 @@ const eventReport = asyncHandler(async (req, res) => {
   const paid = { $and: [{ $eq: ['$paymentStatus', 'paid'] }, { $ne: ['$orderStatus', 'cancelled'] }] };
   const pending = { $and: [{ $eq: ['$paymentStatus', 'pending'] }, { $ne: ['$orderStatus', 'cancelled'] }] };
   const receivedBy = (method) => ({ $sum: { $cond: [{ $and: [paid, { $eq: ['$paymentMethod', method] }] }, '$pricing.total', 0] } });
-  const [events, products] = await Promise.all([
+  const [events, products, eventNames] = await Promise.all([
     Order.aggregate([
       { $match: match },
       { $group: { _id: { $toLower: '$eventName' }, eventName: { $last: '$eventName' }, orders: { $sum: 1 },
@@ -175,8 +175,19 @@ const eventReport = asyncHandler(async (req, res) => {
       { $group: { _id: '$items.product', name: { $last: '$items.name' }, quantity: { $sum: '$items.quantity' }, subtotal: { $sum: '$items.lineTotal' } } },
       { $sort: { quantity: -1 } }, { $project: { name: 1, quantity: 1, subtotal: { $round: ['$subtotal', 2] } } },
     ]),
+    req.query.eventName ? Order.aggregate([
+      { $match: { source: 'event' } },
+      { $group: { _id: { $toLower: '$eventName' }, eventName: { $last: '$eventName' } } },
+      { $sort: { eventName: 1 } },
+      { $project: { _id: 0, eventName: 1 } },
+    ]) : Promise.resolve(null),
   ]);
-  res.json({ success: true, events, products });
+  res.json({
+    success: true,
+    events,
+    products,
+    eventNames: eventNames?.map((event) => event.eventName) || events.map((event) => event.eventName),
+  });
 });
 
 const itemRules = () => [

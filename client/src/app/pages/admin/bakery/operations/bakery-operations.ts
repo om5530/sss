@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-bakery-operations',
@@ -47,20 +46,35 @@ export class BakeryOperations {
     const params: any = {};
     if (this.from) params.from = this.from;
     if (this.to) params.to = this.to;
-    forkJoin({
-      report: this.http.get<any>(this.base + '/reports', { params }),
-      purchasing: this.http.get<any>(this.base + '/purchasing'),
-      materials: this.http.get<any>(this.base + '/materials'),
-      sheets: this.http.get<any>(this.base + '/costing-sheets'),
-    }).subscribe({
-      next: (r) => {
-        this.data.set(r.report);
-        this.purchasing.set(r.purchasing);
-        this.materials.set(r.materials.materials);
-        this.sheets.set(r.sheets.sheets);
+    if (this.view === 'migration') {
+      this.busy.set(false);
+      return;
+    }
+    const request = this.view === 'production'
+      ? this.http.get<any>(this.base + '/costing-sheets')
+      : this.view === 'dashboard'
+        ? this.http.get<any>(this.base + '/reports', { params: { scope: 'overview' } })
+        : this.http.get<any>(this.base + '/reports', { params });
+    request.subscribe({
+      next: (result: any) => {
+        if (this.view === 'production') {
+          const rank: Record<string, number> = { scheduled: 0, draft: 1, completed: 2, cancelled: 3 };
+          this.sheets.set([...result.sheets].sort((a, b) =>
+            (rank[a.status] ?? 2) - (rank[b.status] ?? 2)
+            || (a.status === 'scheduled'
+              ? new Date(a.requiredDate || 0).getTime() - new Date(b.requiredDate || 0).getTime()
+              : new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()),
+          ));
+        }
+        else if (this.view === 'dashboard') this.data.set(result);
+        else {
+          this.data.set(result);
+          this.purchasing.set({ suppliers: result.suppliers });
+          this.materials.set(result.materialNames);
+        }
         this.busy.set(false);
       },
-      error: (e) => {
+      error: (e: any) => {
         this.error.set(e.error?.message || 'Could not load bakery operations');
         this.busy.set(false);
       },

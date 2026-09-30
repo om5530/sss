@@ -5,6 +5,7 @@ import { UpiPaymentQr } from '../shared/upi-payment-qr';
 import { AdminService } from '../../../core/services/admin.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { AdminOrder, AdminPayment } from '../../../core/models/admin.model';
+import { Order } from '../../../core/models/order.model';
 import { ConfirmModal } from '../shared/confirm-modal';
 import { NEXT_LABEL, NEXT_STATUS, badgeClass, orderSource } from '../shared/admin-ui';
 
@@ -42,8 +43,8 @@ export class AdminOrderDetail {
     });
   }
 
-  protected load() {
-    this.loading.set(true);
+  protected load(silent = false) {
+    if (!silent) this.loading.set(true);
     this.admin.order(this.id()).subscribe({
       next: (res) => {
         this.order.set(res.order);
@@ -88,9 +89,10 @@ export class AdminOrderDetail {
     if (!o || !next || this.busy()) return;
     this.busy.set(true);
     this.admin.updateOrderStatus(o._id, next).subscribe({
-      next: () => {
+      next: (updated) => {
+        this.applyOrder(updated);
         this.busy.set(false);
-        this.load();
+        this.load(true);
       },
       error: (err) => {
         this.busy.set(false);
@@ -105,11 +107,13 @@ export class AdminOrderDetail {
     if (!o || !kind) return;
     this.busy.set(true);
 
-    const done = (message: string) => {
+    const done = (message: string, updated: Order, payment?: AdminPayment) => {
+      this.applyOrder(updated);
+      if (payment) this.payment.set(payment);
       this.busy.set(false);
       this.modal.set(null);
       this.toast.success(message);
-      this.load();
+      this.load(true);
     };
     const fail = (err: { error?: { message?: string } }) => {
       this.busy.set(false);
@@ -118,24 +122,28 @@ export class AdminOrderDetail {
 
     if (kind === 'cancel') {
       this.admin.updateOrderStatus(o._id, 'cancelled', reason).subscribe({
-        next: () => done(`${o.orderNumber} cancelled.`),
+        next: (updated) => done(`${o.orderNumber} cancelled.`, updated),
         error: fail,
       });
     } else if (kind === 'manual') {
       this.admin.settleManual(o._id).subscribe({
-        next: () => done(`₹${o.pricing.total.toFixed(2)} payment recorded for ${o.orderNumber}.`),
+        next: (result) => done(`₹${o.pricing.total.toFixed(2)} payment recorded for ${o.orderNumber}.`, result.order, result.payment),
         error: fail,
       });
     } else if (kind === 'cash') {
       this.admin.settleCash(o._id).subscribe({
-        next: () => done(`₹${o.pricing.total.toFixed(2)} cash recorded for ${o.orderNumber}.`),
+        next: (result) => done(`₹${o.pricing.total.toFixed(2)} cash recorded for ${o.orderNumber}.`, result.order, result.payment),
         error: fail,
       });
     } else {
       this.admin.refundOrder(o._id, reason).subscribe({
-        next: () => done(`₹${o.pricing.total.toFixed(2)} refunded for ${o.orderNumber}.`),
+        next: (result) => done(`₹${o.pricing.total.toFixed(2)} refunded for ${o.orderNumber}.`, result.order, result.payment),
         error: fail,
       });
     }
+  }
+
+  private applyOrder(updated: Order) {
+    this.order.update((current) => current ? { ...current, ...updated, user: current.user } : current);
   }
 }

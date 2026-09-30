@@ -2,7 +2,7 @@
   <a class="pcard__media" [routerLink]="['/product', product().slug]">
     <img [src]="imageUrl()" [alt]="product().name" loading="lazy" (error)="onImageError($event)" />
     @if (product().featured) { <span class="pcard__tag">★ Popular</span> }
-    @if (!product().available) { <span class="pcard__sold">Sold out</span> }
+    @if (!product().available) { <span class="pcard__sold">{{ product().stockCount === 0 ? 'Out of stock' : 'Unavailable' }}</span> }
     @if (lowStock()) { <span class="pcard__low">Only {{ product().stockCount }} left</span> }
   </a>
 
@@ -22,7 +22,7 @@
       <span class="pcard__price">₹{{ product().price }}</span>
 
       @if (!product().available) {
-        <button class="btn btn--ghost" disabled>Unavailable</button>
+        <button class="btn btn--ghost" disabled>{{ product().stockCount === 0 ? 'Out of stock' : 'Unavailable' }}</button>
       } @else if (quantity() === 0) {
         <button class="btn btn--primary pcard__add" (click)="add($event)">Add</button>
       } @else {

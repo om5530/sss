@@ -29,7 +29,14 @@ export class AdminCategories {
     if (this.busy() || !this.name.trim()) return;
     this.busy.set(true); this.error.set('');
     this.admin.saveCategory({ name: this.name, group: this.group }, this.editing()).subscribe({
-      next: () => { this.busy.set(false); this.reset(); this.load(); },
+      next: (category) => {
+        this.categories.update((rows) => {
+          const previous = rows.find((row) => row._id === category._id);
+          return [...rows.filter((row) => row._id !== category._id), { ...category, count: previous?.count ?? 0 }]
+            .sort((a, b) => a.group.localeCompare(b.group) || a.displayOrder - b.displayOrder || a.name.localeCompare(b.name));
+        });
+        this.busy.set(false); this.reset();
+      },
       error: (err) => { this.busy.set(false); this.error.set(err.error?.message || 'Could not save category.'); },
     });
   }
@@ -38,7 +45,10 @@ export class AdminCategories {
     if (!target || this.busy()) return;
     this.busy.set(true); this.error.set('');
     this.admin.deleteCategory(target._id).subscribe({
-      next: () => { this.busy.set(false); this.deleteTarget.set(null); this.load(); },
+      next: () => {
+        this.categories.update((rows) => rows.filter((row) => row._id !== target._id));
+        this.busy.set(false); this.deleteTarget.set(null);
+      },
       error: (err) => { this.busy.set(false); this.deleteTarget.set(null); this.error.set(err.error?.message || 'Could not delete category.'); },
     });
   }
@@ -50,7 +60,13 @@ export class AdminCategories {
     [rows[index], rows[index + direction]] = [rows[index + direction], rows[index]];
     this.busy.set(true); this.error.set('');
     this.admin.reorderCategories(category.group, rows.map((c) => c._id)).subscribe({
-      next: () => { this.busy.set(false); this.load(); },
+      next: () => {
+        this.categories.update((all) => [
+          ...all.filter((item) => item.group !== category.group || item.archived),
+          ...rows.map((item, displayOrder) => ({ ...item, displayOrder })),
+        ].sort((a, b) => a.group.localeCompare(b.group) || a.displayOrder - b.displayOrder || a.name.localeCompare(b.name)));
+        this.busy.set(false);
+      },
       error: (err) => { this.busy.set(false); this.error.set(err.error?.message || 'Could not reorder categories.'); },
     });
   }

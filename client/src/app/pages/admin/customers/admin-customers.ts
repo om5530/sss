@@ -1,7 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { AdminService } from '../../../core/services/admin.service';
 import { CustomerRow } from '../../../core/models/admin.model';
 
@@ -22,8 +23,13 @@ export class AdminCustomers {
   protected page = 1;
 
   private searchTimer: ReturnType<typeof setTimeout> | undefined;
+  private listRequest?: Subscription;
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => {
+      clearTimeout(this.searchTimer);
+      this.listRequest?.unsubscribe();
+    });
     this.fetch();
   }
 
@@ -41,8 +47,9 @@ export class AdminCustomers {
   }
 
   protected fetch() {
+    this.listRequest?.unsubscribe();
     this.loading.set(true);
-    this.admin.customers({ q: this.q || undefined, page: this.page }).subscribe({
+    this.listRequest = this.admin.customers({ q: this.q || undefined, page: this.page }).subscribe({
       next: (res) => {
         this.customers.set(res.customers);
         this.total.set(res.total);

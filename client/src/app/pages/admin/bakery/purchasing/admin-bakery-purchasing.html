@@ -26,9 +26,6 @@
         <label><span>Supplier / shop <span class="optional">Optional</span></span><input class="input" name="supplierName" [(ngModel)]="form.supplierName" placeholder="Where you bought it" [attr.aria-invalid]="errors()['supplier'] ? true : null" aria-describedby="purchase-supplier-error" />
           @if (errors()['supplier']) { <small id="purchase-supplier-error" class="error-text" role="alert">{{ errors()['supplier'] }}</small> }
         </label>
-        <label class="purchase-notes"><span>Notes <span class="optional">Optional</span></span><input class="input" name="notes" [(ngModel)]="form.notes" placeholder="Bill number or other details" [attr.aria-invalid]="errors()['notes'] ? true : null" aria-describedby="purchase-notes-error" />
-          @if (errors()['notes']) { <small id="purchase-notes-error" class="error-text" role="alert">{{ errors()['notes'] }}</small> }
-        </label>
       </div>
       @for (line of form.lines; track line; let i = $index) {
         <div class="purchase-item">
@@ -44,9 +41,10 @@
             <label>Quantity bought<input class="input" type="text" inputmode="decimal" [name]="'quantity' + i" [(ngModel)]="line.quantity" placeholder="e.g. 2" [attr.aria-invalid]="errors()[i + '-quantity'] ? true : null" [attr.aria-describedby]="'purchase-quantity-error-' + i" required />
               @if (errors()[i + '-quantity']) { <small [id]="'purchase-quantity-error-' + i" class="error-text" role="alert">{{ errors()[i + '-quantity'] }}</small> }
             </label>
-            <label>Unit<select class="select" [name]="'unit' + i" [(ngModel)]="line.uom" [attr.aria-invalid]="errors()[i + '-unit'] ? true : null" [attr.aria-describedby]="'purchase-unit-error-' + i" required>
-              <option value="">Choose unit</option>@for (u of units(line); track u) { <option [value]="u">{{ u }}</option> }
+            <label>Unit<select class="select" [name]="'unit' + i" [(ngModel)]="line.uom" [disabled]="!line.materialId" [attr.aria-invalid]="errors()[i + '-unit'] ? true : null" [attr.aria-describedby]="'purchase-unit-error-' + i" required>
+              <option value="">{{ line.materialId ? 'Choose unit' : 'Select material first' }}</option>@for (u of units(line); track u) { <option [value]="u">{{ u }}</option> }
             </select>
+              @if (!line.materialId) { <small class="muted">Units appear after you choose a material.</small> }
               @if (errors()[i + '-unit']) { <small [id]="'purchase-unit-error-' + i" class="error-text" role="alert">{{ errors()[i + '-unit'] }}</small> }
             </label>
             <label>Total paid (₹)<input class="input" type="text" inputmode="decimal" [name]="'amount' + i" [(ngModel)]="line.totalPaid" placeholder="e.g. 250" [attr.aria-invalid]="errors()[i + '-amount'] ? true : null" [attr.aria-describedby]="'purchase-amount-error-' + i" required />
@@ -82,6 +80,7 @@
     @if (historyError()) {
       <p class="purchase-error" role="alert">{{ historyError() }} <button type="button" class="btn btn--outline btn--sm" (click)="loadHistory()">Retry</button></p>
     }
+    @if (deleteError()) { <p class="purchase-error" role="alert">{{ deleteError() }}</p> }
     @if (loadingHistory()) { <p class="history-loading" role="status">Loading purchases…</p> }
     @if (!loadingHistory() && !historyError()) {
       @if (history(); as h) {
@@ -103,7 +102,7 @@
                     }
                   </td>
                   <td class="purchase-source"><span class="mobile-label">Supplier &amp; notes</span><span [class.no-supplier]="!p.supplierName">{{ p.supplierName || '—' }}</span>@if (p.notes) { <small class="purchase-note">{{ p.notes }}</small> }</td>
-                  <td class="purchase-amount num"><span class="mobile-label">Amount paid</span><strong>{{ money(p.totalPaid) }}</strong></td>
+                  <td class="purchase-amount num"><span class="mobile-label">Amount paid</span><strong>{{ money(p.totalPaid) }}</strong>@if (p.canDelete) { <button type="button" class="delete-purchase" [disabled]="!!deletingId()" [attr.aria-label]="'Delete purchase ' + p.code" (click)="deletePurchase(p)">{{ deletingId() === p._id ? 'Deleting…' : 'Delete' }}</button> }</td>
                 </tr>
               } @empty {
                 <tr class="empty-row"><td colspan="4" class="empty-state"><span class="empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6"/></svg></span><strong>{{ month() ? 'No purchases in this month' : 'Your purchase history starts here' }}</strong><p>{{ month() ? 'Choose another month or select All time.' : 'Record a purchase above to track your spending and stock.' }}</p></td></tr>

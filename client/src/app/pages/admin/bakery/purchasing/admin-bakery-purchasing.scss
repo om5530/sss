@@ -12,7 +12,7 @@ p { margin: .4rem 0 0; color: var(--muted); font-size: .9rem; }
 .purchase-totals strong, .save-purchase strong { font-size: clamp(1.1rem, 2.3vw, 1.6rem); color: var(--choco); overflow-wrap: anywhere; }
 .purchase-form, fieldset { display: grid; gap: .7rem; min-width: 0; }
 fieldset { margin: 0; padding: 0; border: 0; }
-.purchase-meta { display: grid; grid-template-columns: 180px minmax(180px, 1fr) minmax(180px, 1.2fr); gap: .7rem; align-items: start; }
+.purchase-meta { display: grid; grid-template-columns: 180px minmax(180px, 1fr); gap: .7rem; align-items: start; }
 label { display: grid; gap: .25rem; min-width: 0; font-size: .78rem; font-weight: 600; }
 .optional, .muted { color: var(--muted); font-weight: 400; font-size: .8rem; }
 .optional { display: inline; margin-left: .3rem; }
@@ -67,6 +67,9 @@ fieldset > .btn { justify-self: start; }
 .purchase-note { display: block; margin-top: .3rem; line-height: 1.4; }
 .no-supplier { color: var(--muted); }
 .purchase-amount > strong { display: block; font-variant-numeric: tabular-nums; font-size: .95rem; color: var(--choco); }
+.delete-purchase { margin-top: .55rem; padding: .2rem .35rem; border: 0; background: transparent; color: #923821; font: inherit; font-size: .72rem; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.delete-purchase:disabled { opacity: .5; cursor: default; }
+.delete-purchase:focus-visible { outline: 2px solid #923821; outline-offset: 2px; }
 .mobile-label { display: none; }
 .history-pages { display: flex; justify-content: flex-end; align-items: center; gap: .8rem; font-size: .85rem; }
 .num { text-align: right; white-space: nowrap; }
@@ -97,7 +100,6 @@ fieldset > .btn { justify-self: start; }
 @media (max-width: 1100px) { .item-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); } .material-field { grid-column: 1 / -1; } .item-title { padding-top: .2rem; } }
 @media (max-width: 800px) {
   .purchase-meta { grid-template-columns: 180px minmax(0, 1fr); }
-  .purchase-notes { grid-column: 1 / -1; }
   .purchase-table colgroup { display: none; }
   .purchase-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .purchase-table, .purchase-table tbody { display: block; }
@@ -116,7 +118,6 @@ fieldset > .btn { justify-self: start; }
 @media (max-width: 600px) {
   .purchasing { padding: .8rem; }
   .purchase-meta { grid-template-columns: 1fr; }
-  .purchase-notes { grid-column: auto; }
   .purchase-item { display: block; }
   .item-title { flex-direction: row; justify-content: space-between; align-items: center; padding: 0; margin-bottom: .5rem; }
   .item-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }

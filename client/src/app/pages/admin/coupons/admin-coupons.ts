@@ -78,7 +78,7 @@ export class AdminCoupons {
           this.value = this.minSubtotal = this.maxDiscount = this.usageLimit = null;
           this.expiresAt = '';
           this.toast.success(`${coupon.code} is live — share it away.`);
-          this.fetch();
+          this.coupons.update((coupons) => [coupon, ...coupons]);
         },
         error: (err) => {
           this.saving.set(false);
@@ -91,9 +91,9 @@ export class AdminCoupons {
     if (this.busyId()) return;
     this.busyId.set(c._id);
     this.admin.setCouponActive(c._id, !c.active).subscribe({
-      next: () => {
+      next: (coupon) => {
         this.busyId.set(null);
-        this.fetch();
+        this.coupons.update((coupons) => coupons.map((item) => item._id === coupon._id ? coupon : item));
       },
       error: (err) => {
         this.busyId.set(null);

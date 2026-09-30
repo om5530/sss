@@ -16,7 +16,7 @@ export interface Product {
   tags: string[];
   available: boolean;
   featured: boolean;
-  /** Daily bake count. null/undefined = not tracked; 0 auto-flips available. */
+  /** Daily bake count. null/undefined = not tracked; 0 means sold out. */
   stockCount?: number | null;
   /** Denormalised review stats (0 when unreviewed). */
   ratingAvg?: number;

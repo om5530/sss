@@ -106,6 +106,8 @@ exports.Receipt = model("BakeryReceipt", {
   requestSignature: String,
   lines: [Schema.Types.Mixed],
   receivedAt: Date,
+  voidedAt: Date,
+  voidedBy: Schema.Types.ObjectId,
 });
 exports.Migration = model("BakeryMigration", {
   key: { type: String, required: true, unique: true },

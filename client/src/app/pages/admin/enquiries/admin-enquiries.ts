@@ -27,6 +27,7 @@ export class AdminEnquiries {
   protected readonly pages = signal(1);
   protected readonly loading = signal(true);
   protected readonly busyId = signal<string | null>(null);
+  private requestVersion = 0;
 
   protected status = '';
   protected page = 1;
@@ -44,17 +45,19 @@ export class AdminEnquiries {
     this.fetch();
   }
 
-  protected fetch() {
-    this.loading.set(true);
+  protected fetch(silent = false) {
+    const version = ++this.requestVersion;
+    if (!silent) this.loading.set(true);
     this.admin.messages({ status: this.status || undefined, page: this.page }).subscribe({
       next: (res) => {
+        if (version !== this.requestVersion) return;
         this.messages.set(res.messages);
         this.total.set(res.total);
         this.newCount.set(res.newCount);
         this.pages.set(res.pages);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: () => { if (version === this.requestVersion) this.loading.set(false); },
     });
   }
 
@@ -62,9 +65,12 @@ export class AdminEnquiries {
     if (this.busyId()) return;
     this.busyId.set(m._id);
     this.admin.updateMessageStatus(m._id, status).subscribe({
-      next: () => {
+      next: (saved) => {
         this.busyId.set(null);
-        this.fetch();
+        this.messages.update((messages) => this.status && saved.status !== this.status
+          ? messages.filter((item) => item._id !== saved._id)
+          : messages.map((item) => item._id === saved._id ? saved : item));
+        this.fetch(true);
       },
       error: (err) => {
         this.busyId.set(null);

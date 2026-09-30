@@ -163,7 +163,7 @@ test('orders decrement tracked stock, oversell is rejected, cancel restocks', as
   assert.equal(res2.status, 409);
   assert.equal((await Product.findById(bakeProduct._id)).stockCount, 3);
 
-  // Claim the remaining 3 → sold out + auto-hidden.
+  // Claim the remaining 3 → sold out, visible but no longer orderable.
   const res3 = await place( {
     items: [{ productId: bakeProduct._id, quantity: 3 }],
     orderType: 'takeaway', paymentMethod: 'cash',
@@ -173,6 +173,9 @@ test('orders decrement tracked stock, oversell is rejected, cancel restocks', as
   const soldOut = await Product.findById(bakeProduct._id);
   assert.equal(soldOut.stockCount, 0);
   assert.equal(soldOut.available, false);
+  assert.equal(soldOut.stockSoldOut, true);
+  const menu = await (await json('GET', '/products/menu')).json();
+  assert.equal(menu.menu.bakery.Brownies.find((p) => p._id === String(bakeProduct._id)).available, false);
 
   // Cancelling order1 restocks 2 and re-enables the product.
   const cancel = await json('PATCH', `/admin/orders/${order1._id}/status`, { status: 'cancelled', note: 'test' }, adminToken);
@@ -180,6 +183,7 @@ test('orders decrement tracked stock, oversell is rejected, cancel restocks', as
   const restocked = await Product.findById(bakeProduct._id);
   assert.equal(restocked.stockCount, 2);
   assert.equal(restocked.available, true);
+  assert.equal(restocked.stockSoldOut, false);
 
   // Untracked products never 409 on stock.
   const res4 = await place( {

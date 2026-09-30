@@ -25,15 +25,12 @@ export class AdminEvents {
   protected load() {
     const version = ++this.version;
     this.loading.set(true); this.failed.set(false);
-    this.admin.eventSales().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (all) => {
+    this.admin.eventSales(this.eventName || undefined).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (report) => {
         if (version !== this.version) return;
-        this.names.set(all.events.map((e) => e.eventName));
-        if (!this.eventName) { this.report.set(all); this.loading.set(false); return; }
-        this.admin.eventSales(this.eventName).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-          next: (report) => { if (version === this.version) { this.report.set(report); this.loading.set(false); } },
-          error: () => { if (version === this.version) { this.failed.set(true); this.loading.set(false); } },
-        });
+        this.names.set(report.eventNames);
+        this.report.set(report);
+        this.loading.set(false);
       },
       error: () => { if (version === this.version) { this.failed.set(true); this.loading.set(false); } },
     });

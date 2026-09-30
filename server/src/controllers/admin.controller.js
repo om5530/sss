@@ -341,6 +341,10 @@ const createProduct = asyncHandler(async (req, res) => {
   const category = await resolveCategory(data.group, data.category);
   data.categoryId = category._id;
   data.category = category.name;
+  if (data.available !== false && data.stockCount === 0) {
+    data.available = false;
+    data.stockSoldOut = true;
+  }
 
   const product = await Product.create(data);
 
@@ -367,6 +371,8 @@ const updateProduct = asyncHandler(async (req, res) => {
 
   const before = {};
   const after = {};
+  const wasAvailable = product.available;
+  const wasStockSoldOut = product.stockSoldOut;
   if (req.body.category !== undefined || req.body.group !== undefined) {
     const current = (await decorateProducts([product]))[0];
     const category = await resolveCategory(req.body.group ?? product.group, req.body.category ?? current.category);
@@ -382,6 +388,17 @@ const updateProduct = asyncHandler(async (req, res) => {
       after[f] = next;
     }
     product[f] = req.body[f];
+  }
+  if (req.body.available === false && wasAvailable) {
+    // A staff member deliberately switched this product off.
+    product.stockSoldOut = false;
+  } else if (wasStockSoldOut && product.stockCount != null && product.stockCount > 0) {
+    // A fresh daily stock count makes an automatically sold-out item sellable again.
+    product.available = true;
+    product.stockSoldOut = false;
+  } else if (product.available && product.stockCount === 0) {
+    product.available = false;
+    product.stockSoldOut = true;
   }
   await product.save();
 
@@ -408,6 +425,7 @@ const archiveProduct = asyncHandler(async (req, res) => {
   product.archived = archived;
   if (archived) {
     product.available = false;
+    product.stockSoldOut = false;
     product.featured = false;
   }
   await product.save();

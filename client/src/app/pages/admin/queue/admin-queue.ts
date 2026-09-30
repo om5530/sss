@@ -6,8 +6,8 @@ import { OrderStatus } from '../../../core/models/order.model';
 import { ConfirmModal } from '../shared/confirm-modal';
 import { NEXT_LABEL, NEXT_STATUS, elapsed, elapsedMinutes, itemsSummary, orderCustomer, orderSource } from '../shared/admin-ui';
 import { AdminOrderNotificationService } from '../../../core/services/admin-order-notification.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-const POLL_MS = 8_000;
 const MUTE_KEY = 'adm_queue_muted';
 /** A placed/confirmed order older than this is flagged as running late. */
 const LATE_MINUTES = 20;
@@ -23,6 +23,7 @@ export class AdminQueue {
   private admin = inject(AdminService);
   private toast = inject(ToastService);
   private orderNotification = inject(AdminOrderNotificationService);
+  private destroyRef = inject(DestroyRef);
 
   protected readonly orders = signal<AdminOrder[]>([]);
   protected readonly loading = signal(true);
@@ -48,30 +49,23 @@ export class AdminQueue {
   });
 
   constructor() {
-    this.poll();
-    const timer = setInterval(() => this.poll(), POLL_MS);
-    inject(DestroyRef).onDestroy(() => clearInterval(timer));
+    this.orderNotification.orderUpdates$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((state) => {
+      this.loading.set(false);
+      this.offline.set(state.offline);
+      if (state.offline) return;
+      this.applyOrders(state.orders);
+    });
   }
 
-  private poll() {
-    this.admin.orders({ active: true, limit: 100 }).subscribe({
-      next: (res) => {
-        // Anything we haven't seen before gets a highlight + chime (AS-2.2).
-        const incoming = res.orders.filter((o) => this.knownIds && !this.knownIds.has(o._id));
-        if (incoming.length) {
-          this.newIds.set(new Set(incoming.map((o) => o._id)));
-          if (!this.muted()) this.chime();
-        }
-        this.knownIds = new Set(res.orders.map((o) => o._id));
-        this.orders.set(res.orders);
-        this.loading.set(false);
-        this.offline.set(false);
-      },
-      error: () => {
-        this.loading.set(false);
-        this.offline.set(true);
-      },
-    });
+  private applyOrders(orders: AdminOrder[]) {
+    // Anything we haven't seen before gets a highlight + chime (AS-2.2).
+    const incoming = orders.filter((o) => this.knownIds && !this.knownIds.has(o._id));
+    if (incoming.length) {
+      this.newIds.set(new Set(incoming.map((o) => o._id)));
+      if (!this.muted()) this.chime();
+    }
+    this.knownIds = new Set(orders.map((o) => o._id));
+    this.orders.set(orders);
   }
 
   /** One-tap advance (AS-2.3) — optimistic move, reverted on failure. */

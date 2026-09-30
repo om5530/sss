@@ -8,46 +8,7 @@
       </span>
     </a>
 
-    <div class="adm-side__top-actions">
-      <button
-        type="button"
-        class="adm-bell-btn"
-        [class.muted]="orderNotification.isMuted()"
-        (click)="orderNotification.toggleMute()"
-        [title]="orderNotification.isMuted() ? 'Kitchen order ring is muted — click to unmute' : 'Kitchen order ring is loud & active — click to mute'"
-        [attr.aria-pressed]="!orderNotification.isMuted()"
-        aria-label="Toggle kitchen order ring"
-      >
-        @if (orderNotification.isMuted()) {
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <path d="M13.73 21a2 2 0 0 1-3.46 0M18.63 13A17.89 17.89 0 0 1 18 8M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14M1 1l22 22"/>
-          </svg>
-        } @else {
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/>
-          </svg>
-        }
-        <span>{{ orderNotification.isMuted() ? 'Muted' : 'Ring: On' }}</span>
-      </button>
-      @if (wakeLockSupported) {
-        <button
-          type="button"
-          class="adm-wakelock-pill"
-          [class.active]="isScreenAwake()"
-          (click)="toggleWakeLock()"
-          [attr.aria-pressed]="isScreenAwake()"
-          [title]="isScreenAwake() ? 'Screen wake lock active — screen will stay on' : 'Keep screen awake while baking'"
-          aria-label="Keep screen awake"
-        >
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <circle cx="12" cy="12" r="4"/>
-            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
-          </svg>
-          <span>{{ isScreenAwake() ? 'Awake' : 'Stay awake' }}</span>
-        </button>
-      }
-      <button class="adm-menu-toggle" type="button" [attr.aria-expanded]="mobileNavOpen()" aria-controls="admin-navigation" (click)="mobileNavOpen.set(!mobileNavOpen())">{{mobileNavOpen() ? 'Close menu' : 'Menu'}}</button>
-    </div>
+    <button class="adm-menu-toggle" type="button" [attr.aria-expanded]="mobileNavOpen()" aria-controls="admin-navigation" (click)="mobileNavOpen.set(!mobileNavOpen())">{{mobileNavOpen() ? 'Close menu' : 'Menu'}}</button>
     <nav id="admin-navigation" class="adm-side__nav" aria-label="Admin" data-lenis-prevent tabindex="0">
 
       <!-- Bakery Operations — primary PWA use case, placed first -->
@@ -73,7 +34,6 @@
 
         @if (bakeryOpen()) {
           <div class="adm-side__sub-menu">
-            <a routerLink="/admin/bakery/dashboard" routerLinkActive="active" class="adm-side__sub-link" aria-label="Overview">Overview</a>
             <a routerLink="/admin/bakery/materials" routerLinkActive="active" class="adm-side__sub-link" aria-label="Materials">
               <span>Materials</span>
             </a>
@@ -84,7 +44,6 @@
               <span>Calculator</span>
             </a>
             <a routerLink="/admin/bakery/production" routerLinkActive="active" class="adm-side__sub-link" aria-label="Production">Production</a>
-            <a routerLink="/admin/prep" routerLinkActive="active" class="adm-side__sub-link" aria-label="Prep sheet">Prep sheet</a>
             <a routerLink="/admin/bakery/inventory" routerLinkActive="active" class="adm-side__sub-link" aria-label="Inventory">
               <span>Inventory</span>
             </a>
@@ -150,6 +109,8 @@
               </svg>
               Dashboard
             </a>
+            <a routerLink="/admin/bakery/dashboard" routerLinkActive="active" class="adm-side__sub-link" aria-label="BO overview">BO overview</a>
+            <a routerLink="/admin/prep" routerLinkActive="active" class="adm-side__sub-link" aria-label="Prep sheet">Prep sheet</a>
             <a routerLink="/admin/events" routerLinkActive="active" class="adm-side__sub-link" aria-label="Event sales">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 10h16M5 10v10h14V10M3 10l2-6h14l2 6M9 20v-6h6v6" stroke-linejoin="round" /></svg>
               Event sales
@@ -218,6 +179,36 @@
     </nav>
 
     <div class="adm-side__foot">
+      <div class="adm-side__utility-icons" aria-label="Kitchen controls">
+        <button
+          type="button"
+          class="adm-side__utility-btn"
+          [class.muted]="orderNotification.isMuted()"
+          (click)="orderNotification.toggleMute()"
+          [attr.data-tooltip]="orderNotification.isMuted() ? 'Ring muted — click to unmute' : 'Ring on — click to mute'"
+          [attr.aria-pressed]="!orderNotification.isMuted()"
+          aria-label="Toggle kitchen order ring"
+        >
+          @if (orderNotification.isMuted()) {
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13.73 21a2 2 0 0 1-3.46 0M18.63 13A17.89 17.89 0 0 1 18 8M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14M1 1l22 22"/></svg>
+          } @else {
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          }
+        </button>
+        @if (wakeLockSupported) {
+          <button
+            type="button"
+            class="adm-side__utility-btn"
+            [class.active]="isScreenAwake()"
+            (click)="toggleWakeLock()"
+            [attr.data-tooltip]="isScreenAwake() ? 'Screen stays awake' : 'Keep screen awake'"
+            [attr.aria-pressed]="isScreenAwake()"
+            aria-label="Keep screen awake"
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+          </button>
+        }
+      </div>
       <a routerLink="/" class="adm-side__link" aria-label="View store">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
           <path d="M3 10.5 12 3l9 7.5M5.5 9v11h13V9" stroke-linecap="round" stroke-linejoin="round" />

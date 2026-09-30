@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AdminService, ManagedCategory } from '../../../core/services/admin.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { AdminProductListState } from '../shared/admin-product-list-state';
 import { Product } from '../../../core/models/product.model';
 
 interface ApiFieldError {
@@ -22,6 +23,7 @@ export class AdminProductForm {
   readonly id = input<string>();
 
   private admin = inject(AdminService);
+  private productList = inject(AdminProductListState);
   private router = inject(Router);
   private toast = inject(ToastService);
   private auth = inject(AuthService);
@@ -172,6 +174,7 @@ export class AdminProductForm {
     const request = id ? this.admin.updateProduct(id, data) : this.admin.createProduct(data);
     request.subscribe({
       next: (product) => {
+        this.productList.upsertSaved(product);
         this.clearDraft();
         this.baseline = JSON.stringify(this.snapshot());
         this.saving.set(false);

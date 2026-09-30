@@ -31,6 +31,7 @@ export class AdminCakeRequests {
   protected readonly busyId = signal<string | null>(null);
   /** Row currently expanded for quoting. */
   protected readonly openId = signal<string | null>(null);
+  private requestVersion = 0;
 
   protected status = '';
   protected page = 1;
@@ -50,17 +51,19 @@ export class AdminCakeRequests {
     this.fetch();
   }
 
-  protected fetch() {
-    this.loading.set(true);
+  protected fetch(silent = false) {
+    const version = ++this.requestVersion;
+    if (!silent) this.loading.set(true);
     this.admin.cakeRequests({ status: this.status || undefined, page: this.page }).subscribe({
       next: (res) => {
+        if (version !== this.requestVersion) return;
         this.requests.set(res.requests);
         this.total.set(res.total);
         this.newCount.set(res.newCount);
         this.pages.set(res.pages);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: () => { if (version === this.requestVersion) this.loading.set(false); },
     });
   }
 
@@ -90,10 +93,13 @@ export class AdminCakeRequests {
   private update(r: CakeRequest, data: { status?: CakeRequestStatus; quoteAmount?: number | null; quoteNote?: string }) {
     this.busyId.set(r._id);
     this.admin.updateCakeRequest(r._id, data).subscribe({
-      next: () => {
+      next: (saved) => {
         this.busyId.set(null);
         this.openId.set(null);
-        this.fetch();
+        this.requests.update((requests) => this.status && saved.status !== this.status
+          ? requests.filter((item) => item._id !== saved._id)
+          : requests.map((item) => item._id === saved._id ? saved : item));
+        this.fetch(true);
       },
       error: (err) => {
         this.busyId.set(null);

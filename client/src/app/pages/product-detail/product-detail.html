@@ -22,7 +22,7 @@
           <figure class="pd__media" [appTilt]="3">
             <img [src]="imageFor(p)" [alt]="p.name" (error)="onImageError($event, p)" />
             @if (p.featured) { <span class="pd__tag">★ Popular</span> }
-            @if (!p.available) { <span class="pd__soldout">Sold out</span> }
+            @if (!p.available) { <span class="pd__soldout">{{ p.stockCount === 0 ? 'Out of stock' : 'Unavailable' }}</span> }
           </figure>
         </div>
 
@@ -81,7 +81,7 @@
             </p>
           } @else {
             <div class="pd__sold">
-              <p><strong>Currently unavailable.</strong> This bake sold out for the day — the ovens will catch up by tomorrow morning.</p>
+              <p><strong>{{ p.stockCount === 0 ? 'Out of stock.' : 'Currently unavailable.' }}</strong> {{ p.stockCount === 0 ? 'Please check back after we restock.' : 'Please check back later.' }}</p>
               <a routerLink="/menu" class="btn btn--ghost">Browse today&rsquo;s bakes</a>
             </div>
           }

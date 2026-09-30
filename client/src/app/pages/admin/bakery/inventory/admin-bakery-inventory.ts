@@ -63,6 +63,21 @@ export class AdminBakeryInventory implements OnInit {
     });
   }
 
+  private applyStock(material: BakeryMaterial) {
+    this.materials.update((items) => {
+      const updated = items.map((item) => item._id === material._id
+        ? {
+            ...item,
+            ...material,
+            allocatedStock: item.allocatedStock,
+            available: Math.max(0, Number(material.currentStock) - Number(item.allocatedStock || 0)),
+          }
+        : item);
+      this.lowStockCount.set(updated.filter((item) => this.low(item)).length);
+      return updated;
+    });
+  }
+
   quickAdjust(m: BakeryMaterial, amount: number) {
     const isInc = amount > 0;
     const type = isInc ? 'inc' : 'dec';
@@ -93,9 +108,8 @@ export class AdminBakeryInventory implements OnInit {
 
     this.bakery.adjustStock(m._id, amount).subscribe({
       next: (res) => {
-        m.currentStock = res.material.currentStock;
+        this.applyStock(res.material);
         this.toast.success(`Updated ${m.name} stock (${label})`);
-        this.fetchInventory();
       },
       error: () => {
         this.toast.error('Failed to update stock');
@@ -113,12 +127,11 @@ export class AdminBakeryInventory implements OnInit {
 
     this.bakery.updateStock(m._id, Number(newStock), m.currentStock).subscribe({
       next: (res) => {
-        m.currentStock = res.material.currentStock;
-        this.materials.update((items) => [...items]);
-        this.toast.success(`Stock set to ${m.currentStock} ${m.baseUom}`);
+        this.applyStock(res.material);
+        this.toast.success(`Stock set to ${res.material.currentStock} ${m.baseUom}`);
         this.recentlyAdjusted.update((prev) => ({
           ...prev,
-          [m._id]: { type: 'inc', label: `Set: ${m.currentStock}` },
+          [m._id]: { type: 'inc', label: `Set: ${res.material.currentStock}` },
         }));
         setTimeout(() => {
           this.recentlyAdjusted.update((prev) => {

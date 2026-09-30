@@ -5,6 +5,9 @@ const ApiError = require('../utils/ApiError');
 // Idempotent migration: existing strings are retained as fallbacks; products
 // gain stable references so a rename never requires a multi-document rewrite.
 async function migrateCategories() {
+  // Existing installations only need the migration while legacy products remain.
+  // Avoid aggregating the entire product collection on every category read or save.
+  if (!(await Product.exists({ categoryId: null }))) return;
   const legacy = await Product.aggregate([
     { $match: { categoryId: null } },
     { $group: { _id: { group: '$group', name: '$category' } } },

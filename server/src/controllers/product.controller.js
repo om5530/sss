@@ -31,7 +31,9 @@ const listProducts = asyncHandler(async (req, res) => {
 
 const getMenu = asyncHandler(async (req, res) => {
   await migrateCategories();
-  const products = await decorateProducts(await Product.find({ available: true, archived: { $ne: true } }).sort({ name: 1 }));
+  const products = await decorateProducts(await Product.find({
+    archived: { $ne: true }, $or: [{ available: true }, { stockSoldOut: true }],
+  }).sort({ name: 1 }));
   products.sort((a, b) => a.categoryOrder - b.categoryOrder || a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
 
   // Shape: { bakery: { Brownies: [...] }, savoury: { Pizza: [...] } }

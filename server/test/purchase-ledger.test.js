@@ -79,6 +79,35 @@ test('concurrent retries record one purchase and cannot reuse a saved key for ch
   assert.equal((await Material.findById(flour._id)).currentStock, '2100');
 });
 
+test('deleting a direct purchase reverses inventory and removes spending without losing the audit trail', async () => {
+  const saved = await api('POST', '/purchases/record', payload());
+  const path = `/purchases/${saved.receipt._id}`;
+  assert.equal((await api('DELETE', path, undefined, null)).status, 401);
+  assert.equal((await api('DELETE', path, undefined, customerToken)).status, 403);
+  assert.equal((await api('DELETE', path)).status, 200);
+  assert.equal((await Material.findById(flour._id)).currentStock, '100');
+  assert.equal((await Material.findById(boxes._id)).currentStock, '3');
+  assert.equal((await O.Purchase.findById(saved.purchase._id)).status, 'cancelled');
+  assert.ok((await O.Receipt.findById(saved.receipt._id)).voidedAt);
+  assert.equal(await O.Movement.countDocuments({ type: 'adjustment', reference: saved.purchase.code }), 2);
+  const history = await api('GET', '/purchase-history');
+  assert.equal(history.total, 0);
+  assert.equal(history.summary.allTime, '0');
+  assert.equal((await api('GET', '/purchasing')).receipts.length, 0);
+  assert.equal((await api('DELETE', path)).status, 409);
+  assert.equal((await api('POST', '/purchases/record', payload())).status, 409);
+});
+
+test('deletion keeps the purchase when its stock has already been used', async () => {
+  const saved = await api('POST', '/purchases/record', payload());
+  await api('PATCH', `/inventory/${boxes._id}/stock`, { currentStock: '2' });
+  assert.equal((await api('DELETE', `/purchases/${saved.receipt._id}`)).status, 409);
+  assert.equal((await Material.findById(flour._id)).currentStock, '2100');
+  assert.equal((await Material.findById(boxes._id)).currentStock, '2');
+  assert.equal((await api('GET', '/purchase-history')).total, 1);
+  assert.equal(await O.Movement.countDocuments({ type: 'adjustment', reference: saved.purchase.code }), 0);
+});
+
 test('invalid input and inactive or incompatible materials leave no purchase or stock changes', async () => {
   const valid = payload();
   for (const body of [

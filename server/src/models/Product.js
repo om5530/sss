@@ -17,6 +17,8 @@ const productSchema = new mongoose.Schema(
     // Daily bake count. null = not tracked (availability is manual). When
     // tracked, orders decrement it atomically and 0 auto-flips `available`.
     stockCount: { type: Number, default: null, min: 0 },
+    // True only when stock exhaustion turned an otherwise listed product off.
+    stockSoldOut: { type: Boolean, default: false },
     // Denormalised review stats, recomputed on every review write.
     ratingAvg: { type: Number, default: 0, min: 0, max: 5 },
     ratingCount: { type: Number, default: 0, min: 0 },

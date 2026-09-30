@@ -20,7 +20,10 @@ async function claimStock(lineItems) {
         continue;
       }
       claimed.push(item);
-      await Product.updateOne({ _id: item.product, stockCount: { $lte: 0 } }, { $set: { available: false } });
+      await Product.updateOne(
+        { _id: item.product, stockCount: { $lte: 0 }, available: true },
+        { $set: { available: false, stockSoldOut: true } },
+      );
     }
     return claimed;
   } catch (err) {
@@ -34,12 +37,15 @@ async function releaseStock(lineItems) {
     const prev = await Product.findOneAndUpdate(
       { _id: item.product, stockCount: { $ne: null } },
       { $inc: { stockCount: item.quantity } },
-    ).select('stockCount archived').catch((err) => {
+    ).select('stockCount archived stockSoldOut').catch((err) => {
       console.error('[stock] release failed:', err.message);
       return null;
     });
-    if (prev && prev.stockCount <= 0 && !prev.archived) {
-      await Product.updateOne({ _id: item.product, stockCount: { $gt: 0 } }, { $set: { available: true } }).catch(() => {});
+    if (prev && prev.stockCount <= 0 && prev.stockSoldOut && !prev.archived) {
+      await Product.updateOne(
+        { _id: item.product, stockCount: { $gt: 0 }, stockSoldOut: true },
+        { $set: { available: true, stockSoldOut: false } },
+      ).catch(() => {});
     }
   }
 }

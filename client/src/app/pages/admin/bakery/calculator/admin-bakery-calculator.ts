@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { ToastService } from '../../../../core/services/toast.service';
 @Component({
   selector: 'app-admin-bakery-calculator',
   imports: [CommonModule, FormsModule, RouterLink],
@@ -13,6 +14,7 @@ import { Subscription } from 'rxjs';
 export class AdminBakeryCalculator {
   private http = inject(HttpClient);
   private route = inject(ActivatedRoute);
+  private toast = inject(ToastService);
   private destroy = inject(DestroyRef);
   private request?: Subscription;
   private timer?: ReturnType<typeof setTimeout>;
@@ -20,6 +22,7 @@ export class AdminBakeryCalculator {
   result = signal<any>(null);
   busy = signal(false);
   saving = signal(false);
+  productionPlanSaved = signal(false);
   error = signal('');
   notice = signal('');
   items: any[] = [{ recipeId: '', quantity: '1', uom: '', options: [] }];
@@ -82,6 +85,7 @@ export class AdminBakeryCalculator {
   calculate() {
     this.request?.unsubscribe();
     clearTimeout(this.timer);
+    this.productionPlanSaved.set(false);
     this.result.set(null);
     this.error.set('');
     this.busy.set(true);
@@ -120,9 +124,14 @@ export class AdminBakeryCalculator {
       .subscribe({
         next: () => {
           this.saving.set(false);
-          this.notice.set(
-            'Saved. Open Production to review the saved sheet or record actual production.',
-          );
+          if (type === 'production_plan') {
+            this.productionPlanSaved.set(true);
+            this.notice.set('Added to production. Open Production to review the plan or record actual production.');
+            this.toast.success('Added to production.');
+          } else {
+            this.notice.set('Costing sheet saved.');
+            this.toast.success('Costing sheet saved.');
+          }
         },
         error: (e) => {
           this.saving.set(false);

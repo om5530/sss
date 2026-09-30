@@ -101,7 +101,7 @@
             <label class="label" for="p-stock">Today's stock <span class="muted" style="font-weight: 400">(blank = don't track)</span></label>
             <input id="p-stock" class="input" type="number" min="0" step="1" [(ngModel)]="stockCount" name="stockCount" placeholder="e.g. 24" />
             <p class="muted" style="font-size: 0.78rem; margin: 0.35rem 0 0">
-              Orders count it down; at 0 the item auto-hides from the menu. Cancellations restock it.
+              Orders count it down; at 0 the item shows as sold out and cannot be ordered. Cancellations restock it.
             </p>
             @if (fieldErrors()['stockCount']) { <p class="error-text">{{ fieldErrors()['stockCount'] }}</p> }
           </div>

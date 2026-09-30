@@ -38,6 +38,7 @@ router.get('/recipes/:id/versions', ctrl.revisions);
 router.get('/purchasing', ctrl.getPurchasing);
 router.get('/purchase-history', ctrl.purchaseHistory);
 router.post('/purchases/record', ctrl.recordPurchase);
+router.delete('/purchases/:id', ctrl.deletePurchase);
 router.post('/suppliers', ctrl.saveSupplier);
 router.post('/formats', ctrl.saveFormat);
 router.post('/formats/:id/prefer', ctrl.preferFormat);

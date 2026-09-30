@@ -8,10 +8,12 @@ import { UpperCasePipe } from '@angular/common';
 import { AuthService } from '../../../core/services/auth.service';
 import { AppInstallService } from '../../../core/services/app-install.service';
 import { AdminOrderNotificationService } from '../../../core/services/admin-order-notification.service';
+import { AdminProductListState } from '../shared/admin-product-list-state';
 
 @Component({
   selector: 'app-admin-layout',
   imports: [RouterOutlet, RouterLink, RouterLinkActive, UpperCasePipe],
+  providers: [AdminProductListState],
   templateUrl: './admin-layout.html',
 })
 export class AdminLayout {
@@ -31,7 +33,7 @@ export class AdminLayout {
   constructor() {
     const destroy = inject(DestroyRef);
     const revealTools = (url: string) => {
-      if (/^\/admin\/(activity|qr|reports|coupons|enquiries)(?:[/?#]|$)/.test(url)) {
+      if (/^\/admin\/(activity|qr|reports|coupons|enquiries|prep)(?:[/?#]|$)/.test(url)) {
         this.toolsOpen.set(true);
       }
     };
