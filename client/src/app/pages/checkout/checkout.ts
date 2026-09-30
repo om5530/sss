@@ -40,7 +40,7 @@ export class Checkout {
     items: this.cart.payload(), type: this.orderType(), coupon: this.appliedCoupon(),
   }));
   protected readonly canPlace = computed(() => Boolean(this.quote()) &&
-    this.quotedKey() === this.requestKey() && !this.needsPriceConfirmation() && !this.applyingCoupon());
+    this.quotedKey() === this.requestKey() && !this.needsPriceConfirmation() && !this.applyingCoupon() && !this.orderingPaused());
   protected readonly summaryItems = computed(() => this.cart.items().map((item) => {
     const priced = this.quote()?.items.find((line) => line.product === item.productId);
     return { ...item, price: priced?.price ?? item.price };
@@ -62,6 +62,7 @@ export class Checkout {
 
   /** When the ovens are off, ASAP is impossible — scheduling is the only path. */
   protected readonly shopClosed = computed(() => this.shop.info()?.openNow === false);
+  protected readonly orderingPaused = computed(() => this.shop.info()?.acceptingOrders === false);
 
   protected readonly types: { key: OrderType; label: string; hint: string }[] = [
     { key: 'dining', label: 'Dine-in', hint: 'Eat in the café' },
@@ -226,6 +227,10 @@ export class Checkout {
   }
 
   placeOrder() {
+    if (this.orderingPaused()) {
+      this.errorMsg.set('Online ordering is paused. Please check back when the bakery reopens.');
+      return;
+    }
     if (this.placing() || !this.canPlace()) return;
     if (this.cart.isEmpty()) {
       this.toast.error('Your cart is empty.');
@@ -273,6 +278,7 @@ export class Checkout {
           return;
         }
         this.errorMsg.set(err.error?.message || 'Could not place your order. Please try again.');
+        if (err.status === 409) this.shop.load();
       },
     });
   }

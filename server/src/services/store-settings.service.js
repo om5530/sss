@@ -10,6 +10,7 @@ const DEFAULTS = {
   currency: env.pricing.currency,
   opensAt: env.shop.opensAt,
   closesAt: env.shop.closesAt,
+  acceptingOrders: true,
   contactAddress: '',
   contactPhone: '',
   contactEmail: '',

@@ -7,6 +7,14 @@
   } @else if (loadFailed()) {
     <p role="alert">Settings could not be loaded. Reload this page to retry.</p>
   } @else {
+    <section class="adm-card" style="margin-bottom: 1rem" aria-label="Customer ordering">
+      <h2>Customer ordering</h2>
+      <p class="muted">{{ acceptingOrders() ? 'Customers can place orders during opening hours.' : 'Customer ordering is paused, including scheduled orders. Staff can still record phone and event sales.' }}</p>
+      <button type="button" class="btn" [class.btn--primary]="!acceptingOrders()" [class.btn--ghost]="acceptingOrders()" [disabled]="switchingOrders()" (click)="toggleOrders()">
+        {{ switchingOrders() ? 'Updating…' : acceptingOrders() ? 'Turn off customer ordering' : 'Turn on customer ordering' }}
+      </button>
+      <p class="muted" style="margin-top: 0.5rem">This stays {{ acceptingOrders() ? 'on' : 'off' }} until you change it here.</p>
+    </section>
     <form class="adm-card" (ngSubmit)="save()">
       <h2>Pricing</h2>
       <div class="adm-cols" style="grid-template-columns: repeat(2, 1fr); gap: 0 1rem">

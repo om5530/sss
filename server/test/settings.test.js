@@ -79,3 +79,35 @@ test('store settings are admin-managed and affect new prices immediately', async
   assert.equal(restored.status, 200);
   assert.equal((await place(payload)).status, 201);
 });
+
+test('admin can pause and resume all customer orders without blocking browsing', async () => {
+  const payload = { items: [{ productId: coffeeProduct._id, quantity: 1 }], orderType: 'takeaway', paymentMethod: 'cash',
+    takeaway: { customerName: 'Pause tester', phone: '+919999000123' } };
+  assert.equal((await json('PATCH', '/admin/settings', { acceptingOrders: false })).status, 401);
+  assert.equal((await json('PATCH', '/admin/settings', { acceptingOrders: 'false' }, adminToken)).status, 400);
+  const paused = await json('PATCH', '/admin/settings', { acceptingOrders: false }, adminToken);
+  assert.equal(paused.status, 200);
+  assert.equal((await paused.json()).settings.acceptingOrders, false);
+  assert.equal((await (await json('GET', '/shop')).json()).shop.acceptingOrders, false);
+  assert.equal((await (await json('GET', '/products/menu')).json()).menu.savoury.Coffee.length > 0, true);
+  const count = await Order.countDocuments();
+  for (const order of [payload, { ...payload, fulfilAt: new Date(Date.now() + 3600000).toISOString() }]) {
+    const response = await place(order);
+    assert.equal(response.status, 409);
+    assert.match((await response.json()).message, /ordering is paused/i);
+  }
+  assert.equal(await Order.countDocuments(), count);
+  const staffQuote = await (await json('POST', '/admin/orders/quote', {
+    items: payload.items, orderType: 'takeaway', discount: 0,
+  }, adminToken)).json();
+  const staffOrder = await json('POST', '/admin/orders', {
+    requestKey: require('crypto').randomUUID(), items: payload.items, expectedQuote: staffQuote,
+    orderType: 'takeaway', source: 'event', eventName: 'Closed-day stall', customer: {},
+    discount: 0, paymentMethod: 'cash', paymentStatus: 'paid', orderStatus: 'completed',
+  }, adminToken);
+  assert.equal(staffOrder.status, 201);
+  const resumed = await json('PATCH', '/admin/settings', { acceptingOrders: true }, adminToken);
+  assert.equal(resumed.status, 200);
+  assert.equal((await (await json('GET', '/shop')).json()).shop.acceptingOrders, true);
+  assert.equal((await place(payload)).status, 201);
+});

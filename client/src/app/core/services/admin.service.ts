@@ -40,7 +40,7 @@ function toParams(obj: object): HttpParams {
 
 export interface ManagedCategory { _id: string; name: string; group: 'bakery' | 'savoury'; displayOrder: number; count: number; archived?: boolean }
 export interface StoreSettings {
-  taxRate: number; deliveryFee: number; currency: string; opensAt: string; closesAt: string;
+  taxRate: number; deliveryFee: number; currency: string; opensAt: string; closesAt: string; acceptingOrders: boolean;
   contactAddress: string; contactPhone: string; contactEmail: string;
   defaultUpiRecipientId: string;
   upiRecipients: UpiRecipient[];

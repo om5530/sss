@@ -38,6 +38,7 @@ function shopInfo(settings = env.shop) {
     opensAt: settings.opensAt,
     closesAt: settings.closesAt,
     openNow: isOpenAt(new Date(), settings),
+    acceptingOrders: settings.acceptingOrders !== false,
     timezone: 'Asia/Kolkata',
     contactAddress: settings.contactAddress || '',
     contactPhone: settings.contactPhone || '',

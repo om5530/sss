@@ -67,7 +67,9 @@
 
             <!-- Timing: ASAP vs scheduled pre-order -->
             <div class="co-when">
-              @if (shopClosed()) {
+              @if (orderingPaused()) {
+                <p class="co-when__closed" role="status">Online ordering is paused. Please check back when the bakery reopens.</p>
+              } @else if (shopClosed()) {
                 <p class="co-when__closed" role="status">
                   <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   The ovens are off right now (open {{ shop.info()?.opensAt }}–{{ shop.info()?.closesAt }}) — schedule a pre-order below.
@@ -78,7 +80,7 @@
                   type="button"
                   class="co-when__chip"
                   [class.is-active]="timing() === 'asap'"
-                  [disabled]="shopClosed()"
+                  [disabled]="shopClosed() || orderingPaused()"
                   role="radio"
                   [attr.aria-checked]="timing() === 'asap'"
                   (click)="timing.set('asap')"
@@ -89,6 +91,7 @@
                   type="button"
                   class="co-when__chip"
                   [class.is-active]="timing() === 'scheduled'"
+                  [disabled]="orderingPaused()"
                   role="radio"
                   [attr.aria-checked]="timing() === 'scheduled'"
                   (click)="timing.set('scheduled')"
@@ -101,13 +104,14 @@
                     type="datetime-local"
                     [(ngModel)]="scheduledFor"
                     name="scheduledFor"
+                    [disabled]="orderingPaused()"
                     [min]="minSchedule"
                     [max]="maxSchedule"
                     aria-label="Scheduled time"
                   />
                 }
               </div>
-              @if (timing() === 'scheduled') {
+              @if (timing() === 'scheduled' && !orderingPaused()) {
                 <p class="co-when__hint muted">Bakery time (IST) — at least 45 minutes from now, up to 2 days ahead, within opening hours ({{ shop.info()?.opensAt || '8:00' }}–{{ shop.info()?.closesAt || '22:00' }}).</p>
               }
             </div>

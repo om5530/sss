@@ -6,6 +6,7 @@ export interface ShopInfo {
   opensAt: string;
   closesAt: string;
   openNow: boolean;
+  acceptingOrders: boolean;
   timezone: string;
   contactAddress: string;
   contactPhone: string;

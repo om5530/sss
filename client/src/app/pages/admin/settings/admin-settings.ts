@@ -16,6 +16,8 @@ export class AdminSettings {
   protected readonly loadFailed = signal(false);
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
+  protected readonly switchingOrders = signal(false);
+  protected readonly acceptingOrders = signal(true);
   protected taxPercent = 5;
   protected deliveryFee = 40;
   protected opensAt = '08:00';
@@ -33,6 +35,7 @@ export class AdminSettings {
         this.deliveryFee = s.deliveryFee;
         this.opensAt = s.opensAt;
         this.closesAt = s.closesAt;
+        this.acceptingOrders.set(s.acceptingOrders !== false);
         this.contactAddress = s.contactAddress;
         this.contactPhone = s.contactPhone;
         this.contactEmail = s.contactEmail;
@@ -41,6 +44,24 @@ export class AdminSettings {
         this.loading.set(false);
       },
       error: () => { this.loading.set(false); this.loadFailed.set(true); this.toast.error('Could not load store settings. Reload this page to retry.'); },
+    });
+  }
+
+  toggleOrders() {
+    if (this.switchingOrders() || this.loading() || this.loadFailed()) return;
+    const acceptingOrders = !this.acceptingOrders();
+    this.switchingOrders.set(true);
+    this.admin.updateSettings({ acceptingOrders }).subscribe({
+      next: (settings) => {
+        this.acceptingOrders.set(settings.acceptingOrders);
+        this.switchingOrders.set(false);
+        this.shop.load();
+        this.toast.success(settings.acceptingOrders ? 'Customer ordering is on.' : 'Customer ordering is paused.');
+      },
+      error: (err) => {
+        this.switchingOrders.set(false);
+        this.toast.error(err.error?.message || 'Could not change customer ordering.');
+      },
     });
   }
 

@@ -77,6 +77,9 @@ const createOrder = asyncHandler(async (req, res) => {
 
   const fulfilment = buildFulfilment(orderType, req.body);
   const settings = await getStoreSettings();
+  if (settings.acceptingOrders === false) {
+    throw ApiError.conflict('Online ordering is paused. Please check back when the bakery reopens.');
+  }
   const fulfilAt = resolveFulfilAt(req.body.fulfilAt, settings);
 
   // Re-price on the server; never trust client totals.

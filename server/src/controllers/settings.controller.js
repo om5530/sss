@@ -19,7 +19,7 @@ const list = asyncHandler(async (req, res) => {
 
 const update = asyncHandler(async (req, res) => {
   const before = await getStoreSettings();
-  const fields = ['taxRate', 'deliveryFee', 'currency', 'opensAt', 'closesAt', 'contactAddress', 'contactPhone', 'contactEmail', 'upiRecipients', 'defaultUpiRecipientId'];
+  const fields = ['taxRate', 'deliveryFee', 'currency', 'opensAt', 'closesAt', 'acceptingOrders', 'contactAddress', 'contactPhone', 'contactEmail', 'upiRecipients', 'defaultUpiRecipientId'];
   const changes = Object.fromEntries(fields.filter((key) => req.body[key] !== undefined).map((key) => [key, req.body[key]]));
   if (!Object.keys(changes).length) throw ApiError.badRequest('Provide at least one setting to update');
   if (changes.currency) changes.currency = String(changes.currency).toLowerCase();
@@ -44,6 +44,7 @@ const validators = [
   body('currency').optional().isString().bail().trim().toLowerCase().equals('inr').withMessage('This storefront currently supports INR only'),
   body('opensAt').optional().custom(validTime).withMessage('Opening time must be HH:MM between 00:00 and 24:00'),
   body('closesAt').optional().custom(validTime).withMessage('Closing time must be HH:MM between 00:00 and 24:00'),
+  body('acceptingOrders').optional().isBoolean({ strict: true }).withMessage('Choose whether customer orders are on or off'),
   body('contactAddress').optional().isString().trim().isLength({ max: 240 }).withMessage('Address must be 240 characters or fewer'),
   body('contactPhone').optional().isString().trim().isLength({ max: 40 }).withMessage('Phone must be 40 characters or fewer'),
   body('contactEmail').optional().isString().bail().trim().isLength({ max: 240 }).bail().if((value) => value !== '').isEmail().withMessage('Enter a valid contact email'),

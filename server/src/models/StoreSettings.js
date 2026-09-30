@@ -12,6 +12,7 @@ const storeSettingsSchema = new mongoose.Schema(
     currency: { type: String, required: true, lowercase: true, match: /^[a-z]{3}$/, default: env.pricing.currency },
     opensAt: { type: String, required: true, default: env.shop.opensAt },
     closesAt: { type: String, required: true, default: env.shop.closesAt },
+    acceptingOrders: { type: Boolean, required: true, default: true },
     contactAddress: { type: String, default: '' },
     contactPhone: { type: String, default: '' },
     contactEmail: { type: String, default: '' },
