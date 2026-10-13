@@ -8,8 +8,9 @@ export const routes: Routes = [
   { path: 'product/:slug', loadComponent: () => import('./pages/product-detail/product-detail').then((m) => m.ProductDetail), title: 'Product — The Golden Batch' },
   { path: 'cart', loadComponent: () => import('./pages/cart/cart').then((m) => m.Cart), title: 'Your Cart — The Golden Batch' },
   { path: 'login', loadComponent: () => import('./pages/login/login').then((m) => m.Login), title: 'Sign in — The Golden Batch' },
-  // Guest checkout is allowed for dine-in / takeaway; delivery prompts sign-in within the page.
-  { path: 'checkout', loadComponent: () => import('./pages/checkout/checkout').then((m) => m.Checkout), title: 'Checkout — The Golden Batch' },
+  // Temporarily disabled for WhatsApp-only bakery ordering. Restore for cafe checkout.
+  // { path: 'checkout', loadComponent: () => import('./pages/checkout/checkout').then((m) => m.Checkout), title: 'Checkout — The Golden Batch' },
+  { path: 'checkout', redirectTo: 'cart', pathMatch: 'full' },
   { path: 'order-success/:id', loadComponent: () => import('./pages/order-success/order-success').then((m) => m.OrderSuccess), title: 'Order Confirmed — The Golden Batch' },
   { path: 'orders', canActivate: [authGuard], loadComponent: () => import('./pages/orders/orders').then((m) => m.Orders), title: 'My Orders — The Golden Batch' },
   { path: 'orders/:id', canActivate: [authGuard], loadComponent: () => import('./pages/order-detail/order-detail').then((m) => m.OrderDetail), title: 'Order — The Golden Batch' },

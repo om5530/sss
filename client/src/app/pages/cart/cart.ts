@@ -2,7 +2,6 @@ import { Component, computed, effect, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { CartService } from '../../core/services/cart.service';
-import { AuthService } from '../../core/services/auth.service';
 import { CartQuote } from '../../core/models/cart.model';
 import { ShopService } from '../../core/services/shop.service';
 import { whatsappChatUrl, whatsappOrderMessage } from '../../core/utils/whatsapp';
@@ -17,7 +16,6 @@ import { categoryImage } from '../../core/utils/food-image';
 })
 export class Cart {
   protected cart = inject(CartService);
-  protected auth = inject(AuthService);
   protected shop = inject(ShopService);
 
   private readonly quote = signal<CartQuote | null>(null);

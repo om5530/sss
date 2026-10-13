@@ -108,12 +108,14 @@
               Dashboard
             </a>
             <a routerLink="/admin/bakery/dashboard" routerLinkActive="active" class="adm-side__sub-link" aria-label="BO overview">BO overview</a>
+            <!-- Temporarily disabled: cafe live queue.
             <a routerLink="/admin/queue" routerLinkActive="active" class="adm-side__sub-link" aria-label="Live queue">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                 <circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
               Live queue
             </a>
+            -->
             <a routerLink="/admin/prep" routerLinkActive="active" class="adm-side__sub-link" aria-label="Prep sheet">Prep sheet</a>
             <a routerLink="/admin/categories" routerLinkActive="active" class="adm-side__sub-link" aria-label="Categories">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
@@ -194,6 +196,7 @@
             <circle cx="12" cy="12" r="8" /><path d="M12 4a8 8 0 0 1 0 16Z" fill="currentColor" stroke="none" />
           </svg>
         </button>
+        <!-- Temporarily disabled: cafe order alarm control.
         <button
           type="button"
           class="adm-side__utility-btn"
@@ -209,6 +212,7 @@
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
           }
         </button>
+        -->
         @if (wakeLockSupported) {
           <button
             type="button"
@@ -254,7 +258,7 @@
       </div>
     }
 
-    <!-- High-priority Loud Order Alert Banner -->
+    <!-- Temporarily disabled: cafe live order alert banner.
     @if (orderNotification.activeAlarmOrder(); as alertOrder) {
       <div class="adm-order-alert-banner" role="alert" aria-live="assertive">
         <div class="alarm-bell-icon" aria-hidden="true">🔔</div>
@@ -293,6 +297,7 @@
       </div>
     }
 
+    -->
     <router-outlet />
   </main>
 </div>

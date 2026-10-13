@@ -4,23 +4,23 @@ import { catchError, EMPTY, merge, switchMap, timer } from 'rxjs';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminSessionService } from '../../../core/services/admin-session.service';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } from '@angular/router';
-import { UpperCasePipe } from '@angular/common';
 import { AuthService } from '../../../core/services/auth.service';
 import { AppInstallService } from '../../../core/services/app-install.service';
-import { AdminOrderNotificationService } from '../../../core/services/admin-order-notification.service';
+// import { AdminOrderNotificationService } from '../../../core/services/admin-order-notification.service';
 import { AdminProductListState } from '../shared/admin-product-list-state';
 import { AdminThemeService } from '../../../core/services/admin-theme.service';
 
 @Component({
   selector: 'app-admin-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, UpperCasePipe],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive],
   providers: [AdminProductListState],
   templateUrl: './admin-layout.html',
 })
 export class AdminLayout {
   protected readonly theme = inject(AdminThemeService);
   protected readonly install = inject(AppInstallService);
-  protected readonly orderNotification = inject(AdminOrderNotificationService);
+  // Cafe live order alerts are temporarily disabled for manual WhatsApp orders.
+  // protected readonly orderNotification = inject(AdminOrderNotificationService);
   protected readonly unreadEnquiries = signal<number | null>(null);
   protected readonly bakeryOpen = signal<boolean>(true);
   protected readonly toolsOpen = signal(false);
@@ -53,9 +53,9 @@ export class AdminLayout {
     ).subscribe((res) => this.unreadEnquiries.set(res.newCount));
     destroy.onDestroy(inject(AdminSessionService).start());
 
-    // Start background polling for new incoming orders with loud alarm chime
-    this.orderNotification.start();
-    destroy.onDestroy(() => this.orderNotification.stop());
+    // Restore background polling alongside the cafe live queue.
+    // this.orderNotification.start();
+    // destroy.onDestroy(() => this.orderNotification.stop());
 
     // Offline/online tracking for the connectivity banner
     const onOnline = () => this.isOffline.set(false);
@@ -116,7 +116,7 @@ export class AdminLayout {
   async signOut() {
     this.session.keepDraft();
     this.releaseWakeLock();
-    this.orderNotification.stop();
+    // this.orderNotification.stop();
     if (!await this.auth.logout()) return;
     this.router.navigateByUrl('/');
   }

@@ -33,14 +33,16 @@
         <div class="adm-stat__value">₹{{ s.today.avgOrderValue | number: '1.0-0' }}</div>
         <div class="adm-stat__sub">across paid orders</div>
       </div>
+      <!-- Temporarily disabled: cafe live queue summary.
       <a routerLink="/admin/queue" class="adm-stat adm-stat--link">
         <div class="adm-stat__label">In the kitchen</div>
         <div class="adm-stat__value">{{ queueTotal() }}</div>
         <div class="adm-stat__sub">active orders — open queue →</div>
       </a>
+      -->
     </div>
 
-    <!-- Active queue by stage -->
+    <!-- Temporarily disabled: cafe active queue by stage.
     <div class="adm-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr))">
       @for (row of queueStages(); track row.stage) {
         <a routerLink="/admin/queue" class="adm-stat adm-stat--link">
@@ -50,6 +52,7 @@
       }
     </div>
 
+    -->
     <div class="adm-cols">
       <!-- Order type split -->
       <div class="adm-card">
