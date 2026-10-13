@@ -1,0 +1,679 @@
+[
+  {
+    "module": "event-report",
+    "offscreenControls": [],
+    "pageWidth": 310,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      290,
+      259
+    ],
+    "width": 320
+  },
+  {
+    "module": "event-report",
+    "offscreenControls": [],
+    "pageWidth": 365,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      346,
+      315
+    ],
+    "width": 375
+  },
+  {
+    "module": "event-report",
+    "offscreenControls": [],
+    "pageWidth": 380,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      361,
+      330
+    ],
+    "width": 390
+  },
+  {
+    "module": "event-report",
+    "offscreenControls": [],
+    "pageWidth": 420,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      400,
+      369
+    ],
+    "width": 429
+  },
+  {
+    "module": "event-report",
+    "offscreenControls": [],
+    "pageWidth": 590,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      567,
+      536
+    ],
+    "width": 600
+  },
+  {
+    "module": "event-report",
+    "offscreenControls": [],
+    "pageWidth": 758,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      728,
+      697
+    ],
+    "width": 768
+  },
+  {
+    "module": "event-report",
+    "offscreenControls": [],
+    "pageWidth": 810,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      778,
+      747
+    ],
+    "width": 820
+  },
+  {
+    "module": "event-report",
+    "offscreenControls": [],
+    "pageWidth": 1014,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      763,
+      733
+    ],
+    "width": 1024
+  },
+  {
+    "module": "event-report",
+    "offscreenControls": [],
+    "pageWidth": 1366,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      1682,
+      1079
+    ],
+    "width": 1366
+  },
+  {
+    "module": "event-report",
+    "offscreenControls": [],
+    "pageWidth": 1440,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      1682,
+      1153
+    ],
+    "width": 1440
+  },
+  {
+    "module": "event-editor",
+    "offscreenControls": [],
+    "pageWidth": 310,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      259,
+      290,
+      259
+    ],
+    "width": 320
+  },
+  {
+    "module": "event-editor",
+    "offscreenControls": [],
+    "pageWidth": 365,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      315,
+      346,
+      315
+    ],
+    "width": 375
+  },
+  {
+    "module": "event-editor",
+    "offscreenControls": [],
+    "pageWidth": 380,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      330,
+      361,
+      330
+    ],
+    "width": 390
+  },
+  {
+    "module": "event-editor",
+    "offscreenControls": [],
+    "pageWidth": 420,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      369,
+      400,
+      369
+    ],
+    "width": 429
+  },
+  {
+    "module": "event-editor",
+    "offscreenControls": [],
+    "pageWidth": 590,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      536,
+      567,
+      536
+    ],
+    "width": 600
+  },
+  {
+    "module": "event-editor",
+    "offscreenControls": [],
+    "pageWidth": 758,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      697,
+      728,
+      697
+    ],
+    "width": 768
+  },
+  {
+    "module": "event-editor",
+    "offscreenControls": [],
+    "pageWidth": 810,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      747,
+      778,
+      747
+    ],
+    "width": 820
+  },
+  {
+    "module": "event-editor",
+    "offscreenControls": [],
+    "pageWidth": 1014,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      733,
+      763,
+      733
+    ],
+    "width": 1024
+  },
+  {
+    "module": "event-editor",
+    "offscreenControls": [],
+    "pageWidth": 1356,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      1070,
+      1682,
+      1070
+    ],
+    "width": 1366
+  },
+  {
+    "module": "event-editor",
+    "offscreenControls": [],
+    "pageWidth": 1430,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      1143,
+      1682,
+      1143
+    ],
+    "width": 1440
+  },
+  {
+    "module": "orders",
+    "offscreenControls": [],
+    "pageWidth": 320,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      290
+    ],
+    "width": 320
+  },
+  {
+    "module": "orders",
+    "offscreenControls": [],
+    "pageWidth": 375,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      346
+    ],
+    "width": 375
+  },
+  {
+    "module": "orders",
+    "offscreenControls": [],
+    "pageWidth": 390,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      361
+    ],
+    "width": 390
+  },
+  {
+    "module": "orders",
+    "offscreenControls": [],
+    "pageWidth": 429,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      400
+    ],
+    "width": 429
+  },
+  {
+    "module": "orders",
+    "offscreenControls": [],
+    "pageWidth": 600,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      567
+    ],
+    "width": 600
+  },
+  {
+    "module": "orders",
+    "offscreenControls": [],
+    "pageWidth": 768,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      728
+    ],
+    "width": 768
+  },
+  {
+    "module": "orders",
+    "offscreenControls": [],
+    "pageWidth": 820,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      778
+    ],
+    "width": 820
+  },
+  {
+    "module": "orders",
+    "offscreenControls": [],
+    "pageWidth": 1024,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      815
+    ],
+    "width": 1024
+  },
+  {
+    "module": "orders",
+    "offscreenControls": [],
+    "pageWidth": 1366,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      1101
+    ],
+    "width": 1366
+  },
+  {
+    "module": "orders",
+    "offscreenControls": [],
+    "pageWidth": 1440,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      1174
+    ],
+    "width": 1440
+  },
+  {
+    "module": "recipes",
+    "offscreenControls": [],
+    "pageWidth": 320,
+    "stickyEventCells": 0,
+    "tableWidths": [],
+    "width": 320
+  },
+  {
+    "module": "recipes",
+    "offscreenControls": [],
+    "pageWidth": 375,
+    "stickyEventCells": 0,
+    "tableWidths": [],
+    "width": 375
+  },
+  {
+    "module": "recipes",
+    "offscreenControls": [],
+    "pageWidth": 390,
+    "stickyEventCells": 0,
+    "tableWidths": [],
+    "width": 390
+  },
+  {
+    "module": "recipes",
+    "offscreenControls": [],
+    "pageWidth": 429,
+    "stickyEventCells": 0,
+    "tableWidths": [],
+    "width": 429
+  },
+  {
+    "module": "recipes",
+    "offscreenControls": [],
+    "pageWidth": 600,
+    "stickyEventCells": 0,
+    "tableWidths": [],
+    "width": 600
+  },
+  {
+    "module": "recipes",
+    "offscreenControls": [],
+    "pageWidth": 768,
+    "stickyEventCells": 0,
+    "tableWidths": [],
+    "width": 768
+  },
+  {
+    "module": "recipes",
+    "offscreenControls": [],
+    "pageWidth": 820,
+    "stickyEventCells": 0,
+    "tableWidths": [],
+    "width": 820
+  },
+  {
+    "module": "recipes",
+    "offscreenControls": [],
+    "pageWidth": 1024,
+    "stickyEventCells": 0,
+    "tableWidths": [],
+    "width": 1024
+  },
+  {
+    "module": "recipes",
+    "offscreenControls": [],
+    "pageWidth": 1366,
+    "stickyEventCells": 0,
+    "tableWidths": [],
+    "width": 1366
+  },
+  {
+    "module": "recipes",
+    "offscreenControls": [],
+    "pageWidth": 1440,
+    "stickyEventCells": 0,
+    "tableWidths": [],
+    "width": 1440
+  },
+  {
+    "module": "recipe-editor",
+    "offscreenControls": [],
+    "pageWidth": 310,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      255
+    ],
+    "width": 320
+  },
+  {
+    "module": "recipe-editor",
+    "offscreenControls": [],
+    "pageWidth": 365,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      310
+    ],
+    "width": 375
+  },
+  {
+    "module": "recipe-editor",
+    "offscreenControls": [],
+    "pageWidth": 380,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      325
+    ],
+    "width": 390
+  },
+  {
+    "module": "recipe-editor",
+    "offscreenControls": [],
+    "pageWidth": 420,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      365
+    ],
+    "width": 429
+  },
+  {
+    "module": "recipe-editor",
+    "offscreenControls": [],
+    "pageWidth": 590,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      525
+    ],
+    "width": 600
+  },
+  {
+    "module": "recipe-editor",
+    "offscreenControls": [],
+    "pageWidth": 758,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      684
+    ],
+    "width": 768
+  },
+  {
+    "module": "recipe-editor",
+    "offscreenControls": [],
+    "pageWidth": 810,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      733
+    ],
+    "width": 820
+  },
+  {
+    "module": "recipe-editor",
+    "offscreenControls": [],
+    "pageWidth": 1014,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      715
+    ],
+    "width": 1024
+  },
+  {
+    "module": "recipe-editor",
+    "offscreenControls": [],
+    "pageWidth": 1356,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      1051
+    ],
+    "width": 1366
+  },
+  {
+    "module": "recipe-editor",
+    "offscreenControls": [],
+    "pageWidth": 1430,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      1124
+    ],
+    "width": 1440
+  },
+  {
+    "module": "order-form",
+    "offscreenControls": [],
+    "pageWidth": 310,
+    "stickyEventCells": 0,
+    "tableWidths": [],
+    "width": 320
+  },
+  {
+    "module": "order-form",
+    "offscreenControls": [],
+    "pageWidth": 365,
+    "stickyEventCells": 0,
+    "tableWidths": [],
+    "width": 375
+  },
+  {
+    "module": "order-form",
+    "offscreenControls": [],
+    "pageWidth": 380,
+    "stickyEventCells": 0,
+    "tableWidths": [],
+    "width": 390
+  },
+  {
+    "module": "order-form",
+    "offscreenControls": [],
+    "pageWidth": 420,
+    "stickyEventCells": 0,
+    "tableWidths": [],
+    "width": 429
+  },
+  {
+    "module": "order-form",
+    "offscreenControls": [],
+    "pageWidth": 590,
+    "stickyEventCells": 0,
+    "tableWidths": [],
+    "width": 600
+  },
+  {
+    "module": "order-form",
+    "offscreenControls": [],
+    "pageWidth": 758,
+    "stickyEventCells": 0,
+    "tableWidths": [],
+    "width": 768
+  },
+  {
+    "module": "order-form",
+    "offscreenControls": [],
+    "pageWidth": 810,
+    "stickyEventCells": 0,
+    "tableWidths": [],
+    "width": 820
+  },
+  {
+    "module": "order-form",
+    "offscreenControls": [],
+    "pageWidth": 1014,
+    "stickyEventCells": 0,
+    "tableWidths": [],
+    "width": 1024
+  },
+  {
+    "module": "order-form",
+    "offscreenControls": [],
+    "pageWidth": 1356,
+    "stickyEventCells": 0,
+    "tableWidths": [],
+    "width": 1366
+  },
+  {
+    "module": "order-form",
+    "offscreenControls": [],
+    "pageWidth": 1430,
+    "stickyEventCells": 0,
+    "tableWidths": [],
+    "width": 1440
+  },
+  {
+    "module": "order-form-height",
+    "height": 667,
+    "offscreenControls": [],
+    "pageWidth": 380,
+    "stickyEventCells": 0,
+    "tableWidths": [],
+    "width": 390
+  },
+  {
+    "module": "order-form-height",
+    "height": 1180,
+    "offscreenControls": [],
+    "pageWidth": 810,
+    "stickyEventCells": 0,
+    "tableWidths": [],
+    "width": 820
+  },
+  {
+    "module": "order-form-height",
+    "height": 768,
+    "offscreenControls": [],
+    "pageWidth": 1356,
+    "stickyEventCells": 0,
+    "tableWidths": [],
+    "width": 1366
+  },
+  {
+    "module": "order-detail",
+    "offscreenControls": [],
+    "pageWidth": 320,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      298
+    ],
+    "width": 320
+  },
+  {
+    "module": "order-detail",
+    "offscreenControls": [],
+    "pageWidth": 390,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      368
+    ],
+    "width": 390
+  },
+  {
+    "module": "order-detail",
+    "offscreenControls": [],
+    "pageWidth": 768,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      735
+    ],
+    "width": 768
+  },
+  {
+    "module": "order-detail",
+    "offscreenControls": [],
+    "pageWidth": 820,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      785
+    ],
+    "width": 820
+  },
+  {
+    "module": "order-detail",
+    "offscreenControls": [],
+    "pageWidth": 1024,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      771
+    ],
+    "width": 1024
+  },
+  {
+    "module": "order-detail",
+    "offscreenControls": [],
+    "pageWidth": 1366,
+    "stickyEventCells": 0,
+    "tableWidths": [
+      1110
+    ],
+    "width": 1366
+  }
+]
