@@ -392,9 +392,6 @@
       </div>
 
       <div class="actions-foot">
-        <button type="button" class="btn btn--outline" (click)="preview()">
-          Calculate preview
-        </button>
         <button type="button" class="btn btn--outline" (click)="cancelEdit()">Cancel</button>
         <button type="button" class="btn btn--accent" [disabled]="saving()" (click)="saveRecipe()">{{ saving() ? 'Saving…' : 'Save Recipe' }}</button>
       </div>
