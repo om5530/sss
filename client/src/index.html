@@ -20,7 +20,16 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://images.pexels.com" crossorigin>
   <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Manrope:wght@400..800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Manrope:wght@400..800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Manrope:wght@400..800&display=swap" rel="stylesheet"></noscript>
+  <style>
+    #app-startup { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; padding: 24px; background: #faf4ea; color: #3b2417; text-align: center; font-family: system-ui, sans-serif; }
+    #app-startup .startup-content { width: 100%; max-width: 360px; }
+    #app-startup img { display: block; width: 128px; height: 128px; object-fit: contain; margin: 0 auto 24px; border-radius: 24px; }
+    #app-startup p { line-height: 1.5; }
+    #app-startup a { display: inline-block; margin-top: 12px; padding: 12px 24px; background: #3b2417; color: white; border-radius: 10px; text-decoration: none; font-weight: 600; }
+    #app-startup [hidden] { display: none; }
+  </style>
   <!-- Hero video poster is the first paint — preload it so the hero fills fast. -->
   <link rel="preload" as="image" fetchpriority="high" href="/baking-flour-poster.jpg">
   <link rel="manifest" href="manifest.webmanifest" id="pwa-manifest">
@@ -50,5 +59,62 @@
 </head>
 <body>
   <app-root></app-root>
+  <section id="app-startup" aria-label="Opening Golden Batch">
+    <div class="startup-content">
+      <img src="/icons/golden-batch-icon-192-v3.png" alt="The Golden Batch" width="128" height="128">
+      <p id="startup-message" role="status">Opening Golden Batch…</p>
+      <a id="startup-retry" href="" hidden>Retry opening app</a>
+      <noscript><p>Please enable JavaScript to open the app.</p></noscript>
+    </div>
+  </section>
+  <script id="app-startup-watchdog">
+    (function () {
+      var screen = document.getElementById('app-startup');
+      var message = document.getElementById('startup-message');
+      var retry = document.getElementById('startup-retry');
+      if (!screen || !message || !retry) return;
+
+      // Fetch a fresh app shell for this retry, preserving the intended page.
+      var retryUrl = new URL(window.location.href);
+      retryUrl.searchParams.set('ngsw-bypass', 'true');
+      retry.href = retryUrl.href;
+      // Navigation has already bypassed the worker. Clean the URL before guards
+      // create a login return URL, so the recovery parameter cannot persist there.
+      if (new URL(window.location.href).searchParams.has('ngsw-bypass')) {
+        var cleanUrl = new URL(window.location.href);
+        cleanUrl.searchParams.delete('ngsw-bypass');
+        window.history.replaceState(window.history.state, '', cleanUrl.href);
+      }
+
+      function showRecovery() {
+        if (!screen.isConnected) return;
+        message.textContent = navigator.onLine
+          ? 'The app could not finish opening. Check your connection and try again.'
+          : 'You are offline. Connect to the internet, then try again.';
+        retry.hidden = false;
+      }
+
+      var timer = setTimeout(showRecovery, 15_000);
+      function finish() {
+        clearTimeout(timer);
+        screen.remove();
+        window.removeEventListener('app-startup-failed', showRecovery);
+        window.removeEventListener('error', scriptFailure, true);
+        window.removeEventListener('online', showRecoveryIfVisible);
+        window.removeEventListener('offline', showRecoveryIfVisible);
+      }
+      function scriptFailure(event) {
+        if (event.target && event.target.tagName === 'SCRIPT') showRecovery();
+      }
+      function showRecoveryIfVisible() {
+        if (!retry.hidden) showRecovery();
+      }
+      window.addEventListener('app-startup-ready', finish, { once: true });
+      window.addEventListener('app-startup-failed', showRecovery);
+      window.addEventListener('error', scriptFailure, true);
+      window.addEventListener('online', showRecoveryIfVisible);
+      window.addEventListener('offline', showRecoveryIfVisible);
+    })();
+  </script>
 </body>
 </html>

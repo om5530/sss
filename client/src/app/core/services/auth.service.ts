@@ -4,6 +4,7 @@ import { ToastService } from './toast.service';
 import { firstValueFrom, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Address, ApiResponse, AuthResponse, OtpRequestResponse, User } from '../models/user.model';
+import { loadSavedSession } from '../utils/session-startup';
 
 const TOKEN_KEY = 'bc_token';
 
@@ -23,9 +24,11 @@ export class AuthService {
   /** Called by APP_INITIALIZER — resolves the current user from a stored token. */
   restoreSession(): Promise<void> {
     if (!this.token) return Promise.resolve();
-    return firstValueFrom(this.http.get<{ user: User }>(`${this.base}/auth/me`))
-      .then((res) => this.user.set(res.user))
-      .catch(() => this.clearSession());
+    return loadSavedSession(this.http.get<{ user: User }>(`${this.base}/auth/me`))
+      .then((res) => {
+        if (res) this.user.set(res.user);
+        else this.clearSession();
+      });
   }
 
   requestOtp(phone: string) {

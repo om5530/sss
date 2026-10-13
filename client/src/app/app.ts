@@ -1,5 +1,5 @@
 import { Component, afterNextRender, inject, signal } from '@angular/core';
-import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { NavigationEnd, NavigationError, Router, RouterOutlet } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Navbar } from './shared/components/navbar/navbar';
 import { Footer } from './shared/components/footer/footer';
@@ -34,12 +34,15 @@ export class App {
 
     this.router.events.pipe(takeUntilDestroyed()).subscribe((e) => {
       if (e instanceof NavigationEnd) {
+        window.dispatchEvent(new Event('app-startup-ready'));
         const admin = /^\/admin(?:\/|[?#]|$)/.test(e.urlAfterRedirects);
         this.adminArea.set(admin);
         const manifest = document.querySelector<HTMLLinkElement>('#pwa-manifest');
         if (manifest) manifest.href = admin ? '/admin-manifest.webmanifest' : '/manifest.webmanifest';
         const title = document.querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-title"]');
         if (title) title.content = admin ? 'GB Ops' : 'The Golden Batch';
+      } else if (e instanceof NavigationError) {
+        window.dispatchEvent(new Event('app-startup-failed'));
       }
     });
   }
