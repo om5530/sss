@@ -328,3 +328,33 @@
     gap: 0;
   }
 }
+.save-calculation__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .65rem;
+  min-height: 44px;
+  max-width: 100%;
+  padding: .6rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--button-bg, #3a2417);
+  color: var(--button-ink, #faf4ea);
+  box-shadow: var(--shadow-sm);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+
+  &::-webkit-details-marker { display: none; }
+  &::marker { content: ''; }
+  &:hover { background: #6b4226; border-color: var(--caramel); }
+  &:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+  svg { flex: 0 0 auto; }
+}
+
+.save-calculation[open] .save-calculation__toggle {
+  margin-bottom: .8rem;
+  svg { transform: rotate(180deg); }
+}
+
