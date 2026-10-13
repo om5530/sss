@@ -109,7 +109,8 @@ async function input(body, previous, session) {
       }
     }
     return { product: id, name: saved?.name || product.name, batches,
-      wasted: 0, reusable: item.reusable || 0, returned: item.returned || 0 };
+      wasted: 0, reusable: item.reusable || 0, returned: item.returned || 0,
+      stockNeedsRestore: saved?.stockNeedsRestore || false };
   });
   return { eventName: name, eventKey: eventKeyOf(name), startDate, endDate, rent, travelCost, extraCost,
     extraCostNote: (body.extraCostNote || '').trim(), items };

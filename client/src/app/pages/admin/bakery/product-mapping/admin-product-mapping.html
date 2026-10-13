@@ -10,13 +10,13 @@
   <div class="adm-filters">
     <input type="search" class="input mapping-search" placeholder="Search products, recipes or categories…" aria-label="Search product mappings" [ngModel]="q()" (ngModelChange)="q.set($event)" />
     <select class="select" aria-label="Filter product mappings" [ngModel]="filter()" (ngModelChange)="filter.set($event)">
-      <option value="all">All available products</option><option value="linked">Linked</option><option value="unlinked">Not linked</option>
+      <option value="all">All products</option><option value="linked">Linked</option><option value="unlinked">Not linked</option>
     </select>
   </div>
   @if (loading()) { <div class="skeleton" style="height: 320px" aria-hidden="true"></div> }
   @else if (failed()) { <div class="adm-alert" role="alert">Product mappings could not be loaded. <button type="button" class="btn btn--ghost btn--sm" (click)="load()">Retry</button></div> }
   @else if (data(); as d) {
-    <p class="muted mapping-status" role="status">{{ linkedCount() }} of {{ d.products.length }} available products linked · {{ products().length }} shown</p>
+    <p class="muted mapping-status" role="status">{{ linkedCount() }} of {{ d.products.length }} products linked · {{ products().length }} shown</p>
     <div class="adm-table-wrap"><table class="adm-table">
       <thead><tr><th>Product</th><th>Linked recipe</th><th class="num">Cost per unit</th><th class="num">Margin</th><th class="num">Selling price</th><th>Actions</th></tr></thead>
       <tbody>

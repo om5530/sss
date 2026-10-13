@@ -47,6 +47,23 @@ test('mapping endpoints require admin access and reject malformed updates', asyn
   assert.equal((await api('GET', '/admin/bakery/product-mappings', undefined, customerToken)).status, 403);
   assert.equal((await api('PATCH', '/admin/bakery/product-mappings/invalid', {})).status, 400);
 });
+test('mapping includes unavailable and sold-out products, including their links, while excluding archived products', async () => {
+  const linked = await fixture('Unavailable-linked');
+  assert.equal((await mapProduct(linked.product, linked.recipe)).status, 200);
+  await Product.updateOne({ _id: linked.product._id }, { available: false });
+  const soldOut = await fixture('Sold-out-mapping');
+  await Product.updateOne({ _id: soldOut.product._id }, { available: false, stockCount: 0, stockSoldOut: true });
+  const archived = await fixture('Archived-mapping');
+  await Product.updateOne({ _id: archived.product._id }, { archived: true });
+  const result = await api('GET', '/admin/bakery/product-mappings');
+  assert.equal(result.status, 200);
+  assert.equal(result.products.find(p => p._id === String(linked.product._id))?.recipeId, String(linked.recipe._id));
+  assert.ok(result.products.some(p => p._id === String(soldOut.product._id)));
+  assert.ok(!result.products.some(p => p._id === String(archived.product._id)));
+  assert.equal((await mapProduct(soldOut.product, soldOut.recipe)).status, 200);
+  assert.equal((await Product.findById(soldOut.product._id)).available, false);
+});
+
 test('linked products use per-piece recipe pricing in the catalogue and quotes', async () => {
   const { product, recipe } = await fixture('Slices');
   const preview = await api('GET', '/admin/bakery/product-mappings');

@@ -9,7 +9,7 @@ const { audit } = require('../services/audit.service');
 
 const list = asyncHandler(async (req, res) => {
   const [products, context] = await Promise.all([
-    Product.find({ archived: { $ne: true }, available: true }).sort({ name: 1 }).lean(),
+    Product.find({ archived: { $ne: true } }).sort({ name: 1 }).lean(),
     maps(undefined, new Date(), undefined, true, false),
   ]);
   const recipes = [...context.recipes.values()].filter(sellableRecipe).map((r) => {

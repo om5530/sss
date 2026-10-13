@@ -31,7 +31,7 @@ export class AdminProductMapping {
   protected readonly failed = signal(false);
   protected readonly busyId = signal<string | null>(null);
   protected readonly q = signal('');
-  protected readonly filter = signal('all');
+  protected readonly filter = signal('linked');
   protected readonly choices = signal<Record<string, string>>({});
   protected readonly linkedCount = computed(() => this.data()?.products.filter((p) => p.recipeId).length || 0);
   protected readonly products = computed(() => {

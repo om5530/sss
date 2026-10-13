@@ -14,6 +14,7 @@ const itemSchema = new mongoose.Schema({
   wasted: { type: Number, default: 0, min: 0 },
   reusable: { type: Number, default: 0, min: 0 },
   returned: { type: Number, default: 0, min: 0 },
+  stockNeedsRestore: { type: Boolean, default: false },
 }, { _id: false });
 const schema = new mongoose.Schema({
   eventName: { type: String, required: true, maxlength: 120 },

@@ -41,7 +41,7 @@
                   <td role="cell" class="event-cell-actions" data-label="Actions"><button class="btn btn--ghost btn--sm" type="button" [attr.aria-label]="'Remove ' + line.name" (click)="removeProduct(line.productId)">Remove</button></td></tr>
               } @empty { <tr><td colspan="7" class="muted">Add products and enter the number of pieces prepared for this event.</td></tr> }
             </tbody></table></div>
-            <small class="muted">Saving prepared quantities updates today's product stock. Unsold pieces count as wasted automatically. Enter reusable pieces to reduce wastage.</small>
+            <small class="muted">Saving changed prepared quantities updates today's product stock. After a stock reset, it restores this product's prepared pieces minus event sales and handovers. Unsold pieces count as wasted automatically. Enter reusable pieces to reduce wastage.</small>
             @if (error()) { <div class="adm-alert adm-alert--danger" role="alert">{{ error() }}</div> }
             <div class="event-editor-actions"><button type="button" class="btn btn--ghost btn--sm" (click)="dismissEditor()">Cancel</button><button class="btn btn--primary btn--sm" type="submit" [disabled]="eventForm.invalid || saving()">{{ saving() ? 'Saving…' : 'Save event' }}</button></div>
           </fieldset>

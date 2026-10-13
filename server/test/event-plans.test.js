@@ -383,6 +383,34 @@ test('reset today stock is admin-only, covers all products and leaves prices, or
   assert.ok(!choices.products.some((item) => item._id === String(off._id)));
   const updated = await update(p, [{ ...p.items[0], prepared: 15 }]);
   assert.equal(updated.status, 200, JSON.stringify(updated));
-  assert.equal((await Product.findById(f.product._id)).stockCount, 5);
+  assert.equal((await Product.findById(f.product._id)).stockCount, 13);
   assert.equal((await Product.findById(f.product._id)).available, true);
+  p = updated.plan;
+  const unchanged = await update(p);
+  assert.equal(unchanged.status, 200); p = unchanged.plan;
+  assert.equal((await Product.findById(f.product._id)).stockCount, 13);
+  await sale(f, 3);
+  const increased = await update(p, [{ ...p.items[0], prepared: 17 }]);
+  assert.equal(increased.status, 200, JSON.stringify(increased)); p = increased.plan;
+  assert.equal((await Product.findById(f.product._id)).stockCount, 12);
+});
+
+test('after reset each event restores its unsold pieces once and removing an unrestored event preserves other stock', async () => {
+  const f = await fixture(); let first = await plan(f); await sale(f, 2);
+  const secondFixture = { ...f, name: f.name + ' second' };
+  let second = await plan(secondFixture, { items: [{ productId: String(f.product._id), prepared: 8 }] });
+  const removed = await plan({ ...f, name: f.name + ' removed' });
+  assert.equal((await api('POST', '/admin/products/reset-stock', {})).status, 200);
+  const firstUpdate = await update(first, [{ ...first.items[0], prepared: 9 }]);
+  assert.equal(firstUpdate.status, 200, JSON.stringify(firstUpdate)); first = firstUpdate.plan;
+  assert.equal((await Product.findById(f.product._id)).stockCount, 7);
+  assert.equal((await update(removed, [])).status, 200);
+  assert.equal((await Product.findById(f.product._id)).stockCount, 7);
+  const secondUpdate = await update(second, [{ ...second.items[0], prepared: 10 }]);
+  assert.equal(secondUpdate.status, 200, JSON.stringify(secondUpdate)); second = secondUpdate.plan;
+  assert.equal((await Product.findById(f.product._id)).stockCount, 17);
+  assert.equal((await api('POST', '/admin/products/reset-stock', {})).status, 200);
+  const restoredAgain = await update(first, [{ ...first.items[0], prepared: 11 }]);
+  assert.equal(restoredAgain.status, 200, JSON.stringify(restoredAgain));
+  assert.equal((await Product.findById(f.product._id)).stockCount, 9);
 });
