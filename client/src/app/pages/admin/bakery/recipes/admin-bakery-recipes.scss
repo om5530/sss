@@ -543,3 +543,55 @@
 
 .text-success { color: var(--success); }
 .font-mono { font-family: monospace; }
+
+:host { display: block; min-width: 0; }
+.recipe-cards-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); }
+.recipes-head > div, .card-header > div, .edit-panel, .components-box { min-width: 0; }
+.recipe-name, .panel-head h3 { overflow-wrap: anywhere; }
+.filter-pill { flex: 0 0 auto; white-space: nowrap; min-height: 40px; }
+.recipe-view-toggle { flex-wrap: wrap; }
+.panel-head { gap: .6rem; flex-wrap: wrap; }
+.form-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); }
+.label-with-help { position: relative; width: 100%; }
+.field-help { position: static; }
+.field-help::after { width: min(17rem, 100%); box-sizing: border-box; }
+.actions-foot { flex-wrap: wrap; bottom: max(.5rem, env(safe-area-inset-bottom)); }
+.actions-foot .btn { min-height: 44px; }
+
+@media (max-width: 900px) {
+  .components-box .table-wrap { overflow: visible; }
+  .components-box .data-table, .components-box .data-table tbody { display: block; min-width: 0; }
+  .components-box .data-table thead {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);
+  }
+  .components-box .data-table tbody { display: grid; gap: .75rem; }
+  .components-box .data-table tbody tr {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    border: 1px solid var(--line); border-radius: 8px; padding: .65rem; gap: .6rem;
+  }
+  .components-box .data-table td { display: block; min-width: 0; padding: 0; border: 0; }
+  .components-box .data-table td::before {
+    content: attr(data-label); display: block; color: var(--muted); font-size: .75rem;
+    font-weight: 600; margin-bottom: .25rem;
+  }
+  .components-box .data-table td.component-cell, .components-box .data-table td.component-remove { grid-column: 1 / -1; }
+  .components-box .data-table td.component-remove { text-align: right; }
+  .components-box .data-table td.component-remove::before { display: none; }
+  .components-box .data-table .input, .components-box .data-table .select { min-width: 0; width: 100%; min-height: 44px; }
+  .component-picker__meta { flex-wrap: wrap; }
+  .component-type-change { min-height: 44px; }
+  .recipe-icon-action { min-height: 44px; min-width: 44px; }
+}
+
+@media (max-width: 600px) {
+  .recipes-head .actions, .recipes-head .actions .btn { width: 100%; }
+  .edit-panel { padding: .75rem; }
+  .components-box { padding: .6rem; }
+  .recipes-shell .input, .recipes-shell .select, .recipes-shell textarea { font-size: 16px; min-height: 44px; }
+  .recipe-type-toggle { display: flex; width: 100%; }
+  .recipe-type-toggle button { flex: 1; min-height: 44px; }
+  .actions-foot { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .4rem; }
+  .actions-foot .btn { white-space: normal; }
+  .actions-foot .btn:last-child { grid-column: 1 / -1; }
+  .label-with-help { max-width: 100%; }
+}

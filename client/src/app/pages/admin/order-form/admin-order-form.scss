@@ -42,3 +42,23 @@ form { padding-bottom: 110px; }
 }
 .sale-field-error { color: var(--danger, #a52b20); }
 .input.ng-touched.ng-invalid, .select.ng-touched.ng-invalid { border-color: var(--danger, #a52b20); }
+
+:host { display: block; min-width: 0; }
+.sale-layout > *, .sale-line > * { min-width: 0; }
+.sale-line strong, .sale-line small { overflow-wrap: anywhere; }
+.sale-actions .btn { min-height: 44px; white-space: normal; }
+@media (min-width: 601px) and (max-width: 1100px) {
+  .sale-line { grid-template-columns: minmax(0, 1fr) 88px 100px auto; gap: .5rem; }
+}
+@media (max-width: 600px) {
+  .sale-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: .65rem .75rem max(.65rem, env(safe-area-inset-bottom)); gap: .5rem; }
+  .sale-actions .btn { width: 100%; padding: .55rem; }
+  .sale-actions .btn--primary:last-child { grid-column: auto; }
+  form { padding-bottom: calc(180px + env(safe-area-inset-bottom)); }
+  .input, .select, .textarea { font-size: 16px; min-height: 44px; }
+  .sale-line { border: 1px solid var(--line); border-radius: 8px; padding: .65rem; margin-bottom: .65rem; }
+  .sale-line > div { grid-column: 1 / -1; }
+  .sale-line > strong { white-space: normal; text-align: left; }
+  .sale-line .btn { min-height: 44px; }
+  .sale-total strong { font-size: 1.25rem; overflow-wrap: anywhere; }
+}

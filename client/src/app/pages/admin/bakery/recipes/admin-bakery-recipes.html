@@ -264,7 +264,7 @@
         </div>
 
         <div class="table-wrap">
-          <table class="data-table">
+          <table class="data-table recipe-components-table" role="table" aria-label="Recipe ingredients and resources">
             <thead>
               <tr>
                 <th>Ingredient / resource</th>
@@ -275,11 +275,11 @@
             </thead>
             <tbody>
               @for (comp of form.components; track $index; let idx = $index) {
-                <tr>
-                  <td class="component-cell">
+                <tr role="row">
+                  <td class="component-cell" role="cell" data-label="Ingredient / resource">
                     <div class="component-picker">
                     @if (comp.componentType === 'sub_recipe') {
-                      <select class="select" [(ngModel)]="comp.subRecipeId">
+                      <select class="select" [(ngModel)]="comp.subRecipeId" [attr.aria-label]="'Sub-recipe for ingredient ' + (idx + 1)">
                         <option value="" disabled>Select sub-recipe…</option>
                         @for (r of subRecipes(form._id); track r._id) {
                           <option [value]="r._id">{{ r.name }}</option>
@@ -300,6 +300,7 @@
                         class="select"
                         [ngModel]="comp.materialId"
                         (ngModelChange)="onComponentMaterialChange(comp, $event)"
+                        [attr.aria-label]="'Material for ingredient ' + (idx + 1)"
                       >
                         <option value="" disabled>Select Material…</option>
                         @for (m of materials(); track m._id) {
@@ -334,16 +335,17 @@
                       }
                     </div>
                   </td>
-                  <td>
+                  <td role="cell" data-label="Quantity">
                     <input
                       class="input font-mono"
                       type="number"
                       step="any"
                       min="0"
                       [(ngModel)]="comp.quantity"
+                      [attr.aria-label]="'Quantity for ingredient ' + (idx + 1)"
                     />
                   </td>
-                  <td>
+                  <td role="cell" data-label="Unit">
                     @if (comp.componentType === 'material') {
                       <span
                         class="input unit-readonly"
@@ -351,7 +353,7 @@
                         aria-label="Unit defined by the selected material"
                       >{{ comp.uom }}</span>
                     } @else {
-                      <input class="input" [(ngModel)]="comp.uom" />
+                      <input class="input" [(ngModel)]="comp.uom" [attr.aria-label]="'Unit for ingredient ' + (idx + 1)" />
                     }
                     @if (comp.itemType === 'labour') {
                       <label class="label"
@@ -363,11 +365,12 @@
                       /></label>
                     }
                   </td>
-                  <td>
+                  <td role="cell" class="component-remove">
                     <button
                       type="button"
                       class="btn btn--ghost btn--danger btn--sm"
                       (click)="removeComponent(idx)"
+                      [attr.aria-label]="'Remove ingredient ' + (idx + 1)"
                     >
                       ✕
                     </button>
