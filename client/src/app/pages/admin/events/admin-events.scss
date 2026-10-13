@@ -42,6 +42,18 @@ td small { display: block; font-size: .72rem; margin-top: .2rem; }
 .adm-table td:first-child { min-width: 13rem; overflow-wrap: anywhere; }
 .event-row-actions .btn { white-space: normal; }
 
+@media screen and (min-width: 1101px) {
+  .event-summary th:last-child,
+  .event-summary td.event-cell-actions {
+    position: sticky;
+    right: 0;
+    z-index: 1;
+    background: var(--white);
+    box-shadow: -1px 0 0 var(--line), -8px 0 12px -10px rgba(36, 23, 16, .25);
+  }
+  .event-summary th:last-child { z-index: 2; }
+}
+
 /* Every value stays visible beneath its label on phones and tablets. */
 @media (max-width: 1100px) {
   .event-scroll-hint { display: none; }

@@ -59,7 +59,7 @@
       <div class="adm-card"><span class="muted">Units sold</span><h2>{{ sum('units') }}</h2></div>
       <div class="adm-card"><span class="muted">Net profit</span><h2 [class.event-profit]="(netTotal() || 0) > 0" [class.event-loss]="(netTotal() || 0) < 0">{{ netTotal() === null ? netReason() : rupees(netTotal()) }}</h2></div>
     </div>
-    <p class="event-scroll-hint">Scroll sideways to see all event totals and actions.</p>
+    <p class="event-scroll-hint">Scroll sideways to see all event totals.</p>
     <div class="adm-table-wrap" tabindex="0" role="region" aria-label="Event totals and actions"><table class="adm-table event-summary" role="table" aria-label="Event totals"><thead><tr><th>Event / Stall</th><th class="num">Orders</th><th class="num">Units sold</th><th class="num">Paid sales</th><th class="num">Cost of sold items</th><th class="num">Profit</th><th class="num">Wastage / loss cost</th><th class="num">Rent</th><th class="num">Car / travel cost</th><th class="num">Extra cost</th><th class="num">Net profit</th><th class="num">Cash</th><th class="num">UPI</th><th>Last sale</th><th>Actions</th></tr></thead><tbody>
       @for (e of r.events; track e.eventName) {
         <tr role="row"><td role="cell" data-label="Event / Stall"><strong>{{ e.eventName }}</strong><small class="event-status" [class.event-status--closed]="e.status === 'closed'">{{ e.status === 'unconfigured' ? 'Setup needed' : e.status === 'closed' ? 'Closed' : 'Open' }}</small>@if (e.startDate) { <small class="muted">{{ e.startDate }} → {{ e.endDate }}</small> }</td>
