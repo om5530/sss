@@ -223,16 +223,18 @@
 
         <div class="field">
           <div class="label-with-help">
-            <label class="label">Finished yield unit (e.g. cake, piece)</label>
+            <label class="label">Finished yield unit</label>
             <button type="button" class="field-help" aria-label="About yield unit" data-tooltip="The name of one finished unit. Example: use “cake” for whole cakes or “piece” for individual slices.">i</button>
           </div>
           <input class="input" [(ngModel)]="form.yieldUom" placeholder="cake" />
         </div>
 
         <div class="field">
-          <label class="label" for="pieces-per-batch">Pieces / portions in one batch</label>
+          <div class="label-with-help">
+            <label class="label" for="pieces-per-batch">Pieces / portions per batch</label>
+            <button type="button" class="field-help" aria-label="About pieces per batch" data-tooltip="Example: one cheesecake cut into 16 pieces → enter 16. Recipe ingredients are for the whole batch.">i</button>
+          </div>
           <input id="pieces-per-batch" class="input" type="number" inputmode="numeric" min="1" step="1" [(ngModel)]="form.piecesPerBatch" />
-          <small>Example: one cheesecake cut into 16 pieces → enter 16. Recipe ingredients above are for the whole batch.</small>
         </div>
 
         <div class="field">
@@ -243,17 +245,19 @@
           <input class="input" type="number" inputmode="decimal" min="0" step="any" [(ngModel)]="form.targetMarkupPercent" />
         </div>
         <div class="field">
-          <label class="label" for="piece-selling-price">Selling price per piece (₹)</label>
+          <div class="label-with-help">
+            <label class="label" for="piece-selling-price">Selling price per piece (₹)</label>
+            <button type="button" class="field-help" aria-label="About selling price per piece" data-tooltip="Set a selling price for each piece. Leave blank or enter 0 to use the markup suggestion.">i</button>
+          </div>
           <input id="piece-selling-price" class="input" type="number" inputmode="decimal" min="0" step="0.01" [(ngModel)]="form.manualSellingPricePerPiece" placeholder="Leave blank to use suggested price" />
-          <small>Leave blank or enter 0 to use the markup suggestion.</small>
         </div>
         <div class="field">
           <div class="label-with-help"><label class="label">Finished batch weight (g)</label><button type="button" class="field-help" aria-label="About finished batch weight" data-tooltip="The weight of the completed batch after baking or cooking. Example: enter 900 for a finished 900 g loaf.">i</button></div>
           <input class="input" type="number" inputmode="decimal" min="0" step="any" [(ngModel)]="form.finishedWeightGrams" />
         </div>
-        <label class="field"
+        <label class="field recipe-notes-field"
           ><span class="label">Internal notes</span
-          ><textarea class="input" [(ngModel)]="form.notes"></textarea>
+          ><textarea class="input" rows="4" [(ngModel)]="form.notes"></textarea>
         </label>
       </div>
 

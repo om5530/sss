@@ -307,8 +307,14 @@
   margin-bottom: 1rem;
 }
 
-.recipe-type-field {
+.recipe-type-field,
+.recipe-notes-field {
   grid-column: 1 / -1;
+}
+
+.recipe-notes-field textarea {
+  width: 100%;
+  resize: vertical;
 }
 
 .recipe-type-toggle {
@@ -377,6 +383,8 @@
   gap: 0.35rem;
   width: fit-content;
   margin-bottom: 0.3rem;
+
+  > .label { margin: 0; }
 }
 
 .field-help {

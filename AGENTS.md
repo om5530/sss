@@ -22,3 +22,7 @@ These defaults are optimized for AI coding agents (and humans) working on apps t
   needed. Always curl https://ai-gateway.vercel.sh/v1/models first; never trust model IDs from memory
 - For durable agent loops or untrusted code: use Workflow (pause/resume/state) + Sandbox; use Vercel MCP for secure infra access
 <!-- VERCEL BEST PRACTICES END -->
+
+## Delivery preference
+
+After completing requested app changes and passing the relevant build/checks, commit and push those changes and deploy to Vercel production directly. The user has authorized this workflow; do not leave completed changes only locally or ask for deployment confirmation. Include only files relevant to the requested work and verify the production deployment succeeds.
