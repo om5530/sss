@@ -40,7 +40,7 @@
       <h2>Contact details</h2>
       <div class="field"><label class="label" for="s-address">Address</label><textarea id="s-address" class="textarea" rows="2" maxlength="240" [(ngModel)]="contactAddress" name="contactAddress"></textarea></div>
       <div class="adm-cols" style="grid-template-columns: repeat(2, 1fr); gap: 0 1rem">
-        <div class="field"><label class="label" for="s-phone">Phone</label><input id="s-phone" class="input" maxlength="40" [(ngModel)]="contactPhone" name="contactPhone" /></div>
+        <div class="field"><label class="label" for="s-phone">Phone / WhatsApp</label><input id="s-phone" class="input" type="tel" maxlength="40" [(ngModel)]="contactPhone" name="contactPhone" placeholder="+91 98765 43210" /><small class="muted">Receives cart requests on WhatsApp. Use your business WhatsApp number with country code.</small></div>
         <div class="field"><label class="label" for="s-email">Email</label><input id="s-email" class="input" type="email" maxlength="240" [(ngModel)]="contactEmail" name="contactEmail" /></div>
       </div>
       <div class="adm-modal__actions"><button type="submit" class="btn btn--primary" [disabled]="saving()">{{ saving() ? 'Saving…' : 'Save settings' }}</button></div>

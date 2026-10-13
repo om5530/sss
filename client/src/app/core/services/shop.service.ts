@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { whatsappChatUrl } from '../utils/whatsapp';
 
 export interface ShopInfo {
   opensAt: string;
@@ -20,7 +21,7 @@ export class ShopService {
 
   readonly info = signal<ShopInfo | null>(null);
   readonly mapsUrl = computed(() => 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(this.info()?.contactAddress || ''));
-  readonly whatsappUrl = computed(() => 'https://wa.me/' + (this.info()?.contactPhone || '').replace(/[^0-9]/g, ''));
+  readonly whatsappUrl = computed(() => whatsappChatUrl(this.info()?.contactPhone || ''));
   private loading = false;
 
   /** Coalesces concurrent component requests without caching for the session. */

@@ -1,1 +1,7 @@
 output/
+.env
+.env.*
+**/.env
+**/.env.*
+.codex-remote-attachments/
+server/uploads/

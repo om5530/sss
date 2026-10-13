@@ -1,4 +1,4 @@
-<div class="adm-page">
+<div class="adm-page events-page">
   <div class="adm-head">
     <div><a routerLink="/admin/orders" class="eyebrow eyebrow--bare">← All orders</a><h1>Event sales</h1><p>Prepare stock, track sales and see what each event earns.</p></div>
     <div class="adm-head__actions">
@@ -30,15 +30,15 @@
             <div class="field"><label class="label" for="event-extra-note">Extra cost note (optional)</label><input id="event-extra-note" class="input" name="extraCostNote" [(ngModel)]="draft.extraCostNote" maxlength="1000" placeholder="e.g. helper charges, electricity" /><small class="muted">Add only expenses that are not already included in recipe costs.</small></div>
             <div class="event-section-head"><h3>Prepared products</h3><a routerLink="/admin/bakery/product-mapping" class="btn btn--ghost btn--sm">Link missing recipes</a></div>
             <div class="event-picker"><select class="select" name="product" [(ngModel)]="selectedProduct" aria-label="Choose prepared product"><option value="">Choose a product</option>@for (p of choices(); track p._id) { <option [value]="p._id" [disabled]="p.unitCost === null">{{ p.name }}{{ p.unitCost === null ? ' · Link recipe first' : '' }}</option> }</select><button type="button" class="btn btn--ghost btn--sm" [disabled]="!selectedProduct || lines().length >= 100" (click)="addProduct()">Add product</button></div>
-            <div class="adm-table-wrap"><table class="adm-table event-input-table"><thead><tr><th>Product</th><th>Prepared pieces</th><th class="num">Cost / piece</th><th>Wasted pieces</th><th>Reusable pieces</th><th>Refunded pieces returned</th><th></th></tr></thead><tbody>
+            <div class="adm-table-wrap"><table class="adm-table event-input-table" role="table" aria-label="Prepared products"><thead><tr><th>Product</th><th>Prepared pieces</th><th class="num">Cost / piece</th><th>Wasted pieces</th><th>Reusable pieces</th><th>Refunded pieces returned</th><th>Actions</th></tr></thead><tbody>
               @for (line of lines(); track line.productId) {
-                <tr><td><strong>{{ line.name }}</strong>@if (stockRow(line.productId); as stock) { <small class="muted">{{ stock.sold }} paid units · {{ stock.handedOver }} handed over</small> }</td>
-                  <td><input class="input" type="number" [name]="'prepared-' + line.productId" [(ngModel)]="line.prepared" [min]="minimumPrepared(line)" max="1000000" step="1" required [attr.aria-label]="'Prepared pieces for ' + line.name" />@if (line.prepared !== null && line.prepared < minimumPrepared(line)) { <small class="event-loss" role="alert">At least {{ minimumPrepared(line) }} pieces are needed for recorded sales, handovers and reusable stock.</small> }</td>
-                  <td class="num">{{ rupees(line.unitCost) }}</td>
-                  <td><strong [attr.aria-label]="'Wasted pieces for ' + line.name">{{ wastedPieces(line) }}</strong><small class="muted">Automatic</small></td>
-                  <td><input class="input" type="number" [name]="'reusable-' + line.productId" [(ngModel)]="line.reusable" min="0" [max]="reusableLimit(line)" step="1" required [attr.aria-label]="'Reusable pieces for ' + line.name" /></td>
-                  <td><input class="input" type="number" [name]="'returned-' + line.productId" [(ngModel)]="line.returned" min="0" [max]="line.refundedHandovers" step="1" required [attr.aria-label]="'Refunded pieces returned for ' + line.name" /></td>
-                  <td><button class="btn btn--ghost btn--sm" type="button" [attr.aria-label]="'Remove ' + line.name" (click)="removeProduct(line.productId)">Remove</button></td></tr>
+                <tr role="row"><td role="cell" data-label="Product"><strong>{{ line.name }}</strong>@if (stockRow(line.productId); as stock) { <small class="muted">{{ stock.sold }} paid units · {{ stock.handedOver }} handed over</small> }</td>
+                  <td role="cell" data-label="Prepared pieces"><input class="input" type="number" [name]="'prepared-' + line.productId" [(ngModel)]="line.prepared" [min]="minimumPrepared(line)" max="1000000" step="1" required [attr.aria-label]="'Prepared pieces for ' + line.name" />@if (line.prepared !== null && line.prepared < minimumPrepared(line)) { <small class="event-loss" role="alert">At least {{ minimumPrepared(line) }} pieces are needed for recorded sales, handovers and reusable stock.</small> }</td>
+                  <td role="cell" class="num" data-label="Cost / piece">{{ rupees(line.unitCost) }}</td>
+                  <td role="cell" data-label="Wasted pieces"><strong [attr.aria-label]="'Wasted pieces for ' + line.name">{{ wastedPieces(line) }}</strong><small class="muted">Automatic</small></td>
+                  <td role="cell" data-label="Reusable pieces"><input class="input" type="number" [name]="'reusable-' + line.productId" [(ngModel)]="line.reusable" min="0" [max]="reusableLimit(line)" step="1" required [attr.aria-label]="'Reusable pieces for ' + line.name" /></td>
+                  <td role="cell" data-label="Refunded pieces returned"><input class="input" type="number" [name]="'returned-' + line.productId" [(ngModel)]="line.returned" min="0" [max]="line.refundedHandovers" step="1" required [attr.aria-label]="'Refunded pieces returned for ' + line.name" /></td>
+                  <td role="cell" class="event-cell-actions" data-label="Actions"><button class="btn btn--ghost btn--sm" type="button" [attr.aria-label]="'Remove ' + line.name" (click)="removeProduct(line.productId)">Remove</button></td></tr>
               } @empty { <tr><td colspan="7" class="muted">Add products and enter the number of pieces prepared for this event.</td></tr> }
             </tbody></table></div>
             <small class="muted">Saving prepared quantities updates today's product stock. Unsold pieces count as wasted automatically. Enter reusable pieces to reduce wastage.</small>
@@ -59,15 +59,16 @@
       <div class="adm-card"><span class="muted">Units sold</span><h2>{{ sum('units') }}</h2></div>
       <div class="adm-card"><span class="muted">Net profit</span><h2 [class.event-profit]="(netTotal() || 0) > 0" [class.event-loss]="(netTotal() || 0) < 0">{{ netTotal() === null ? netReason() : rupees(netTotal()) }}</h2></div>
     </div>
-    <div class="adm-table-wrap"><table class="adm-table event-summary"><thead><tr><th>Event / Stall</th><th class="num">Orders</th><th class="num">Units sold</th><th class="num">Paid sales</th><th class="num">Cost of sold items</th><th class="num">Profit</th><th class="num">Wastage / loss cost</th><th class="num">Rent</th><th class="num">Car / travel cost</th><th class="num">Extra cost</th><th class="num">Net profit</th><th class="num">Cash</th><th class="num">UPI</th><th>Last sale</th><th>Actions</th></tr></thead><tbody>
+    <p class="event-scroll-hint">Scroll sideways to see all event totals and actions.</p>
+    <div class="adm-table-wrap" tabindex="0" role="region" aria-label="Event totals and actions"><table class="adm-table event-summary" role="table" aria-label="Event totals"><thead><tr><th>Event / Stall</th><th class="num">Orders</th><th class="num">Units sold</th><th class="num">Paid sales</th><th class="num">Cost of sold items</th><th class="num">Profit</th><th class="num">Wastage / loss cost</th><th class="num">Rent</th><th class="num">Car / travel cost</th><th class="num">Extra cost</th><th class="num">Net profit</th><th class="num">Cash</th><th class="num">UPI</th><th>Last sale</th><th>Actions</th></tr></thead><tbody>
       @for (e of r.events; track e.eventName) {
-        <tr><td><strong>{{ e.eventName }}</strong><small class="event-status" [class.event-status--closed]="e.status === 'closed'">{{ e.status === 'unconfigured' ? 'Setup needed' : e.status === 'closed' ? 'Closed' : 'Open' }}</small>@if (e.startDate) { <small class="muted">{{ e.startDate }} → {{ e.endDate }}</small> }</td>
-          <td class="num">{{ e.orders }}</td><td class="num">{{ e.units }}</td><td class="num">{{ rupees(e.revenue) }}</td>
-          <td class="num">{{ rupees(e.cost) }}@if (e.costEstimated) { <small class="muted">Includes estimates</small> }</td><td class="num" [class.event-profit]="(e.profit || 0) > 0" [class.event-loss]="(e.profit || 0) < 0">{{ rupees(e.profit) }}</td>
-          <td class="num">{{ rupees(e.wastageCost) }}</td><td class="num">{{ rupees(e.rent) }}</td><td class="num">{{ rupees(e.travelCost) }}</td><td class="num">{{ rupees(e.extraCost) }}</td>
-          <td class="num event-net" [class.event-profit]="(e.netProfit || 0) > 0" [class.event-loss]="(e.netProfit || 0) < 0">{{ e.netProfit === null ? netReason(e) : rupees(e.netProfit) }}</td><td class="num">{{ rupees(e.cash) }}</td><td class="num">{{ rupees(e.upi) }}</td>
-          <td class="nowrap">{{ e.lastSaleAt ? (e.lastSaleAt | date: 'MMM d, y') : 'No sales yet' }}</td>
-          <td><div class="event-row-actions"><button type="button" class="btn btn--ghost btn--sm" [disabled]="saving()" (click)="e.status === 'closed' ? selectEvent(e) : begin(e)">{{ e.status === 'closed' ? 'View report' : e.planId ? 'Preparation & costs' : 'Set up event' }}</button><a routerLink="/admin/orders" [queryParams]="{ source: 'event', eventName: e.eventName }" class="btn btn--ghost btn--sm">Orders</a>@if (e.planId && e.status !== 'closed') { <button type="button" class="btn btn--ghost btn--sm" [disabled]="saving() || !!closeReason(e) || editor()" [title]="closeReason(e) || 'Save the final event report'" (click)="requestLifecycle(e, 'close')">Close event</button> }</div></td></tr>
+        <tr role="row"><td role="cell" data-label="Event / Stall"><strong>{{ e.eventName }}</strong><small class="event-status" [class.event-status--closed]="e.status === 'closed'">{{ e.status === 'unconfigured' ? 'Setup needed' : e.status === 'closed' ? 'Closed' : 'Open' }}</small>@if (e.startDate) { <small class="muted">{{ e.startDate }} → {{ e.endDate }}</small> }</td>
+          <td role="cell" class="num" data-label="Orders">{{ e.orders }}</td><td role="cell" class="num" data-label="Units sold">{{ e.units }}</td><td role="cell" class="num" data-label="Paid sales">{{ rupees(e.revenue) }}</td>
+          <td role="cell" class="num" data-label="Cost of sold items">{{ rupees(e.cost) }}@if (e.costEstimated) { <small class="muted">Includes estimates</small> }</td><td role="cell" class="num" data-label="Profit" [class.event-profit]="(e.profit || 0) > 0" [class.event-loss]="(e.profit || 0) < 0">{{ rupees(e.profit) }}</td>
+          <td role="cell" class="num" data-label="Wastage / loss cost">{{ rupees(e.wastageCost) }}</td><td role="cell" class="num" data-label="Rent">{{ rupees(e.rent) }}</td><td role="cell" class="num" data-label="Car / travel cost">{{ rupees(e.travelCost) }}</td><td role="cell" class="num" data-label="Extra cost">{{ rupees(e.extraCost) }}</td>
+          <td role="cell" class="num event-net" data-label="Net profit" [class.event-profit]="(e.netProfit || 0) > 0" [class.event-loss]="(e.netProfit || 0) < 0">{{ e.netProfit === null ? netReason(e) : rupees(e.netProfit) }}</td><td role="cell" class="num" data-label="Cash">{{ rupees(e.cash) }}</td><td role="cell" class="num" data-label="UPI">{{ rupees(e.upi) }}</td>
+          <td role="cell" class="nowrap" data-label="Last sale">{{ e.lastSaleAt ? (e.lastSaleAt | date: 'MMM d, y') : 'No sales yet' }}</td>
+          <td role="cell" class="event-cell-actions" data-label="Actions"><div class="event-row-actions"><button type="button" class="btn btn--ghost btn--sm" [disabled]="saving()" (click)="e.status === 'closed' ? selectEvent(e) : begin(e)">{{ e.status === 'closed' ? 'View report' : e.planId ? 'Preparation & costs' : 'Set up event' }}</button><a routerLink="/admin/orders" [queryParams]="{ source: 'event', eventName: e.eventName }" class="btn btn--ghost btn--sm">Orders</a>@if (e.planId && e.status !== 'closed') { <button type="button" class="btn btn--ghost btn--sm" [disabled]="saving() || !!closeReason(e) || editor()" [title]="closeReason(e) || 'Save the final event report'" (click)="requestLifecycle(e, 'close')">Close event</button> }</div></td></tr>
       } @empty { <tr><td colspan="15"><div class="adm-empty">Create an event to enter prepared products and expenses before your first sale.</div></td></tr> }
     </tbody></table></div>
     @if (selectedEvent(); as e) {
@@ -81,9 +82,9 @@
           </div>
           @if (e.changedSinceClose) { <div class="adm-alert" role="alert">Orders changed after this report was saved. Reopen the event to review and save updated totals.</div> }
           <div class="event-stock-values"><div><span class="muted">Prepared stock cost</span><strong>{{ rupees(e.preparedCost) }}</strong></div><div><span class="muted">Reusable stock value</span><strong>{{ rupees(e.reusableValue) }}</strong></div><div><span class="muted">Wasted pieces</span><strong>{{ e.wastedUnits }}</strong></div><div><span class="muted">Net profit</span><strong [class.event-profit]="(e.netProfit || 0) > 0" [class.event-loss]="(e.netProfit || 0) < 0">{{ e.netProfit === null ? netReason(e) : rupees(e.netProfit) }}</strong></div></div>
-          <div class="adm-table-wrap"><table class="adm-table"><thead><tr><th>Product</th><th class="num">Wasted</th><th class="num">Reusable</th><th class="num">Wasted stock cost</th></tr></thead><tbody>
+          <div class="adm-table-wrap"><table class="adm-table" role="table" aria-label="Wasted and reusable stock"><thead><tr><th>Product</th><th class="num">Wasted</th><th class="num">Reusable</th><th class="num">Wasted stock cost</th></tr></thead><tbody>
             @for (p of r.stock; track p.productId) {
-              <tr><td><strong>{{ p.name }}</strong>@if (p.prepared === null) { <small class="event-loss">Enter prepared quantity</small> }@else if (p.remaining !== null && p.remaining < 0) { <small class="event-loss">Check prepared and reusable quantities</small> }@if (p.unpaidHandovers) { <small class="event-loss">{{ p.unpaidHandovers }} unpaid handovers</small> }@if (p.refundedHandovers) { <small class="muted">{{ p.refundedHandovers }} refunded handovers · {{ p.returned }} returned</small> }</td><td class="num">{{ p.wasted }}</td><td class="num">{{ p.reusable }}</td><td class="num">{{ rupees(p.wastageCost) }}</td></tr>
+              <tr role="row"><td role="cell" data-label="Product"><strong>{{ p.name }}</strong>@if (p.prepared === null) { <small class="event-loss">Enter prepared quantity</small> }@else if (p.remaining !== null && p.remaining < 0) { <small class="event-loss">Check prepared and reusable quantities</small> }@if (p.unpaidHandovers) { <small class="event-loss">{{ p.unpaidHandovers }} unpaid handovers</small> }@if (p.refundedHandovers) { <small class="muted">{{ p.refundedHandovers }} refunded handovers · {{ p.returned }} returned</small> }</td><td role="cell" class="num" data-label="Wasted">{{ p.wasted }}</td><td role="cell" class="num" data-label="Reusable">{{ p.reusable }}</td><td role="cell" class="num" data-label="Wasted stock cost">{{ rupees(p.wastageCost) }}</td></tr>
             } @empty { <tr><td colspan="4" class="muted">No prepared products yet.</td></tr> }
           </tbody></table></div>
           @if (e.extraCostNote) { <p class="event-note"><strong>Extra cost:</strong> {{ e.extraCostNote }}</p> }
@@ -94,7 +95,7 @@
     }
     <div class="adm-card">
       <h3>Products sold{{ eventName ? ' at ' + eventName : ' across all events' }}</h3>
-      <div class="adm-table-wrap"><table class="adm-table"><thead><tr>
+      <div class="adm-table-wrap" tabindex="0" role="region" aria-label="Product sales and costs"><table class="adm-table" role="table" aria-label="Products sold"><thead><tr>
         <th>Product</th><th class="num" title="Total pieces prepared for the selected events">Total units</th><th class="num">Units sold</th>
         <th class="num" title="Total units − Units sold. Includes wasted and reusable units.">Units left</th>
         <th class="num">Cost of total units</th><th class="num">Cost of sold units</th>
@@ -102,12 +103,12 @@
         <th class="num" title="Product subtotal − Cost of total units">Profit/loss</th>
       </tr></thead><tbody>
         @for (p of r.products; track p._id) {
-          <tr><td>{{ p.name }}</td><td class="num">{{ p.totalUnits === null ? 'Not set' : p.totalUnits }}</td><td class="num">{{ p.quantity }}</td>
-            <td class="num" title="Total units − Units sold">{{ unitsLeft(p) === null ? 'Not set' : unitsLeft(p) }}</td>
-            <td class="num">{{ rupees(p.totalCost) }}</td>
-            <td class="num">{{ rupees(p.cost) }}@if (p.costEstimated) { <small class="muted">Estimated</small> }</td>
-            <td class="num" title="Total paid product sales before tax, delivery fees and order-level discounts">{{ rupees(p.subtotal) }}</td>
-            <td class="num event-net" [class.event-profit]="(p.profit || 0) > 0" [class.event-loss]="(p.profit || 0) < 0" [title]="p.profit === null ? 'Set prepared quantities and costs to calculate profit/loss' : 'Product subtotal − Cost of total units: ' + rupees(p.subtotal) + ' − ' + rupees(p.totalCost) + ' = ' + rupees(p.profit)">{{ rupees(p.profit) }}</td></tr>
+          <tr role="row"><td role="cell" data-label="Product">{{ p.name }}</td><td role="cell" class="num" data-label="Total units">{{ p.totalUnits === null ? 'Not set' : p.totalUnits }}</td><td role="cell" class="num" data-label="Units sold">{{ p.quantity }}</td>
+            <td role="cell" class="num" data-label="Units left" title="Total units − Units sold">{{ unitsLeft(p) === null ? 'Not set' : unitsLeft(p) }}</td>
+            <td role="cell" class="num" data-label="Cost of total units">{{ rupees(p.totalCost) }}</td>
+            <td role="cell" class="num" data-label="Cost of sold units">{{ rupees(p.cost) }}@if (p.costEstimated) { <small class="muted">Estimated</small> }</td>
+            <td role="cell" class="num" data-label="Product subtotal" title="Total paid product sales before tax, delivery fees and order-level discounts">{{ rupees(p.subtotal) }}</td>
+            <td role="cell" class="num event-net" data-label="Profit/loss" [class.event-profit]="(p.profit || 0) > 0" [class.event-loss]="(p.profit || 0) < 0" [title]="p.profit === null ? 'Set prepared quantities and costs to calculate profit/loss' : 'Product subtotal − Cost of total units: ' + rupees(p.subtotal) + ' − ' + rupees(p.totalCost) + ' = ' + rupees(p.profit)">{{ rupees(p.profit) }}</td></tr>
         } @empty { <tr><td colspan="8"><div class="adm-empty">No prepared products or paid product sales for this selection.</div></td></tr> }
       </tbody></table></div>
     </div>

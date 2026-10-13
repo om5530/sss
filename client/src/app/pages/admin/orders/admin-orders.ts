@@ -13,6 +13,7 @@ import { orderSource } from '../shared/admin-ui';
   selector: 'app-admin-orders',
   imports: [RouterLink, FormsModule, DatePipe, DecimalPipe],
   templateUrl: './admin-orders.html',
+  styleUrl: './admin-orders.scss',
   styles: `
     .payment-method--upi { background: #eee8fb; color: #61409b; }
     .payment-method--cash { background: #e2f1e7; color: #286442; }

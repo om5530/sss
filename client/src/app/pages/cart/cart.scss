@@ -273,6 +273,19 @@
 }
 
 .summary__browse { margin-top: 0.7rem; }
+.summary__whatsapp {
+  margin-top: .7rem;
+  background: #1f7a48;
+  border-color: #1f7a48;
+  color: #fff;
+  white-space: normal;
+  line-height: 1.4;
+}
+.summary__whatsapp svg { flex: none; }
+.summary__whatsapp:hover { background: #176238; border-color: #176238; color: #fff; }
+.summary__whatsapp:disabled { opacity: .5; cursor: not-allowed; }
+.summary__whatsapp-note { margin: .65rem 0 0; }
+.summary__error { color: var(--danger); }
 
 /* ---------------- Empty state ---------------- */
 

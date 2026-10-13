@@ -43,7 +43,7 @@
         <!-- ---- Line items ---- -->
         <section class="cart-items" aria-label="Items in your cart">
           <div class="cart-items__list" appReveal="group">
-            @for (item of cart.items(); track item.productId) {
+            @for (item of summaryItems(); track item.productId) {
               <article class="line">
                 <a class="line__media" [routerLink]="['/product', item.slug]" tabindex="-1" aria-hidden="true">
                   <img [src]="item.image" [alt]="item.name" loading="lazy" width="112" height="112" />
@@ -60,7 +60,7 @@
                   <button type="button" (click)="cart.increment(item.productId)" [attr.aria-label]="'Increase quantity of ' + item.name">+</button>
                 </div>
 
-                <span class="line__total">₹{{ item.price * item.quantity }}</span>
+                <span class="line__total">₹{{ item.lineTotal | number:'1.2-2' }}</span>
 
                 <button
                   type="button"
@@ -104,12 +104,24 @@
           @if (pricingLoading()) {
             <p class="summary__note summary__note--live" aria-live="polite"><span class="summary__pulse"></span>Updating totals…</p>
           }
+          @if (pricingError()) {
+            <p class="summary__note summary__error" role="alert">{{ pricingError() }} <button type="button" class="btn btn--ghost btn--sm" (click)="retryPricing()">Retry</button></p>
+          }
           <p class="summary__note muted">Delivery fee (if any) is added once you choose an order type.</p>
 
           <a routerLink="/checkout" class="btn btn--accent btn--block btn--lg">
             {{ auth.isAuthenticated() ? 'Checkout' : 'Sign in & checkout' }}
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </a>
+          @if (whatsappCheckoutUrl(); as whatsappUrl) {
+            <a [href]="whatsappUrl" class="btn btn--block btn--lg summary__whatsapp" target="_blank" rel="noopener noreferrer" aria-describedby="whatsapp-checkout-note">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.7-1.2A9 9 0 1 0 12 3Z"/><path d="M8.8 9.2c0 3.3 2.7 6 6 6l1.4-1.3-1.8-1.5-1.2.6a4.6 4.6 0 0 1-2.2-2.2l.6-1.2-1.5-1.8Z" fill="currentColor" stroke="none"/></svg>
+              Checkout on WhatsApp
+            </a>
+          } @else {
+            <button type="button" class="btn btn--block btn--lg summary__whatsapp" disabled aria-describedby="whatsapp-checkout-note">Checkout on WhatsApp</button>
+          }
+          <p id="whatsapp-checkout-note" class="summary__note summary__whatsapp-note muted">{{ shop.whatsappUrl() ? 'Review and send your order request in WhatsApp. Availability, delivery and payment will be confirmed there.' : 'WhatsApp ordering is currently unavailable.' }}</p>
           <a routerLink="/menu" class="btn btn--ghost btn--block summary__browse">Keep browsing</a>
         </aside>
       </div>

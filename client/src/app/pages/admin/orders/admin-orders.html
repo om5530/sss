@@ -11,10 +11,9 @@
 
   <div class="adm-filters">
     <input
-      class="input"
+      class="input orders-search"
       type="search"
       placeholder="Search order #, name, phone or total…"
-      style="min-width: 220px"
       [(ngModel)]="q"
       (ngModelChange)="onSearch()"
       aria-label="Search orders"
@@ -53,8 +52,8 @@
   @if (loading()) {
     <div class="skeleton" style="height: 320px" aria-hidden="true"></div>
   } @else {
-    <div class="adm-table-wrap">
-      <table class="adm-table">
+    <div class="adm-table-wrap" tabindex="0" role="region" aria-label="Orders">
+      <table class="adm-table orders-table" role="table" aria-label="Orders list">
         <thead>
           <tr>
             <th>Source</th>
@@ -68,22 +67,24 @@
         </thead>
         <tbody>
           @for (o of orders(); track o._id) {
-            <tr class="is-clickable" [routerLink]="['/admin/orders', o._id]">
-              <td><span class="adm-badge adm-badge--type">{{ orderSource(o) }}</span>@if (o.eventName) { <div class="muted">{{ o.eventName }}</div> }</td>
-              <td>
+            <tr class="is-clickable" role="row" [routerLink]="['/admin/orders', o._id]">
+              <td role="cell" data-label="Source"><span class="adm-badge adm-badge--type">{{ orderSource(o) }}</span>@if (o.eventName) { <div class="muted">{{ o.eventName }}</div> }</td>
+              <td role="cell" data-label="Products" class="order-products">
                 @for (item of o.items; track $index) {
                   <div>{{ item.name }} <span class="muted">× {{ item.quantity }}</span></div>
                 } @empty {
                   <span class="muted">No products</span>
                 }
               </td>
-              <td class="num">{{ o.items.length }}</td>
-              <td class="num">₹{{ o.pricing.total | number: '1.2-2' }}</td>
-              <td><span class="adm-badge adm-badge--type"
+              <td role="cell" class="num" data-label="Items">{{ o.items.length }}</td>
+              <td role="cell" class="num" data-label="Total">₹{{ o.pricing.total | number: '1.2-2' }}</td>
+              <td role="cell" data-label="Payment method"><span class="adm-badge adm-badge--type"
                 [class.payment-method--upi]="o.paymentMethod === 'upi'"
                 [class.payment-method--cash]="o.paymentMethod === 'cash'">{{ paymentMethodLabel(o) }}</span></td>
-              <td class="nowrap">{{ o.createdAt | date: 'MMM d, y · h:mm a' }}</td>
-              <td>
+              <td role="cell" class="nowrap" data-label="Placed">{{ o.createdAt | date: 'MMM d, y · h:mm a' }}</td>
+              <td role="cell" data-label="Actions">
+                <a class="btn btn--ghost btn--sm order-open" [routerLink]="['/admin/orders', o._id]"
+                  [attr.aria-label]="'View order ' + o.orderNumber" (click)="$event.stopPropagation()">View order</a>
                 <button type="button" class="btn btn--ghost btn--danger btn--sm"
                   [disabled]="deletingId() !== null" [attr.aria-label]="'Permanently delete order ' + o.orderNumber"
                   (click)="deleteOrder(o, $event)">

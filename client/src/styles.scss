@@ -660,7 +660,7 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ---- Tables ---- */
 
-.adm-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--white); box-shadow: var(--shadow-sm); }
+.adm-table-wrap { min-width: 0; max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--white); box-shadow: var(--shadow-sm); }
 .adm-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
 .adm-table th {
   text-align: left;
@@ -1157,7 +1157,7 @@ button { font-family: inherit; cursor: pointer; }
 
 /* Phones and tablets share a labelled, collapsible operations menu. */
 @media (max-width: 960px) {
-  .adm-shell { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .adm-shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
   .adm-side {
     position: sticky;
     top: 0;
@@ -1177,6 +1177,15 @@ button { font-family: inherit; cursor: pointer; }
   .adm-side__link { padding: 0.4rem 0.55rem; white-space: nowrap; font-size: 0.8rem; }
   .adm-side__foot { flex-direction: row; border-top: none; padding-top: 0; }
   .adm-side__foot .adm-side__link span { display: none; }
+  /* Tooltips must stay within the mobile header, even while transparent. */
+  .adm-side__utility-btn::after {
+    left: auto;
+    right: 0;
+    top: calc(100% + 0.35rem);
+    transform: translateY(-0.2rem);
+  }
+  .adm-side__utility-btn:hover::after,
+  .adm-side__utility-btn:focus-visible::after { transform: translateY(0); }
   .adm-kv { grid-template-columns: 95px 1fr; }
 }
 
