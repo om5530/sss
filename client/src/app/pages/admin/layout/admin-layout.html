@@ -196,23 +196,6 @@
             <circle cx="12" cy="12" r="8" /><path d="M12 4a8 8 0 0 1 0 16Z" fill="currentColor" stroke="none" />
           </svg>
         </button>
-        <!-- Temporarily disabled: cafe order alarm control.
-        <button
-          type="button"
-          class="adm-side__utility-btn"
-          [class.muted]="orderNotification.isMuted()"
-          (click)="orderNotification.toggleMute()"
-          [attr.data-tooltip]="orderNotification.isMuted() ? 'Ring muted — click to unmute' : 'Ring on — click to mute'"
-          [attr.aria-pressed]="!orderNotification.isMuted()"
-          aria-label="Toggle kitchen order ring"
-        >
-          @if (orderNotification.isMuted()) {
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13.73 21a2 2 0 0 1-3.46 0M18.63 13A17.89 17.89 0 0 1 18 8M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14M1 1l22 22"/></svg>
-          } @else {
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-          }
-        </button>
-        -->
         @if (wakeLockSupported) {
           <button
             type="button"
