@@ -5,7 +5,7 @@
       <h1>Products</h1>
     </div>
     <div class="adm-head__actions">
-      <button type="button" class="btn btn--ghost btn--sm" [disabled]="busy() || loading()" (click)="resetStockOpen.set(true)">Reset today's stock to 0</button>
+      <button [appBusy]="busy() || loading()" type="button" class="btn btn--ghost btn--sm" [disabled]="busy() || loading()" (click)="resetStockOpen.set(true)">Reset today's stock to 0</button>
       <a routerLink="/admin/bakery/product-mapping" class="btn btn--ghost btn--sm">Product mapping</a>
       <a routerLink="/admin/products/new" class="btn btn--gold btn--sm">+ New product</a>
     </div>
@@ -37,7 +37,7 @@
       <input type="checkbox" [disabled]="busy()" [(ngModel)]="showArchived" (ngModelChange)="allArchives = false; fetch()" />
       Show archived
     </label>
-    @if (hasFilters()) { <button type="button" class="btn btn--ghost btn--sm" [disabled]="busy()" (click)="clearFilters()">Clear filters</button> }
+    @if (hasFilters()) { <button [appBusy]="busy()" type="button" class="btn btn--ghost btn--sm" [disabled]="busy()" (click)="clearFilters()">Clear filters</button> }
   </div>
 
   @if (loading()) {
@@ -46,8 +46,8 @@
     @if (selectedIds().size) {
       <div class="bulk-actions" role="region" aria-label="Bulk product actions">
         <span role="status">{{ selectedIds().size }} product{{ selectedIds().size === 1 ? '' : 's' }} selected</span>
-        <button type="button" class="btn btn--accent btn--sm" [disabled]="busy()" (click)="bulkArchiveOpen.set(true)">Archive selected</button>
-        <button type="button" class="btn btn--ghost btn--sm" [disabled]="busy()" (click)="selectAll(false)">Clear selection</button>
+        <button [appBusy]="busy()" type="button" class="btn btn--accent btn--sm" [disabled]="busy()" (click)="bulkArchiveOpen.set(true)">Archive selected</button>
+        <button [appBusy]="busy()" type="button" class="btn btn--ghost btn--sm" [disabled]="busy()" (click)="selectAll(false)">Clear selection</button>
       </div>
     }
     <div class="adm-table-wrap">
@@ -107,7 +107,7 @@
               </td>
               <td class="nowrap" style="text-align: right">
                 <a [routerLink]="['/admin/products', p._id, 'edit']" class="btn btn--ghost btn--sm">Edit</a>
-                <button type="button" class="btn btn--ghost btn--sm" style="margin-left: 0.35rem" [disabled]="busy()" (click)="archiveTarget.set(p)">
+                <button [appBusy]="busy()" type="button" class="btn btn--ghost btn--sm" style="margin-left: 0.35rem" [disabled]="busy()" (click)="archiveTarget.set(p)">
                   {{ p.archived ? 'Restore' : 'Archive' }}
                 </button>
               </td>

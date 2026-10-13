@@ -1,3 +1,4 @@
+import { BusyButton } from '../shared/busy-button';
 import { Component, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -7,7 +8,7 @@ import { Coupon, CouponType } from '../../../core/models/admin.model';
 
 @Component({
   selector: 'app-admin-coupons',
-  imports: [FormsModule, DatePipe, DecimalPipe],
+  imports: [BusyButton, FormsModule, DatePipe, DecimalPipe],
   templateUrl: './admin-coupons.html',
 })
 export class AdminCoupons {

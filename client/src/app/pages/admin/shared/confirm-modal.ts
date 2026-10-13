@@ -1,5 +1,6 @@
 import { Component, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { BusyButton } from './busy-button';
 
 /**
  * Confirmation dialog for destructive / money-moving admin actions (AS-10.2).
@@ -8,7 +9,7 @@ import { FormsModule } from '@angular/forms';
  */
 @Component({
   selector: 'adm-confirm-modal',
-  imports: [FormsModule],
+  imports: [FormsModule, BusyButton],
   template: `
     <div class="adm-modal-backdrop" (click)="cancelled.emit()">
       <div class="adm-modal" role="dialog" aria-modal="true" [attr.aria-label]="title()" (click)="$event.stopPropagation()">
@@ -36,6 +37,7 @@ import { FormsModule } from '@angular/forms';
             [class.btn--danger]="tone() === 'danger'"
             [class.btn--primary]="tone() !== 'danger'"
             [disabled]="busy() || (requireReason() && !reasonValue.trim())"
+            [appBusy]="busy()"
             (click)="confirmed.emit(reasonValue.trim())"
           >
             {{ busy() ? 'Working…' : confirmLabel() }}

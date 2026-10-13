@@ -1,3 +1,4 @@
+import { BusyButton } from '../shared/busy-button';
 import { Component, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -14,7 +15,7 @@ const MESSAGE_BADGE: Record<ContactMessageStatus, string> = {
 
 @Component({
   selector: 'app-admin-enquiries',
-  imports: [FormsModule, DatePipe],
+  imports: [BusyButton, FormsModule, DatePipe],
   templateUrl: './admin-enquiries.html',
 })
 export class AdminEnquiries {

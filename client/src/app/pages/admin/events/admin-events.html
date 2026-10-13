@@ -2,15 +2,15 @@
   <div class="adm-head">
     <div><a routerLink="/admin/orders" class="eyebrow eyebrow--bare">← All orders</a><h1>Event sales</h1><p>Prepare stock, track sales and see what each event earns.</p></div>
     <div class="adm-head__actions">
-      <button class="btn btn--primary btn--sm" type="button" [disabled]="saving()" (click)="begin()">Create event</button>
-      <button class="btn btn--ghost btn--sm" type="button" [disabled]="saving()" (click)="load()">Refresh</button>
-      <button class="btn btn--ghost btn--sm" type="button" [disabled]="loading() || failed() || !report()?.events?.length" (click)="export()">Export CSV</button>
+      <button [appBusy]="saving()" class="btn btn--primary btn--sm" type="button" [disabled]="saving()" (click)="begin()">Create event</button>
+      <button [appBusy]="loading()" class="btn btn--ghost btn--sm" type="button" [disabled]="loading() || saving()" (click)="load()">{{ loading() ? 'Refreshing…' : 'Refresh' }}</button>
+      <button [appBusy]="loading()" class="btn btn--ghost btn--sm" type="button" [disabled]="loading() || failed() || !report()?.events?.length" (click)="export()">Export CSV</button>
     </div>
   </div>
   @if (editor()) {
     <section class="adm-card event-editor" aria-labelledby="event-editor-title">
       <div class="event-section-head"><h2 id="event-editor-title" tabindex="-1">{{ existingName() ? 'Preparation & costs · ' + draft.eventName : 'Create event' }}</h2>
-        <button type="button" class="btn btn--ghost btn--sm" [disabled]="saving()" (click)="dismissEditor()">Cancel</button></div>
+        <button [appBusy]="saving()" type="button" class="btn btn--ghost btn--sm" [disabled]="saving()" (click)="dismissEditor()">Cancel</button></div>
       @if (editorLoading()) { <p class="muted" role="status">Loading products and event details…</p> }
       @else if (editorFailed()) { <div class="adm-alert" role="alert">Event details could not be loaded. <button type="button" class="btn btn--ghost btn--sm" (click)="retryEditor()">Retry</button></div> }
       @else {
@@ -43,7 +43,7 @@
             </tbody></table></div>
             <small class="muted">Saving changed prepared quantities updates today's product stock. After a stock reset, it restores this product's prepared pieces minus event sales and handovers. Unsold pieces count as wasted automatically. Enter reusable pieces to reduce wastage.</small>
             @if (error()) { <div class="adm-alert adm-alert--danger" role="alert">{{ error() }}</div> }
-            <div class="event-editor-actions"><button type="button" class="btn btn--ghost btn--sm" (click)="dismissEditor()">Cancel</button><button class="btn btn--primary btn--sm" type="submit" [disabled]="eventForm.invalid || saving()">{{ saving() ? 'Saving…' : 'Save event' }}</button></div>
+            <div class="event-editor-actions"><button type="button" class="btn btn--ghost btn--sm" (click)="dismissEditor()">Cancel</button><button [appBusy]="saving()" class="btn btn--primary btn--sm" type="submit" [disabled]="eventForm.invalid || saving()">{{ saving() ? 'Saving…' : 'Save event' }}</button></div>
           </fieldset>
         </form>
       }
@@ -68,7 +68,7 @@
           <td role="cell" class="num" data-label="Wastage / loss cost">{{ rupees(e.wastageCost) }}</td><td role="cell" class="num" data-label="Rent">{{ rupees(e.rent) }}</td><td role="cell" class="num" data-label="Car / travel cost">{{ rupees(e.travelCost) }}</td><td role="cell" class="num" data-label="Extra cost">{{ rupees(e.extraCost) }}</td>
           <td role="cell" class="num event-net" data-label="Net profit" [class.event-profit]="(e.netProfit || 0) > 0" [class.event-loss]="(e.netProfit || 0) < 0">{{ e.netProfit === null ? netReason(e) : rupees(e.netProfit) }}</td><td role="cell" class="num" data-label="Cash">{{ rupees(e.cash) }}</td><td role="cell" class="num" data-label="UPI">{{ rupees(e.upi) }}</td>
           <td role="cell" class="nowrap" data-label="Last sale">{{ e.lastSaleAt ? (e.lastSaleAt | date: 'MMM d, y') : 'No sales yet' }}</td>
-          <td role="cell" class="event-cell-actions" data-label="Actions"><div class="event-row-actions"><button type="button" class="btn btn--ghost btn--sm" [disabled]="saving()" (click)="e.status === 'closed' ? selectEvent(e) : begin(e)">{{ e.status === 'closed' ? 'View report' : e.planId ? 'Preparation & costs' : 'Set up event' }}</button><a routerLink="/admin/orders" [queryParams]="{ source: 'event', eventName: e.eventName }" class="btn btn--ghost btn--sm">Orders</a>@if (e.planId && e.status !== 'closed') { <button type="button" class="btn btn--ghost btn--sm" [disabled]="saving() || !!closeReason(e) || editor()" [title]="closeReason(e) || 'Save the final event report'" (click)="requestLifecycle(e, 'close')">Close event</button> }</div></td></tr>
+          <td role="cell" class="event-cell-actions" data-label="Actions"><div class="event-row-actions"><button [appBusy]="saving()" type="button" class="btn btn--ghost btn--sm" [disabled]="saving()" (click)="e.status === 'closed' ? selectEvent(e) : begin(e)">{{ e.status === 'closed' ? 'View report' : e.planId ? 'Preparation & costs' : 'Set up event' }}</button><a routerLink="/admin/orders" [queryParams]="{ source: 'event', eventName: e.eventName }" class="btn btn--ghost btn--sm">Orders</a>@if (e.planId && e.status !== 'closed') { <button [appBusy]="saving()" type="button" class="btn btn--ghost btn--sm" [disabled]="saving() || !!closeReason(e) || editor()" [title]="closeReason(e) || 'Save the final event report'" (click)="requestLifecycle(e, 'close')">Close event</button> }</div></td></tr>
       } @empty { <tr><td colspan="15"><div class="adm-empty">Create an event to enter prepared products and expenses before your first sale.</div></td></tr> }
     </tbody></table></div>
     @if (selectedEvent(); as e) {
@@ -76,8 +76,8 @@
         <section class="adm-card event-stock" aria-label="Event stock and final report">
           <div class="event-section-head"><div><h2>{{ e.eventName }} · {{ e.status === 'closed' ? 'Final report' : 'Stock & expenses' }}</h2>@if (e.closedAt) { <small class="muted">Closed {{ e.closedAt | date: 'MMM d, y, h:mm a' }}</small> }</div>
             <div class="event-row-actions">
-              @if (e.status === 'closed') { <button type="button" class="btn btn--ghost btn--sm" [disabled]="saving()" (click)="requestLifecycle(e, 'reopen')">Reopen event</button> }
-              @else { <button type="button" class="btn btn--ghost btn--sm" [disabled]="saving()" (click)="begin(e)">Edit stock & costs</button><button type="button" class="btn btn--primary btn--sm" [disabled]="saving() || !!closeReason(e) || editor()" (click)="requestLifecycle(e, 'close')">Close event</button> }
+              @if (e.status === 'closed') { <button [appBusy]="saving()" type="button" class="btn btn--ghost btn--sm" [disabled]="saving()" (click)="requestLifecycle(e, 'reopen')">Reopen event</button> }
+              @else { <button [appBusy]="saving()" type="button" class="btn btn--ghost btn--sm" [disabled]="saving()" (click)="begin(e)">Edit stock & costs</button><button [appBusy]="saving()" type="button" class="btn btn--primary btn--sm" [disabled]="saving() || !!closeReason(e) || editor()" (click)="requestLifecycle(e, 'close')">Close event</button> }
             </div>
           </div>
           @if (e.changedSinceClose) { <div class="adm-alert" role="alert">Orders changed after this report was saved. Reopen the event to review and save updated totals.</div> }

@@ -1,12 +1,14 @@
+import { BusyButton } from '../../shared/busy-button';
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 
 @Component({
   selector: 'app-bakery-operations',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [BusyButton, CommonModule, FormsModule, RouterLink],
   templateUrl: './bakery-operations.html',
   styleUrl: './bakery-operations.scss',
 })
@@ -166,16 +168,21 @@ export class BakeryOperations {
     );
   }
   compare(s: any) {
+    if (this.busy()) return;
+    this.busy.set(true);
     this.error.set('');
-    this.http.get<any>(this.base + '/costing-sheets/' + s._id + '/recalculate').subscribe({
+    this.http.get<any>(this.base + '/costing-sheets/' + s._id + '/recalculate').pipe(finalize(() => this.busy.set(false))).subscribe({
       next: (r) => (this.history = r),
       error: (e) => this.error.set(e.error?.message || 'Cannot recalculate'),
     });
   }
   requirements(s: any) {
+    if (this.busy()) return;
+    this.busy.set(true);
     this.error.set('');
     this.http
       .post<any>(this.base + '/purchase-requirements', { items: s.items, excludePlanId: s._id })
+      .pipe(finalize(() => this.busy.set(false)))
       .subscribe({
         next: (r) => (this.comparison = r.requirements),
         error: (e) => this.error.set(e.error?.message || 'Cannot calculate requirements'),
@@ -200,6 +207,7 @@ export class BakeryOperations {
     }
   }
   previewImport() {
+    if (this.busy()) return;
     const items = this.importText
       .split('\n')
       .filter((l) => l.trim())
@@ -207,7 +215,8 @@ export class BakeryOperations {
         const [name, cost] = l.split('|');
         return { name: name.trim(), cost: cost?.trim() };
       });
-    this.http.post<any>(this.base + '/migration/preview', { items }).subscribe({
+    this.busy.set(true);
+    this.http.post<any>(this.base + '/migration/preview', { items }).pipe(finalize(() => this.busy.set(false))).subscribe({
       next: (r) => (this.suggestions = r.suggestions),
       error: (e) => this.error.set(e.error?.message || 'Cannot preview import'),
     });

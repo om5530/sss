@@ -96,6 +96,7 @@
                   />
                   @if (priceChanged(r) || savingPriceId() === r._id) {
                     <button type="submit" class="btn btn--accent btn--sm"
+                      [appBusy]="savingPriceId() === r._id"
                       [disabled]="!!savingPriceId() || !priceChanged(r) || !!r.costingError"
                       [attr.aria-label]="'Save selling price for ' + r.name">
                       {{ savingPriceId() === r._id ? 'Saving…' : 'Save' }}
@@ -105,7 +106,7 @@
                 <div class="card-price-editor__hint">
                   <span>{{ hasAdminPrice(r) ? 'Admin price' : 'Suggested price' }}</span>
                   @if (hasAdminPrice(r)) {
-                    <button type="button" class="price-reset" [disabled]="!!savingPriceId() || !!r.costingError" (click)="savePiecePrice(r, true)">Use suggestion</button>
+                    <button type="button" class="price-reset" [appBusy]="savingPriceId() === r._id" [disabled]="!!savingPriceId() || !!r.costingError" (click)="savePiecePrice(r, true)">Use suggestion</button>
                   }
                 </div>
               </form>
@@ -393,7 +394,7 @@
 
       <div class="actions-foot">
         <button type="button" class="btn btn--outline" (click)="cancelEdit()">Cancel</button>
-        <button type="button" class="btn btn--accent" [disabled]="saving()" (click)="saveRecipe()">{{ saving() ? 'Saving…' : 'Save Recipe' }}</button>
+        <button [appBusy]="saving()" type="button" class="btn btn--accent" [disabled]="saving()" (click)="saveRecipe()">{{ saving() ? 'Saving…' : 'Save Recipe' }}</button>
       </div>
       <section>
         <h3>Custom product options</h3>

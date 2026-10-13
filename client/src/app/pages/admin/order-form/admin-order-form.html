@@ -80,7 +80,7 @@
               <div class="field"><label class="label" for="sale-recipient">Receive payment in</label><select id="sale-recipient" class="select" name="upiRecipient" [(ngModel)]="upiRecipientId" required>@for (recipient of recipients(); track recipient.id) { <option [value]="recipient.id" [disabled]="!recipient.upiId">{{ recipient.name }}</option> }</select></div>
             }
             <div class="field"><label class="label" for="sale-discount">Discount (₹)</label><input id="sale-discount" class="input" type="number" name="discount" min="0" step="0.01" [ngModel]="discount" (ngModelChange)="discountChanged($event)" /></div>
-            @if (pricing()) { <p role="status">Calculating total…</p> }
+            @if (pricing()) { <p role="status"><span class="adm-loading-spinner" aria-hidden="true"></span> Calculating total…</p> }
             @if (quote(); as q) {
               <dl class="adm-kv">
                 <dt>Subtotal</dt><dd>₹{{ q.pricing.subtotal | number: '1.2-2' }}</dd>
@@ -98,13 +98,13 @@
       <div class="sale-actions">
         <a routerLink="/admin/orders" class="btn btn--ghost">Cancel</a>
         @if (retryPending()) {
-          <button type="submit" class="btn btn--primary" [disabled]="saving()">{{ saving() ? 'Checking…' : 'Retry this sale' }}</button>
+          <button [appBusy]="saving()" type="submit" class="btn btn--primary" [disabled]="saving()">{{ saving() ? 'Checking…' : 'Retry this sale' }}</button>
         } @else {
-          <button type="submit" class="btn btn--ghost" [disabled]="saving() || pricing() || !quote()" (click)="chooseSaveMode(true)">Save & add another</button>
+          <button [appBusy]="saving()" type="submit" class="btn btn--ghost" [disabled]="saving() || pricing() || !quote()" (click)="chooseSaveMode(true)">Save & add another</button>
           @if (paymentMethod === 'upi') {
-            <button type="submit" class="btn btn--ghost" [disabled]="saving() || pricing() || !quote()" (click)="chooseSaveMode(false, true)">Save &amp; show payment QR</button>
+            <button [appBusy]="saving()" type="submit" class="btn btn--ghost" [disabled]="saving() || pricing() || !quote()" (click)="chooseSaveMode(false, true)">Save &amp; show payment QR</button>
           }
-          <button type="submit" class="btn btn--primary" [disabled]="saving() || pricing() || !quote()" (click)="chooseSaveMode(false)">{{ saving() ? 'Saving…' : 'Save order' }}</button>
+          <button [appBusy]="saving()" type="submit" class="btn btn--primary" [disabled]="saving() || pricing() || !quote()" (click)="chooseSaveMode(false)">{{ saving() ? 'Saving…' : 'Save order' }}</button>
         }
       </div>
     </form>

@@ -1,3 +1,4 @@
+import { BusyButton } from '../shared/busy-button';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -11,7 +12,7 @@ import { AdminProductListState } from '../shared/admin-product-list-state';
 
 @Component({
   selector: 'app-admin-products',
-  imports: [RouterLink, FormsModule, DecimalPipe, ConfirmModal],
+  imports: [BusyButton, RouterLink, FormsModule, DecimalPipe, ConfirmModal],
   templateUrl: './admin-products.html',
   styles: `
     .bulk-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-bottom: 1rem; }

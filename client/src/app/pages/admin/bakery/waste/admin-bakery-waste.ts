@@ -1,3 +1,4 @@
+import { BusyButton } from '../../shared/busy-button';
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -9,7 +10,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 @Component({
   selector: 'app-admin-bakery-waste',
   standalone: true,
-  imports: [CommonModule, FormsModule, CurrencyPipe, DatePipe],
+  imports: [BusyButton, CommonModule, FormsModule, CurrencyPipe, DatePipe],
   templateUrl: './admin-bakery-waste.html',
   styleUrl: './admin-bakery-waste.scss',
 })

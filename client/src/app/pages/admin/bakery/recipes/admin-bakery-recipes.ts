@@ -1,3 +1,4 @@
+import { BusyButton } from '../../shared/busy-button';
 import { Component, computed, inject, signal, OnInit, DestroyRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
@@ -16,7 +17,7 @@ import { AdminProductListState } from '../../shared/admin-product-list-state';
 @Component({
   selector: 'app-admin-bakery-recipes',
   standalone: true,
-  imports: [CommonModule, FormsModule, CurrencyPipe],
+  imports: [BusyButton, CommonModule, FormsModule, CurrencyPipe],
   templateUrl: './admin-bakery-recipes.html',
   styleUrl: './admin-bakery-recipes.scss',
 })

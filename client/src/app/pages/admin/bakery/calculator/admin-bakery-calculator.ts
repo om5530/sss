@@ -1,3 +1,4 @@
+import { BusyButton } from '../../shared/busy-button';
 import { Component, inject, signal, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -7,7 +8,7 @@ import { Subscription } from 'rxjs';
 import { ToastService } from '../../../../core/services/toast.service';
 @Component({
   selector: 'app-admin-bakery-calculator',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [BusyButton, CommonModule, FormsModule, RouterLink],
   templateUrl: './admin-bakery-calculator.html',
   styleUrl: './admin-bakery-calculator.scss',
 })

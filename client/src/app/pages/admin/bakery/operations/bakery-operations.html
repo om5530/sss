@@ -146,14 +146,14 @@
         <div class="no-print inline">
           @if (s.status === 'scheduled') {
             <button class="btn btn--accent" (click)="beginBatch(s)">Record production</button
-            ><button class="btn btn--outline" (click)="requirements(s)">
+            ><button class="btn btn--outline" [appBusy]="busy()" [disabled]="busy()" (click)="requirements(s)">
               Purchase requirements
             </button>
           }
-          <button class="btn btn--outline" (click)="compare(s)">Compare current cost</button
+          <button class="btn btn--outline" [appBusy]="busy()" [disabled]="busy()" (click)="compare(s)">Compare current cost</button
           ><button class="btn btn--outline" (click)="printBatch(s._id)">Print prep</button>
           @if (s.status !== 'completed' && s.status !== 'cancelled') {
-            <button
+            <button [appBusy]="busy()"
               class="btn btn--outline"
               [disabled]="busy()"
               (click)="post('/costing-sheets/' + s._id + '/cancel', {}, 'Plan cancelled')"
@@ -162,7 +162,7 @@
             </button>
           }
           @if (s.status !== 'completed' && !s.actual) {
-            <button type="button" class="btn btn--outline btn--danger" [disabled]="busy()" (click)="deletePlan(s)">
+            <button [appBusy]="busy()" type="button" class="btn btn--outline btn--danger" [disabled]="busy()" (click)="deletePlan(s)">
               Delete permanently
             </button>
           }
@@ -264,7 +264,7 @@
           >Notes<textarea class="input" name="notes" [(ngModel)]="completing.notes"></textarea>
         </label>
         <div class="inline">
-          <button class="btn btn--accent" [disabled]="busy()">
+          <button [appBusy]="busy()" class="btn btn--accent" [disabled]="busy()">
             Complete batch and consume stock</button
           ><button type="button" class="btn btn--outline" (click)="completing = null">Close</button>
         </div>
@@ -560,7 +560,7 @@
           [(ngModel)]="importText"
           placeholder="Butter (500 gm) | 310"
         ></textarea></label
-      ><button class="btn btn--accent" (click)="previewImport()">Preview pack detection</button>
+      ><button class="btn btn--accent" [appBusy]="busy()" [disabled]="busy()" (click)="previewImport()">{{ busy() ? 'Calculating…' : 'Preview pack detection' }}</button>
     </section>
     @for (row of suggestions; track $index) {
       <form class="card" (ngSubmit)="importOne(row)">
@@ -589,7 +589,7 @@
           /></label>
         </div>
         <p>Detected unit cost: {{ row.effectiveUnitCost | number: '1.2-6' }}</p>
-        <button class="btn btn--accent" [disabled]="busy()">
+        <button [appBusy]="busy()" class="btn btn--accent" [disabled]="busy()">
           Confirm and import this material
         </button>
       </form>

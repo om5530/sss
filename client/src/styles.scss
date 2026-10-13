@@ -1256,3 +1256,41 @@ button { font-family: inherit; cursor: pointer; }
   body.printing-prep .bakery-workspace > :not(.printing-batch) { display: none !important; }
   body.printing-prep .printing-batch { display: block !important; }
 }
+
+/* Shared feedback for every foreground admin fetch, calculation and save. */
+.adm-loading-spinner,
+.adm-button-busy::before {
+  content: '';
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  flex: 0 0 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: adm-loading-spin .8s linear infinite;
+}
+.adm-button-busy::before { margin-right: .4rem; vertical-align: -.15em; }
+.adm-request-status {
+  position: fixed;
+  z-index: 3000;
+  top: max(1rem, env(safe-area-inset-top));
+  right: max(1rem, env(safe-area-inset-right));
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  max-width: calc(100vw - 2rem);
+  padding: .65rem .9rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--white);
+  color: var(--night);
+  box-shadow: var(--shadow);
+  font-size: .82rem;
+  font-weight: 600;
+  pointer-events: none;
+}
+@keyframes adm-loading-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .adm-loading-spinner, .adm-button-busy::before { animation: none; }
+}

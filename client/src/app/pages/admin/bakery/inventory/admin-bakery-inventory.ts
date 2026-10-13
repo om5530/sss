@@ -4,11 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { BakeryService } from '../../../../core/services/bakery.service';
 import { BakeryMaterial } from '../../../../core/models/bakery.model';
 import { ToastService } from '../../../../core/services/toast.service';
+import { finalize } from 'rxjs';
+import { BusyButton } from '../../shared/busy-button';
 
 @Component({
   selector: 'app-admin-bakery-inventory',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [BusyButton, CommonModule, FormsModule],
   templateUrl: './admin-bakery-inventory.html',
   styleUrl: './admin-bakery-inventory.scss',
 })
@@ -19,6 +21,10 @@ export class AdminBakeryInventory implements OnInit {
   materials = signal<BakeryMaterial[]>([]);
   lowStockCount = signal<number>(0);
   loading = signal<boolean>(false);
+  adjusting = signal<Record<string, boolean>>({});
+  private markAdjusting(id: string, busy: boolean) {
+    this.adjusting.update(current => ({ ...current, [id]: busy }));
+  }
   searchQuery = signal<string>('');
   sortOrder = signal<'name' | 'stock-asc' | 'stock-desc'>('name');
   filterType = signal<'all' | 'low' | 'ingredient' | 'packaging'>('all');
@@ -79,6 +85,8 @@ export class AdminBakeryInventory implements OnInit {
   }
 
   quickAdjust(m: BakeryMaterial, amount: number) {
+    if (this.adjusting()[m._id]) return;
+    this.markAdjusting(m._id, true);
     const isInc = amount > 0;
     const type = isInc ? 'inc' : 'dec';
     const delta = amount * (m.packQuantity || 1);
@@ -106,7 +114,7 @@ export class AdminBakeryInventory implements OnInit {
       });
     }, 1300);
 
-    this.bakery.adjustStock(m._id, amount).subscribe({
+    this.bakery.adjustStock(m._id, amount).pipe(finalize(() => this.markAdjusting(m._id, false))).subscribe({
       next: (res) => {
         this.applyStock(res.material);
         this.toast.success(`Updated ${m.name} stock (${label})`);
@@ -121,11 +129,13 @@ export class AdminBakeryInventory implements OnInit {
   }
 
   setStock(m: BakeryMaterial, newStock: number) {
+    if (this.adjusting()[m._id]) return;
+    this.markAdjusting(m._id, true);
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
       try { navigator.vibrate([25]); } catch {}
     }
 
-    this.bakery.updateStock(m._id, Number(newStock), m.currentStock).subscribe({
+    this.bakery.updateStock(m._id, Number(newStock), m.currentStock).pipe(finalize(() => this.markAdjusting(m._id, false))).subscribe({
       next: (res) => {
         this.applyStock(res.material);
         this.toast.success(`Stock set to ${res.material.currentStock} ${m.baseUom}`);

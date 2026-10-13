@@ -1,3 +1,4 @@
+import { BusyButton } from '../shared/busy-button';
 import { Component, computed, effect, inject, input, signal, DestroyRef } from '@angular/core';
 import { AdminSessionService } from '../../../core/services/admin-session.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -15,7 +16,7 @@ interface ApiFieldError {
 
 @Component({
   selector: 'app-admin-product-form',
-  imports: [RouterLink, FormsModule],
+  imports: [BusyButton, RouterLink, FormsModule],
   templateUrl: './admin-product-form.html',
 })
 export class AdminProductForm {

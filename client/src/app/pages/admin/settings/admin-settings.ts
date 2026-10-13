@@ -1,3 +1,4 @@
+import { BusyButton } from '../shared/busy-button';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AdminService, UpiRecipient } from '../../../core/services/admin.service';
@@ -6,7 +7,7 @@ import { ShopService } from '../../../core/services/shop.service';
 
 @Component({
   selector: 'app-admin-settings',
-  imports: [FormsModule],
+  imports: [BusyButton, FormsModule],
   templateUrl: './admin-settings.html',
 })
 export class AdminSettings {

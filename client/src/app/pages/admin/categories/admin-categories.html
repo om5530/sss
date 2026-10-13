@@ -6,8 +6,8 @@
     <div class="adm-filters">
       <label>Name <input class="input" name="name" [(ngModel)]="name" required maxlength="80" [disabled]="busy()" /></label>
       <label>Group <select class="select" name="group" [(ngModel)]="group" [disabled]="!!editing() || busy()"><option value="bakery">Bakery</option><option value="savoury">Savoury</option></select></label>
-      <button class="btn btn--primary" [disabled]="busy() || !name.trim()">{{ editing() ? 'Save name' : 'Create category' }}</button>
-      @if (editing()) { <button class="btn btn--ghost" type="button" (click)="reset()" [disabled]="busy()">Cancel edit</button> }
+      <button [appBusy]="busy()" class="btn btn--primary" [disabled]="busy() || !name.trim()">{{ editing() ? 'Save name' : 'Create category' }}</button>
+      @if (editing()) { <button [appBusy]="busy()" class="btn btn--ghost" type="button" (click)="reset()" [disabled]="busy()">Cancel edit</button> }
     </div>
   </form>
   @for (g of groups; track g) {
@@ -16,10 +16,10 @@
       <article class="adm-card">
         <div class="adm-head"><div><h3>{{ category.name }}</h3><p>{{ category.count }} products @if (category.archived) { · Removed category — reassign remaining products }</p></div>
           <div class="adm-filters">
-            <button type="button" class="btn btn--ghost btn--sm" [disabled]="busy() || i === 0 || category.archived" (click)="move(category, -1)" [attr.aria-label]="'Move ' + category.name + ' up'">↑</button>
-            <button type="button" class="btn btn--ghost btn--sm" [disabled]="busy() || last || category.archived" (click)="move(category, 1)" [attr.aria-label]="'Move ' + category.name + ' down'">↓</button>
-            <button type="button" class="btn btn--ghost btn--sm" [disabled]="busy() || category.archived" (click)="edit(category)">Rename</button>
-            <button type="button" class="btn btn--ghost btn--danger btn--sm" [disabled]="busy() || category.archived" (click)="deleteTarget.set(category)">Delete</button>
+            <button [appBusy]="busy()" type="button" class="btn btn--ghost btn--sm" [disabled]="busy() || i === 0 || category.archived" (click)="move(category, -1)" [attr.aria-label]="'Move ' + category.name + ' up'">↑</button>
+            <button [appBusy]="busy()" type="button" class="btn btn--ghost btn--sm" [disabled]="busy() || last || category.archived" (click)="move(category, 1)" [attr.aria-label]="'Move ' + category.name + ' down'">↓</button>
+            <button [appBusy]="busy()" type="button" class="btn btn--ghost btn--sm" [disabled]="busy() || category.archived" (click)="edit(category)">Rename</button>
+            <button [appBusy]="busy()" type="button" class="btn btn--ghost btn--danger btn--sm" [disabled]="busy() || category.archived" (click)="deleteTarget.set(category)">Delete</button>
             <a class="btn btn--ghost btn--sm" routerLink="/admin/products" [queryParams]="{ category: category.name, group: category.group, archived: 'all' }">View / reassign products</a>
           </div>
         </div>

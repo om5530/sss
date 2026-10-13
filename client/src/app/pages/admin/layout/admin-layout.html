@@ -226,9 +226,15 @@
   </aside>
 
   <main class="adm-main">
+    @if (requestActivity.kind()) {
+      <div class="adm-request-status no-print" role="status" aria-live="polite" aria-atomic="true">
+        <span class="adm-loading-spinner" aria-hidden="true"></span>
+        <span>{{ requestActivity.message() }}</span>
+      </div>
+    }
     @if (install.visible()) {
       <div class="adm-install no-print">
-        <button type="button" class="btn btn--outline" (click)="install.install()" [disabled]="install.busy()" [attr.aria-expanded]="install.instructions()">Install Operations app</button>
+        <button [appBusy]="install.busy()" type="button" class="btn btn--outline" (click)="install.install()" [disabled]="install.busy()" [attr.aria-expanded]="install.instructions()">Install Operations app</button>
         @if (install.instructions()) {
           <p role="status">Open this page in Chrome, then use the browser menu and choose Install app. On iPhone, use Safari → Share → Add to Home Screen → Add. Live data and saving changes require internet.</p>
         }

@@ -68,16 +68,16 @@
               <td><span [class]="badge(r)">{{ r.status }}</span></td>
               <td class="nowrap" style="text-align: right">
                 @if (r.status === 'new' || r.status === 'quoted') {
-                  <button type="button" class="btn btn--primary btn--sm" [disabled]="busyId() === r._id" (click)="openQuote(r)">
+                  <button [appBusy]="busyId() === r._id" type="button" class="btn btn--primary btn--sm" [disabled]="busyId() === r._id" (click)="openQuote(r)">
                     {{ openId() === r._id ? 'Close' : r.status === 'new' ? 'Quote' : 'Re-quote' }}
                   </button>
                 }
                 @if (r.status === 'quoted') {
-                  <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === r._id" (click)="setStatus(r, 'accepted')">Accepted</button>
-                  <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === r._id" (click)="setStatus(r, 'declined')">Declined</button>
+                  <button [appBusy]="busyId() === r._id" type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === r._id" (click)="setStatus(r, 'accepted')">Accepted</button>
+                  <button [appBusy]="busyId() === r._id" type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === r._id" (click)="setStatus(r, 'declined')">Declined</button>
                 }
                 @if (r.status === 'accepted' || r.status === 'declined') {
-                  <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === r._id" (click)="setStatus(r, 'closed')">Close</button>
+                  <button [appBusy]="busyId() === r._id" type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === r._id" (click)="setStatus(r, 'closed')">Close</button>
                 }
               </td>
             </tr>
@@ -93,7 +93,7 @@
                       <label class="label" for="q-note">Note <span class="muted">(what the quote covers)</span></label>
                       <input id="q-note" class="input" [(ngModel)]="quoteNote" name="quoteNote" maxlength="500" />
                     </div>
-                    <button type="button" class="btn btn--primary btn--sm" [disabled]="busyId() === r._id" (click)="saveQuote(r)">
+                    <button [appBusy]="busyId() === r._id" type="button" class="btn btn--primary btn--sm" [disabled]="busyId() === r._id" (click)="saveQuote(r)">
                       {{ busyId() === r._id ? 'Saving…' : 'Save quote' }}
                     </button>
                   </div>

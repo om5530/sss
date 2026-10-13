@@ -43,16 +43,16 @@
               <td><span [class]="badge(m)">{{ m.status }}</span></td>
               <td class="nowrap" style="text-align: right">
                 @if (m.status === 'new') {
-                  <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === m._id" (click)="setStatus(m, 'read')">
+                  <button [appBusy]="busyId() === m._id" type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === m._id" (click)="setStatus(m, 'read')">
                     Mark read
                   </button>
                 }
                 @if (m.status !== 'closed') {
-                  <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === m._id" (click)="setStatus(m, 'closed')">
+                  <button [appBusy]="busyId() === m._id" type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === m._id" (click)="setStatus(m, 'closed')">
                     Close
                   </button>
                 } @else {
-                  <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === m._id" (click)="setStatus(m, 'new')">
+                  <button [appBusy]="busyId() === m._id" type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === m._id" (click)="setStatus(m, 'new')">
                     Reopen
                   </button>
                 }

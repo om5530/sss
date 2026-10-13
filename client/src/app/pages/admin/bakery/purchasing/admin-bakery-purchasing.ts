@@ -1,3 +1,4 @@
+import { BusyButton } from '../../shared/busy-button';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -21,7 +22,7 @@ interface PurchasePayload { operationKey: string; purchasedAt: string; supplierN
 
 @Component({
   selector: 'app-admin-bakery-purchasing',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [BusyButton, CommonModule, FormsModule, RouterLink],
   templateUrl: './admin-bakery-purchasing.html',
   styleUrl: './admin-bakery-purchasing.scss',
 })

@@ -1,6 +1,7 @@
 import { Component, inject, signal, OnInit, DestroyRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Subscription } from 'rxjs';
+import { Subscription, finalize } from 'rxjs';
+import { BusyButton } from '../../shared/busy-button';
 import { CommonModule, CurrencyPipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BakeryService } from '../../../../core/services/bakery.service';
@@ -10,7 +11,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 @Component({
   selector: 'app-admin-bakery-materials',
   standalone: true,
-  imports: [CommonModule, FormsModule, CurrencyPipe, DecimalPipe],
+  imports: [BusyButton, CommonModule, FormsModule, CurrencyPipe, DecimalPipe],
   templateUrl: './admin-bakery-materials.html',
   styleUrl: './admin-bakery-materials.scss',
 })
@@ -24,6 +25,7 @@ export class AdminBakeryMaterials implements OnInit {
   previewCost = signal<string | null>(null);
   previewError = signal('');
   saveError = signal('');
+  saving = signal(false);
   constructor() {
     inject(DestroyRef).onDestroy(() => {
       this.previewRequest?.unsubscribe();
@@ -236,6 +238,7 @@ export class AdminBakeryMaterials implements OnInit {
   }
 
   cancelEdit() {
+    if (this.saving()) return;
     this.saveError.set('');
     this.editingMaterial.set(null);
   }
@@ -256,6 +259,7 @@ export class AdminBakeryMaterials implements OnInit {
   }
 
   saveMaterial() {
+    if (this.saving()) return;
     const m = this.editingMaterial();
     this.saveError.set('');
     if (!m || !m.name?.trim()) {
@@ -265,11 +269,12 @@ export class AdminBakeryMaterials implements OnInit {
       return;
     }
 
+    this.saving.set(true);
     if (m._id) {
       this.bakery.updateMaterial(m._id, {
         ...m,
         expectedStock: this.originalStock() ?? undefined,
-      }).subscribe({
+      }).pipe(finalize(() => this.saving.set(false))).subscribe({
         next: (res) => {
           this.toast.success('Material updated');
           this.editingMaterial.set(null);
@@ -278,7 +283,7 @@ export class AdminBakeryMaterials implements OnInit {
         error: (error) => this.showSaveError(error, 'Failed to update material'),
       });
     } else {
-      this.bakery.createMaterial(m).subscribe({
+      this.bakery.createMaterial(m).pipe(finalize(() => this.saving.set(false))).subscribe({
         next: (res) => {
           this.toast.success('Material created');
           this.editingMaterial.set(null);

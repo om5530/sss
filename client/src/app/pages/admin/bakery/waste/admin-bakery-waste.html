@@ -82,7 +82,7 @@
         >
       </div>
 
-      <button
+      <button [appBusy]="saving()"
         type="button"
         class="btn btn--accent btn--block"
         [disabled]="saving()"
@@ -175,6 +175,6 @@
         </select></label
       >
     </div>
-    <button class="btn btn--accent" [disabled]="saving()">Record product waste</button>
+    <button [appBusy]="saving()" class="btn btn--accent" [disabled]="saving()">Record product waste</button>
   </form>
 </div>

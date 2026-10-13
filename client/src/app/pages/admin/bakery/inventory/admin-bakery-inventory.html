@@ -113,6 +113,8 @@
                   inputmode="decimal"
                   step="any"
                   class="stock-inline-input"
+                  [disabled]="adjusting()[m._id]"
+                  [attr.aria-busy]="adjusting()[m._id] ? 'true' : null"
                   [ngModel]="m.currentStock"
                   (change)="setStock(m, $any($event.target).value)"
                   aria-label="Current stock quantity"
@@ -140,6 +142,8 @@
                     type="button"
                     class="btn btn--outline btn--sm"
                     (click)="quickAdjust(m, 1)"
+                    [appBusy]="!!adjusting()[m._id]"
+                    [disabled]="adjusting()[m._id]"
                     title="Add 1 Pack"
                   >
                     +1 Pack ({{ m.packQuantity }})
@@ -148,6 +152,8 @@
                     type="button"
                     class="btn btn--ghost btn--sm"
                     (click)="quickAdjust(m, -1)"
+                    [appBusy]="!!adjusting()[m._id]"
+                    [disabled]="adjusting()[m._id]"
                     title="Deduct 1 Pack"
                   >
                     -1

@@ -1,3 +1,4 @@
+import { BusyButton } from '../shared/busy-button';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, EMPTY, merge, switchMap, timer } from 'rxjs';
@@ -9,14 +10,16 @@ import { AppInstallService } from '../../../core/services/app-install.service';
 // import { AdminOrderNotificationService } from '../../../core/services/admin-order-notification.service';
 import { AdminProductListState } from '../shared/admin-product-list-state';
 import { AdminThemeService } from '../../../core/services/admin-theme.service';
+import { AdminRequestActivity } from '../../../core/services/admin-request-activity.service';
 
 @Component({
   selector: 'app-admin-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [BusyButton, RouterOutlet, RouterLink, RouterLinkActive],
   providers: [AdminProductListState],
   templateUrl: './admin-layout.html',
 })
 export class AdminLayout {
+  protected readonly requestActivity = inject(AdminRequestActivity);
   protected readonly theme = inject(AdminThemeService);
   protected readonly install = inject(AppInstallService);
   // Cafe live order alerts are temporarily disabled for manual WhatsApp orders.

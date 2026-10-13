@@ -23,25 +23,25 @@
         @if (addAnother) { <a routerLink="/admin/orders/new" [queryParams]="nextSaleParams" class="btn btn--ghost btn--sm">Next sale</a> }
         <button type="button" class="btn btn--ghost btn--sm" onclick="window.print()">Print</button>
         @if (nextStatus(); as next) {
-          <button type="button" class="btn btn--primary btn--sm" [disabled]="busy()" (click)="advance()">
+          <button [appBusy]="busy()" type="button" class="btn btn--primary btn--sm" [disabled]="busy()" (click)="advance()">
             {{ nextLabel[o.orderStatus] }}
           </button>
         }
         @if (o.orderStatus !== 'completed' && o.orderStatus !== 'cancelled') {
-          <button type="button" class="btn btn--ghost btn--sm" [disabled]="busy()" (click)="modal.set('cancel')">
+          <button [appBusy]="busy()" type="button" class="btn btn--ghost btn--sm" [disabled]="busy()" (click)="modal.set('cancel')">
             Cancel order
           </button>
         }
         @if (cashDue()) {
-          <button type="button" class="btn btn--primary btn--sm" [disabled]="busy()" (click)="modal.set('cash')">
+          <button [appBusy]="busy()" type="button" class="btn btn--primary btn--sm" [disabled]="busy()" (click)="modal.set('cash')">
             Mark cash received
           </button>
         }
         @if (manualDue()) {
-          <button type="button" class="btn btn--primary btn--sm" [disabled]="busy()" (click)="modal.set('manual')">Mark payment received</button>
+          <button [appBusy]="busy()" type="button" class="btn btn--primary btn--sm" [disabled]="busy()" (click)="modal.set('manual')">Mark payment received</button>
         }
         @if (o.paymentStatus === 'paid') {
-          <button type="button" class="btn btn--accent btn--sm" [disabled]="busy()" (click)="modal.set('refund')">
+          <button [appBusy]="busy()" type="button" class="btn btn--accent btn--sm" [disabled]="busy()" (click)="modal.set('refund')">
             Issue refund
           </button>
         }

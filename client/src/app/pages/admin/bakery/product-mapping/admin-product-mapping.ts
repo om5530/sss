@@ -1,3 +1,4 @@
+import { BusyButton } from '../../shared/busy-button';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -11,7 +12,7 @@ import { AdminProductListState } from '../../shared/admin-product-list-state';
 type MappingProduct = ProductRecipeMapping['products'][number];
 @Component({
   selector: 'app-admin-product-mapping',
-  imports: [RouterLink, FormsModule, DecimalPipe],
+  imports: [BusyButton, RouterLink, FormsModule, DecimalPipe],
   templateUrl: './admin-product-mapping.html',
   styles: `
     .mapping-select { min-width: 240px; max-width: 350px; }

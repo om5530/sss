@@ -1,3 +1,4 @@
+import { BusyButton } from '../shared/busy-button';
 import { Component, DestroyRef, effect, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subscription } from 'rxjs';
@@ -16,7 +17,7 @@ type CreatedOrderDetail = { createdOrder: AdminOrder; createdPayment: AdminPayme
 
 @Component({
   selector: 'app-admin-order-detail',
-  imports: [RouterLink, DatePipe, DecimalPipe, ConfirmModal, UpiPaymentQr],
+  imports: [BusyButton, RouterLink, DatePipe, DecimalPipe, ConfirmModal, UpiPaymentQr],
   templateUrl: './admin-order-detail.html',
 })
 export class AdminOrderDetail {

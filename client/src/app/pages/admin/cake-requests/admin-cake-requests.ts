@@ -1,3 +1,4 @@
+import { BusyButton } from '../shared/busy-button';
 import { Component, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -16,7 +17,7 @@ const CAKE_BADGE: Record<CakeRequestStatus, string> = {
 
 @Component({
   selector: 'app-admin-cake-requests',
-  imports: [FormsModule, DatePipe],
+  imports: [BusyButton, FormsModule, DatePipe],
   templateUrl: './admin-cake-requests.html',
 })
 export class AdminCakeRequests {

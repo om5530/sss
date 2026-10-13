@@ -116,13 +116,13 @@
           ><textarea id="notes" class="input" [(ngModel)]="notes"></textarea>
         </div>
         <div class="actions-foot">
-          <button
+          <button [appBusy]="busy() || saving()"
             class="btn btn--outline"
             [disabled]="busy() || saving() || !result()"
             (click)="save('costing_sheet')"
           >
-            Save costing sheet</button
-          ><button
+            {{ saving() ? 'Saving…' : 'Save costing sheet' }}</button
+          ><button [appBusy]="busy() || saving()"
             class="btn btn--accent"
             [disabled]="busy() || saving() || productionPlanSaved() || !result()"
             (click)="save('production_plan')"
@@ -134,7 +134,7 @@
     </section>
     <div class="results-panel">
       @if (busy()) {
-        <p role="status">Calculating…</p>
+        <p role="status"><span class="adm-loading-spinner" aria-hidden="true"></span> Calculating…</p>
       }
       @if (result(); as r) {
         <section class="card">

@@ -1,3 +1,4 @@
+import { BusyButton } from '../shared/busy-button';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -13,7 +14,7 @@ interface SaleLine { product: Product; quantity: number }
 
 @Component({
   selector: 'app-admin-order-form',
-  imports: [FormsModule, RouterLink, DecimalPipe],
+  imports: [BusyButton, FormsModule, RouterLink, DecimalPipe],
   templateUrl: './admin-order-form.html',
   styleUrl: './admin-order-form.scss',
 })

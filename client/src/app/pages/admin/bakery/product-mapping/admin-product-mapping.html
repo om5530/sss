@@ -4,7 +4,7 @@
     <div class="adm-head__actions">
       <a routerLink="/admin/bakery/recipes" class="btn btn--ghost btn--sm">Recipes</a>
       <a routerLink="/admin/events" class="btn btn--ghost btn--sm">Event sales</a>
-      <button type="button" class="btn btn--ghost btn--sm" [disabled]="loading() || busyId() !== null" (click)="load()">Refresh</button>
+      <button [appBusy]="loading()" type="button" class="btn btn--ghost btn--sm" [disabled]="loading() || busyId() !== null" (click)="load()">Refresh</button>
     </div>
   </div>
   <div class="adm-filters">

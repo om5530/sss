@@ -1,3 +1,4 @@
+import { BusyButton } from '../shared/busy-button';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -5,7 +6,7 @@ import { AdminService, ManagedCategory } from '../../../core/services/admin.serv
 import { ConfirmModal } from '../shared/confirm-modal';
 
 @Component({
-  selector: 'app-admin-categories', imports: [FormsModule, RouterLink, ConfirmModal],
+  selector: 'app-admin-categories', imports: [BusyButton, FormsModule, RouterLink, ConfirmModal],
   templateUrl: './admin-categories.html',
 })
 export class AdminCategories {

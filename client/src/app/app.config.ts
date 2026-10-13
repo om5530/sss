@@ -12,6 +12,7 @@ import { provideServiceWorker } from '@angular/service-worker';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
+import { adminActivityInterceptor } from './core/interceptors/admin-activity.interceptor';
 import { AuthService } from './core/services/auth.service';
 import { AppInstallService } from './core/services/app-install.service';
 
@@ -25,7 +26,7 @@ export const appConfig: ApplicationConfig = {
       // Native cross-fade between routes on supporting browsers; no-op elsewhere.
       withViewTransitions(),
     ),
-    provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
+    provideHttpClient(withInterceptors([authInterceptor, adminActivityInterceptor, errorInterceptor])),
     provideAppInitializer(() => { inject(AppInstallService); }),
     // Restore an existing session (if any) before the first route renders.
     provideAppInitializer(() => inject(AuthService).restoreSession()),

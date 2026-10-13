@@ -43,7 +43,7 @@
         <div class="field"><label class="label" for="s-phone">Phone / WhatsApp</label><input id="s-phone" class="input" type="tel" maxlength="40" [(ngModel)]="contactPhone" name="contactPhone" placeholder="+91 98765 43210" /><small class="muted">Receives cart requests on WhatsApp. Use your business WhatsApp number with country code.</small></div>
         <div class="field"><label class="label" for="s-email">Email</label><input id="s-email" class="input" type="email" maxlength="240" [(ngModel)]="contactEmail" name="contactEmail" /></div>
       </div>
-      <div class="adm-modal__actions"><button type="submit" class="btn btn--primary" [disabled]="saving()">{{ saving() ? 'Saving…' : 'Save settings' }}</button></div>
+      <div class="adm-modal__actions"><button [appBusy]="saving()" type="submit" class="btn btn--primary" [disabled]="saving()">{{ saving() ? 'Saving…' : 'Save settings' }}</button></div>
     </form>
   }
 </div>

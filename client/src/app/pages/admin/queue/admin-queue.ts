@@ -1,3 +1,4 @@
+import { BusyButton } from '../shared/busy-button';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { AdminService } from '../../../core/services/admin.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -16,7 +17,7 @@ const STAGES: OrderStatus[] = ['placed', 'confirmed', 'preparing', 'ready'];
 
 @Component({
   selector: 'app-admin-queue',
-  imports: [ConfirmModal],
+  imports: [BusyButton, ConfirmModal],
   templateUrl: './admin-queue.html',
 })
 export class AdminQueue {

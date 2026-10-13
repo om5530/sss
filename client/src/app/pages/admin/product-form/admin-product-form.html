@@ -122,7 +122,7 @@
 
       <div class="adm-modal__actions" style="margin-top: 0.6rem">
         <a routerLink="/admin/products" class="btn btn--ghost btn--sm">Discard</a>
-        <button type="submit" class="btn btn--primary btn--sm" [disabled]="saving()">
+        <button [appBusy]="saving()" type="submit" class="btn btn--primary btn--sm" [disabled]="saving()">
           {{ saving() ? 'Saving…' : isEdit() ? 'Save changes' : 'Create product' }}
         </button>
       </div>
