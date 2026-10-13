@@ -8,6 +8,7 @@ import { ToastContainer } from './shared/components/toast/toast-container';
 import { AnalyticsService } from './core/services/analytics.service';
 import { MotionService } from './core/services/motion.service';
 import { SeoService } from './core/services/seo.service';
+import { AdminThemeService } from './core/services/admin-theme.service';
 
 @Component({
   selector: 'app-root',
@@ -20,6 +21,7 @@ export class App {
   private seo = inject(SeoService);
   private analytics = inject(AnalyticsService);
   private router = inject(Router);
+  private theme = inject(AdminThemeService);
 
   /** The admin console ships its own chrome — hide the storefront's.
    *  Seeded from the URL so a hard load of /admin never flashes the navbar. */
@@ -37,6 +39,7 @@ export class App {
         window.dispatchEvent(new Event('app-startup-ready'));
         const admin = /^\/admin(?:\/|[?#]|$)/.test(e.urlAfterRedirects);
         this.adminArea.set(admin);
+        this.theme.setAdminArea(admin);
         const manifest = document.querySelector<HTMLLinkElement>('#pwa-manifest');
         if (manifest) manifest.href = admin ? '/admin-manifest.webmanifest' : '/manifest.webmanifest';
         const title = document.querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-title"]');

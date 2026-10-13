@@ -50,7 +50,7 @@
 
   &.active {
     background: var(--night);
-    color: var(--white);
+    color: var(--on-night, var(--white));
     border-color: var(--night);
   }
 }
@@ -97,7 +97,7 @@
 
 .recipe-name {
   font-size: 1.05rem;
-  color: var(--night);
+  color: var(--ink);
   margin: 0.1rem 0;
   font-family: var(--font-display);
 }
@@ -128,7 +128,7 @@
   > div, > form { min-width: 0; }
   span, strong { display: block; }
   span { color: var(--muted); font-size: 0.7rem; }
-  strong { color: var(--night); font-size: 0.98rem; overflow-wrap: anywhere; }
+  strong { color: var(--ink); font-size: 0.98rem; overflow-wrap: anywhere; }
 }
 
 .recipe-price {
@@ -136,17 +136,17 @@
   border-radius: 6px;
 
   &--cost {
-    background: #fff2e5;
-    border-left: 3px solid #a34b12;
+    background: var(--recipe-cost-bg, #fff2e5);
+    border-left: 3px solid var(--recipe-cost-border, #a34b12);
 
-    span, strong { color: #8a3e10; }
+    span, strong { color: var(--recipe-cost-ink, #8a3e10); }
   }
 
   &--sell {
-    background: #eaf6ee;
-    border-left: 3px solid #257348;
+    background: var(--recipe-sell-bg, #eaf6ee);
+    border-left: 3px solid var(--recipe-sell-border, #257348);
 
-    span, strong { color: #1c623b; }
+    span, strong { color: var(--recipe-sell-ink, #1c623b); }
   }
 }
 
@@ -157,7 +157,7 @@
   border: 1px solid var(--line);
   border-radius: 6px;
   background: var(--surface);
-  color: var(--night);
+  color: var(--ink);
   font-size: 0.85rem;
   font-weight: 700;
   cursor: help;
@@ -172,7 +172,7 @@
     padding: 0.4rem 0.55rem;
     border-radius: 6px;
     background: var(--night);
-    color: var(--cream);
+    color: var(--on-night, var(--cream));
     box-shadow: var(--shadow-sm);
     font-size: 0.7rem;
     font-weight: 500;
@@ -214,7 +214,7 @@
   > label {
     display: block;
     margin-bottom: 0.2rem;
-    color: #1c623b;
+    color: var(--recipe-sell-ink, #1c623b);
     font-size: 0.7rem;
     font-weight: 600;
   }
@@ -228,9 +228,9 @@
       width: 100%;
       min-width: 0;
       padding: 0.3rem 0.4rem;
-      border-color: #b5d6bf;
-      background: rgba(255, 255, 255, 0.8);
-      color: #1c623b;
+      border-color: var(--recipe-price-input-border, #b5d6bf);
+      background: var(--recipe-price-input-bg, rgba(255, 255, 255, 0.8));
+      color: var(--recipe-sell-ink, #1c623b);
       font-size: 0.98rem;
       font-weight: 700;
     }
@@ -332,7 +332,7 @@
 
     &.active {
       background: var(--night);
-      color: var(--white);
+      color: var(--on-night, var(--white));
     }
 
     &:focus-visible {
@@ -407,7 +407,7 @@
     padding: 0.55rem 0.65rem;
     border-radius: 6px;
     background: var(--night);
-    color: var(--cream);
+    color: var(--on-night, var(--cream));
     box-shadow: var(--shadow);
     font-family: var(--font-body);
     font-size: 0.72rem;

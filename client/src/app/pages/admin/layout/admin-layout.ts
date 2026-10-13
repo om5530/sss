@@ -9,6 +9,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { AppInstallService } from '../../../core/services/app-install.service';
 import { AdminOrderNotificationService } from '../../../core/services/admin-order-notification.service';
 import { AdminProductListState } from '../shared/admin-product-list-state';
+import { AdminThemeService } from '../../../core/services/admin-theme.service';
 
 @Component({
   selector: 'app-admin-layout',
@@ -17,6 +18,7 @@ import { AdminProductListState } from '../shared/admin-product-list-state';
   templateUrl: './admin-layout.html',
 })
 export class AdminLayout {
+  protected readonly theme = inject(AdminThemeService);
   protected readonly install = inject(AppInstallService);
   protected readonly orderNotification = inject(AdminOrderNotificationService);
   protected readonly unreadEnquiries = signal<number | null>(null);

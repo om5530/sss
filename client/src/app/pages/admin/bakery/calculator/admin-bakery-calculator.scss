@@ -45,7 +45,7 @@
 
   &.active {
     background: var(--white);
-    color: var(--night);
+    color: var(--ink);
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   }
 }
@@ -175,7 +175,7 @@
   font-family: var(--font-display);
   margin: 0.1rem 0;
 
-  &.cost { color: var(--night); }
+  &.cost { color: var(--ink); }
   &.price { color: var(--caramel-dark); }
   &.profit { color: var(--success); }
 }

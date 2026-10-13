@@ -1,4 +1,5 @@
 @use './app/pages/admin/bakery/bakery-ui';
+@use './app/pages/admin/admin-theme';
 /* ============================================================
    The Golden Batch — "Midnight Patisserie" design system
    Cinematic dark-espresso canvas · warm cream editorial light ·
@@ -194,7 +195,7 @@ button { font-family: inherit; cursor: pointer; }
 }
 .btn:hover::after { transform: translateX(120%); }
 
-.btn--primary { background: var(--choco); color: var(--cream); box-shadow: var(--shadow-sm); }
+.btn--primary { background: var(--button-bg, var(--choco)); color: var(--button-ink, var(--cream)); box-shadow: var(--shadow-sm); }
 .btn--primary:hover { background: var(--night-3); box-shadow: var(--shadow); }
 
 .btn--accent {

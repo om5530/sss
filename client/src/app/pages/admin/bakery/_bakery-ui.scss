@@ -1,8 +1,8 @@
 /* Shared operational UI: compact controls, readable tables and responsive work areas.
    Optimised for PWA-first bakery operations — dense, fast, touch-friendly. */
 :is(.calc-shell, .materials-shell, .recipes-shell, .inv-shell, .waste-shell, .bakery-workspace) {
-  --surface: #f7f2eb;
-  --muted: #6f6257;
+  --surface: var(--bakery-surface, #f7f2eb);
+  --muted: var(--bakery-muted, #6f6257);
   --radius: 10px;
   min-width: 0;
   padding: clamp(10px, 1.8vw, 20px);
@@ -54,20 +54,20 @@
     font-weight: 700;
     letter-spacing: 0.04em;
     color: var(--muted);
-    background: #f5efe6;
+    background: var(--bakery-table-head, #f5efe6);
     border-bottom: 1px solid var(--line);
     white-space: nowrap;
   }
   .data-table td {
     padding: 6px 10px;
-    border-bottom: 1px solid #eee5da;
+    border-bottom: 1px solid var(--line-soft, #eee5da);
     vertical-align: middle;
   }
   .data-table tr:last-child td {
     border-bottom: 0;
   }
   .data-table tbody tr:hover {
-    background: #faf7f1;
+    background: var(--bakery-table-hover, #faf7f1);
   }
   .data-table .num {
     text-align: right;
@@ -85,7 +85,7 @@
   .select {
     border-radius: 7px;
     min-height: 36px;
-    background: #fffdf9;
+    background: var(--white);
     font-size: 0.82rem;
     width: 100%;
     padding: 0.4rem 0.6rem;
@@ -110,7 +110,7 @@
     flex-wrap: wrap;
     gap: 2px;
     border: 1px solid var(--line);
-    background: #f3ede4;
+    background: var(--bakery-tabs, #f3ede4);
     border-radius: 8px;
   }
   .type-tab-btn,

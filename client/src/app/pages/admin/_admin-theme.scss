@@ -1,0 +1,83 @@
+/* Admin appearance is independent of the storefront and browser extensions. */
+html[data-admin-theme='light'] { color-scheme: light; }
+
+html[data-admin-theme='dark'] {
+  color-scheme: dark;
+  --cream: #36260c;
+  --cream-2: #3d2c15;
+  --sand: #49351c;
+  --white: #2c1d05;
+  --ink: #f7ead3;
+  --choco: #f7ead3;
+  --cocoa: #e2c194;
+  --muted: #c9b794;
+  --line: #604724;
+  --caramel-dark: #e4b477;
+  --danger: #ff8070;
+  --success: #80d6a1;
+  --surface: #392914;
+  --bakery-surface: #392914;
+  --bakery-muted: #c9b794;
+  --bakery-table-head: #342309;
+  --bakery-table-hover: #443016;
+  --bakery-tabs: #392914;
+  --line-soft: #4a361c;
+  --on-night: #f7ead3;
+  --button-bg: #654020;
+  --button-ink: #fff1d9;
+  --recipe-cost-bg: #472400;
+  --recipe-cost-ink: #ffb477;
+  --recipe-cost-border: #ce7629;
+  --recipe-sell-bg: #16372b;
+  --recipe-sell-ink: #8aefb7;
+  --recipe-sell-border: #439467;
+  --recipe-price-input-bg: #16251e;
+  --recipe-price-input-border: #43885e;
+  --shadow-sm: 0 2px 12px rgba(0, 0, 0, .12);
+  --shadow: 0 14px 38px rgba(0, 0, 0, .22);
+
+  .adm-side { background: linear-gradient(180deg, #170d06, #0f0804); }
+  .btn--accent { background: var(--button-bg); color: var(--button-ink); }
+  :is(.filter-pill, .recipe-type-toggle button, .type-tab-btn).active {
+    color: var(--on-night);
+  }
+  :is(.recipe-markup__tooltip, .field-help::after) { color: var(--on-night); }
+  :is(.history-total, .monthly-row.selected, .monthly-row:hover, .quantity-badge,
+      .month-icon, .empty-icon, .monthly-count > :first-child) { background: var(--cream-2); }
+  :is(.purchase-table th, .monthly-labels) { background: var(--surface); }
+  .purchase-table tbody tr:hover { background: var(--cream-2); }
+  :is(.purchase-notice, .notice) { background: #19372a; color: #8aefb7; }
+  :is(.purchase-error, .error-box, .low-stock-alert) { background: #48231b; color: #ffb5a7; }
+  .warning-box { background: #483411; color: #f4d592; }
+  .adm-offline-bar { color: #f4d592; }
+  :is(.adm-badge--paid, .adm-badge--cash, .adm-badge--completed) { background: #19372a; color: #8aefb7; }
+  :is(.adm-badge--cancelled, .adm-badge--failed) { background: #48231b; color: #ffb5a7; }
+}
+
+.adm-theme-toggle:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 3px; }
+
+@media print {
+  html[data-admin-theme='dark'] {
+    --cream: #fff;
+    --cream-2: #f3e9da;
+    --white: #fff;
+    --ink: #241710;
+    --choco: #3a2417;
+    --cocoa: #6b4226;
+    --muted: #6f6257;
+    --line: #e7d8c4;
+    --bakery-surface: #f7f2eb;
+    --bakery-muted: #6f6257;
+    --bakery-table-head: #f5efe6;
+    --bakery-table-hover: #faf7f1;
+    --bakery-tabs: #f3ede4;
+    --line-soft: #eee5da;
+    --recipe-cost-bg: #fff2e5;
+    --recipe-cost-ink: #8a3e10;
+    --recipe-sell-bg: #eaf6ee;
+    --recipe-sell-ink: #1c623b;
+    --recipe-price-input-bg: #fff;
+    --recipe-price-input-border: #b5d6bf;
+  }
+  .adm-theme-toggle { display: none; }
+}

@@ -53,7 +53,7 @@
 
   &.active {
     background: var(--white);
-    color: var(--night);
+    color: var(--ink);
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   }
 }
@@ -214,7 +214,7 @@
 
   h4 {
     margin: 0 0 0.15rem;
-    color: var(--night);
+    color: var(--ink);
     font-size: 0.85rem;
   }
   .box-sub {

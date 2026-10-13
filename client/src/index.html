@@ -29,6 +29,8 @@
     #app-startup p { line-height: 1.5; }
     #app-startup a { display: inline-block; margin-top: 12px; padding: 12px 24px; background: #3b2417; color: white; border-radius: 10px; text-decoration: none; font-weight: 600; }
     #app-startup [hidden] { display: none; }
+    html[data-admin-theme="dark"] #app-startup { background: #36260c; color: #f7ead3; color-scheme: dark; }
+    html[data-admin-theme="dark"] #app-startup a { background: #654020; color: #fff1d9; }
   </style>
   <!-- Hero video poster is the first paint — preload it so the hero fills fast. -->
   <link rel="preload" as="image" fetchpriority="high" href="/baking-flour-poster.jpg">
@@ -37,6 +39,12 @@
   <!-- Swap to admin manifest when installing from /admin so the PWA launches into ops -->
   <script>
     if (location.pathname.startsWith('/admin')) {
+      var adminTheme = 'dark';
+      try { if (localStorage.getItem('gb_admin_theme') === 'light') adminTheme = 'light'; } catch (_) {}
+      document.documentElement.dataset.adminTheme = adminTheme;
+      var themeLock = document.createElement('meta');
+      themeLock.name = 'darkreader-lock';
+      document.head.appendChild(themeLock);
       document.getElementById('pwa-manifest').href = '/admin-manifest.webmanifest';
       var m = document.querySelector('meta[name="apple-mobile-web-app-title"]');
       if (m) m.content = 'GB Ops';
