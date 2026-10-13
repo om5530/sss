@@ -8,6 +8,7 @@ import {
   MultiProductResult,
   BakeryWaste,
   CostingSheet,
+  ProductRecipeMapping,
 } from '../models/bakery.model';
 
 @Injectable({
@@ -59,6 +60,13 @@ export class BakeryService {
   }
 
   // Recipes
+  getProductMappings(): Observable<ProductRecipeMapping> {
+    return this.http.get<ProductRecipeMapping>(`${this.base}/product-mappings`);
+  }
+
+  saveProductMapping(id: string, data: { recipeId: string | null; expectedRecipeId: string | null; expectedVersion?: number; expectedUpdatedAt: string }) {
+    return this.http.patch<{ success: boolean }>(`${this.base}/product-mappings/${id}`, data);
+  }
   getRecipes(params?: { category?: string; search?: string }): Observable<{
     success: boolean;
     count: number;
@@ -97,6 +105,12 @@ export class BakeryService {
 
   deleteRecipe(id: string): Observable<{ success: boolean; message: string }> {
     return this.http.delete<{ success: boolean; message: string }>(`${this.base}/recipes/${id}`);
+  }
+
+  updateRecipeSellingPrice(id: string, data: { version: number; pricePerPiece: number | null }) {
+    return this.http.patch<{ success: boolean; recipe: BakeryRecipe }>(
+      `${this.base}/recipes/${id}/selling-price`, data,
+    );
   }
 
   // Simulation & Calculation

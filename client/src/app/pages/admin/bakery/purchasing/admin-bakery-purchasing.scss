@@ -67,9 +67,9 @@ fieldset > .btn { justify-self: start; }
 .purchase-note { display: block; margin-top: .3rem; line-height: 1.4; }
 .no-supplier { color: var(--muted); }
 .purchase-amount > strong { display: block; font-variant-numeric: tabular-nums; font-size: .95rem; color: var(--choco); }
-.delete-purchase { margin-top: .55rem; padding: .2rem .35rem; border: 0; background: transparent; color: #923821; font: inherit; font-size: .72rem; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.delete-purchase { margin-top: .55rem; padding: .2rem .35rem; border: 0; background: transparent; color: var(--danger); font: inherit; font-size: .72rem; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
 .delete-purchase:disabled { opacity: .5; cursor: default; }
-.delete-purchase:focus-visible { outline: 2px solid #923821; outline-offset: 2px; }
+.delete-purchase:focus-visible { outline: 2px solid var(--danger); outline-offset: 2px; }
 .mobile-label { display: none; }
 .history-pages { display: flex; justify-content: flex-end; align-items: center; gap: .8rem; font-size: .85rem; }
 .num { text-align: right; white-space: nowrap; }

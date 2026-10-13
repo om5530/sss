@@ -65,11 +65,46 @@ export interface ManualOrderPayload {
   notes: string;
 }
 
+export interface EventStockRow {
+  eventName: string; productId: string; name: string; prepared: number | null; sold: number; handedOver: number;
+  unpaidHandovers: number; refundedHandovers: number; returned: number; wasted: number; reusable: number; remaining: number | null;
+  unitCost: number | null; preparedCost: number | null; wastageCost: number | null; reusableValue: number | null; handoverLossCost: number | null;
+}
+
+export interface EventSummary {
+  eventName: string; planId: string | null; version: number | null; orders: number; paidOrders: number; revenue: number; units: number;
+  pendingAmount: number; cash: number; upi: number; card: number; cost: number | null; profit: number | null;
+  costEstimated: boolean; lastSaleAt: string | null; openOrders: number;
+  status: 'open' | 'closed' | 'unconfigured'; startDate: string; endDate: string; closedAt: string | null;
+  rent: number | null; travelCost: number | null; extraCost: number | null; extraCostNote: string;
+  netProfit: number | null; preparedUnits: number | null; wastedUnits: number | null; reusableUnits: number | null;
+  preparedCost: number | null; wastageCost: number | null; handoverLossCost: number | null; reusableValue: number | null;
+  stockReconciled: boolean; changedSinceClose: boolean; revision: string;
+}
+
+export interface EventPlanItem {
+  productId: string; name: string; prepared: number; wasted: number; reusable: number; returned: number; unitCost: number | null;
+  stockOut: number; refundedHandovers: number;
+}
+
+export interface EventPlan {
+  _id: string; eventName: string; startDate: string; endDate: string; rent: number; travelCost: number; extraCost: number;
+  extraCostNote: string; status: 'open' | 'closed'; version: number; closedAt: string | null; items: EventPlanItem[];
+}
+
+export interface EventPlanPayload {
+  eventName: string; startDate: string; endDate: string; rent: number; travelCost: number; extraCost: number; extraCostNote: string;
+  version?: number; items: Pick<EventPlanItem, 'productId' | 'prepared' | 'wasted' | 'reusable' | 'returned'>[];
+}
+
+export interface EventPreparationProduct { _id: string; name: string; unitCost: number | null; recipeName: string | null }
+
 export interface EventSalesReport {
   eventNames: string[];
-  events: { eventName: string; orders: number; paidOrders: number; revenue: number; units: number;
-    pendingAmount: number; cash: number; upi: number; card: number; lastSaleAt: string }[];
-  products: { _id: string; name: string; quantity: number; subtotal: number }[];
+  events: EventSummary[];
+  stock: EventStockRow[];
+  products: { _id: string; name: string; quantity: number; totalUnits: number | null; cost: number | null;
+    totalCost: number | null; wastageCost: number | null; costEstimated: boolean; subtotal: number; profit: number | null }[];
 }
 
 export interface CustomerRow {

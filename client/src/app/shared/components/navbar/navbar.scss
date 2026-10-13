@@ -30,8 +30,7 @@
 
 /* ---- Brand ---- */
 .brand { display: inline-flex; align-items: center; gap: 0.6rem; flex: none; }
-.brand__mark { filter: drop-shadow(0 2px 8px rgba(223, 167, 87, 0.4)); transition: transform 0.5s var(--ease-out); }
-.brand:hover .brand__mark { transform: rotate(-10deg) scale(1.08); }
+.brand__mark { width: 62px; height: auto; flex-shrink: 0; border-radius: 6px; }
 .brand__name {
   font-family: var(--font-display);
   font-weight: 700;
@@ -191,6 +190,7 @@
   .nav__links, .nav__signin { display: none; }
   .nav__burger { display: flex; }
   .nav__inner { height: 64px; }
+  .brand__mark { width: 48px; }
 }
 @media (min-width: 1201px) {
   .nav__sheet { display: none; }
@@ -201,7 +201,7 @@
   .nav__inner { gap: .5rem; }
   .brand { gap: .35rem; }
   .brand__name { font-size: 1rem; }
-  .brand__mark { width: 28px; height: 28px; }
+  .brand__mark { width: 44px; height: auto; }
   .nav__actions { gap: .25rem; }
   .nav__cart, .nav__profile, .nav__burger { min-width: 44px; min-height: 44px; justify-content: center; align-items: center; }
 }

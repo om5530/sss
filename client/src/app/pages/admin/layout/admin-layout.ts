@@ -33,7 +33,7 @@ export class AdminLayout {
   constructor() {
     const destroy = inject(DestroyRef);
     const revealTools = (url: string) => {
-      if (/^\/admin\/(activity|qr|reports|coupons|enquiries|prep)(?:[/?#]|$)/.test(url)) {
+      if (/^\/admin\/(dashboard|activity|qr|reports|coupons|enquiries|prep|queue)(?:[/?#]|$)/.test(url)) {
         this.toolsOpen.set(true);
       }
     };

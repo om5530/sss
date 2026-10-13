@@ -320,9 +320,14 @@ function evaluateRecipeCost(recipe, materials, recipes) {
     : 1;
   const pieces = dec(recipe.piecesPerBatch ?? inferredPieces, "Pieces per batch", true);
   if (!pieces.isInteger()) throw ApiError.badRequest("Pieces per batch must be a whole number");
-  const selling = dec(recipe.manualSellingPrice ?? 0).gt(0)
-    ? dec(recipe.manualSellingPrice)
-    : dec(r.suggestedSellingPrice);
+  const selling = dec(recipe.manualSellingPricePerPiece ?? 0).gt(0)
+    ? dec(recipe.manualSellingPricePerPiece).mul(pieces)
+    : dec(recipe.manualSellingPrice ?? 0).gt(0)
+      ? dec(recipe.manualSellingPrice)
+      : dec(r.suggestedSellingPrice);
+  // Product and order prices are charged to two decimal places per piece.
+  const unitSelling = selling.div(pieces).toDecimalPlaces(2);
+  const unitCost = dec(r.totalCost).div(pieces);
   return {
     ...r,
     totalBatchCost: r.totalCost,
@@ -330,6 +335,12 @@ function evaluateRecipeCost(recipe, materials, recipes) {
     sellingPricePerBatch: selling.toString(),
     costPerPiece: dec(r.totalCost).div(pieces).toString(),
     sellingPricePerPiece: selling.div(pieces).toString(),
+    actualMarginPercent: unitSelling.isZero()
+      ? null
+      : unitSelling.sub(unitCost).div(unitSelling).mul(100).toString(),
+    actualMarkupPercent: unitCost.isZero()
+      ? null
+      : unitSelling.sub(unitCost).div(unitCost).mul(100).toString(),
   };
 }
 function aggregateMultiProductRequirements(

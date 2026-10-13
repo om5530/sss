@@ -102,6 +102,18 @@ test("A recipe batch keeps its full ingredients and splits batch pricing across 
   assert.equal(cost.sellingPricePerBatch, "1200");
   assert.equal(cost.costPerPiece, "50");
   assert.equal(cost.sellingPricePerPiece, "75");
+  assert.equal(Number(cost.actualMarginPercent).toFixed(2), '33.33');
+  assert.equal(cost.actualMarkupPercent, '50');
+  assert.equal(E.evaluateRecipeCost({ ...recipe, manualSellingPricePerPiece: 100 }, materials).actualMarkupPercent, '100');
+  assert.equal(E.evaluateRecipeCost({ ...recipe, manualSellingPricePerPiece: 50 }, materials).actualMarkupPercent, '0');
+  assert.equal(E.evaluateRecipeCost({ ...recipe, manualSellingPricePerPiece: 25 }, materials).actualMarkupPercent, '-50');
+  assert.equal(E.evaluateRecipeCost({ ...recipe, manualSellingPricePerPiece: 100 }, materials).actualMarginPercent, '50');
+  assert.equal(E.evaluateRecipeCost({ ...recipe, manualSellingPricePerPiece: 50 }, materials).actualMarginPercent, '0');
+  assert.equal(E.evaluateRecipeCost({ ...recipe, manualSellingPricePerPiece: 25 }, materials).actualMarginPercent, '-100');
+  const free = E.evaluateRecipeCost({ ...recipe, manualSellingPrice: 0,
+    components: [{ componentType: 'other', name: 'No charge', quantity: 1, unitCost: 0, uom: 'piece' }] }, materials);
+  assert.equal(free.actualMarginPercent, null);
+  assert.equal(free.actualMarkupPercent, null);
   assert.equal(E.evaluateRecipeCost({ ...recipe, piecesPerBatch: undefined }, materials).piecesPerBatch, "16");
 
   const plan = E.aggregateMultiProductRequirements(

@@ -3,6 +3,8 @@ const categories = require('../controllers/category.controller');
 const ctrl = require('../controllers/admin.controller');
 const orderCtrl = require('../controllers/order.controller');
 const manualOrderCtrl = require('../controllers/manual-order.controller');
+const eventPlanCtrl = require('../controllers/event-plan.controller');
+const productStockCtrl = require('../controllers/product-stock.controller');
 const contactCtrl = require('../controllers/contact.controller');
 const couponCtrl = require('../controllers/coupon.controller');
 const cakeCtrl = require('../controllers/cake.controller');
@@ -34,6 +36,7 @@ router.get('/orders', ctrl.listOrders);
 router.post('/orders/quote', manualOrderCtrl.validators.quote, validate, manualOrderCtrl.quote);
 router.post('/orders', manualOrderCtrl.validators.create, validate, manualOrderCtrl.create);
 router.get('/orders/:id', ctrl.getOrderAdmin);
+router.delete('/orders/:id', ctrl.deleteOrder);
 router.get('/orders/:id/upi-qr', manualOrderCtrl.paymentQr);
 // Same lifecycle-enforced handler as the legacy /api/orders/:id/status route.
 router.patch('/orders/:id/status', orderCtrl.updateOrderStatus);
@@ -43,6 +46,7 @@ router.post('/orders/:id/settle-manual', manualOrderCtrl.settle);
 router.post('/orders/:id/refund', ctrl.validators.refund, validate, ctrl.refundOrder);
 
 router.get('/products', ctrl.listProductsAdmin);
+router.post('/products/reset-stock', productStockCtrl.reset);
 router.get('/products/:id', ctrl.getProductAdmin);
 router.post('/products', ctrl.validators.createProduct, validate, ctrl.createProduct);
 router.patch('/products/:id', ctrl.validators.updateProduct, validate, ctrl.updateProduct);
@@ -76,6 +80,13 @@ router.get('/reports/sales', ctrl.salesReport);
 router.get('/reports/products', ctrl.productReport);
 router.get('/reports/prep', ctrl.prepSheet);
 router.get('/reports/events', manualOrderCtrl.validators.report, validate, manualOrderCtrl.eventReport);
+router.get('/events/products', eventPlanCtrl.products);
+router.get('/events/options', eventPlanCtrl.options);
+router.post('/events', eventPlanCtrl.save);
+router.get('/events/:id', eventPlanCtrl.get);
+router.patch('/events/:id', eventPlanCtrl.save);
+router.post('/events/:id/close', eventPlanCtrl.close);
+router.post('/events/:id/reopen', eventPlanCtrl.reopen);
 
 router.get('/audit', ctrl.listAudit);
 

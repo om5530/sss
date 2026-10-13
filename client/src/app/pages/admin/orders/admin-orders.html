@@ -57,38 +57,43 @@
       <table class="adm-table">
         <thead>
           <tr>
-            <th>Order</th>
-            <th>Placed</th>
-            <th>Customer</th>
-            <th>Type</th>
             <th>Source</th>
+            <th>Products</th>
             <th class="num">Items</th>
             <th class="num">Total</th>
-            <th>Payment</th>
-            <th>Status</th>
+            <th>Payment method</th>
+            <th>Placed</th>
+            <th>Delete</th>
           </tr>
         </thead>
         <tbody>
           @for (o of orders(); track o._id) {
             <tr class="is-clickable" [routerLink]="['/admin/orders', o._id]">
-              <td class="nowrap"><strong>{{ o.orderNumber }}</strong></td>
-              <td class="nowrap">{{ o.createdAt | date: 'MMM d, y · h:mm a' }}</td>
+              <td><span class="adm-badge adm-badge--type">{{ orderSource(o) }}</span>@if (o.eventName) { <div class="muted">{{ o.eventName }}</div> }</td>
               <td>
-                {{ orderCustomer(o) }}
-                @if (!o.user) {
-                  <span class="adm-badge adm-badge--mock" style="margin-left: 0.3rem">guest</span>
+                @for (item of o.items; track $index) {
+                  <div>{{ item.name }} <span class="muted">× {{ item.quantity }}</span></div>
+                } @empty {
+                  <span class="muted">No products</span>
                 }
               </td>
-              <td><span class="adm-badge adm-badge--type">{{ o.orderType }}</span></td>
-              <td><span class="adm-badge adm-badge--type">{{ orderSource(o) }}</span>@if (o.eventName) { <div class="muted">{{ o.eventName }}</div> }</td>
               <td class="num">{{ o.items.length }}</td>
               <td class="num">₹{{ o.pricing.total | number: '1.2-2' }}</td>
-              <td><span [class]="badgeClass(o.paymentStatus)">{{ o.paymentStatus }}</span></td>
-              <td><span [class]="badgeClass(o.orderStatus)">{{ o.orderStatus }}</span></td>
+              <td><span class="adm-badge adm-badge--type"
+                [class.payment-method--upi]="o.paymentMethod === 'upi'"
+                [class.payment-method--cash]="o.paymentMethod === 'cash'">{{ paymentMethodLabel(o) }}</span></td>
+              <td class="nowrap">{{ o.createdAt | date: 'MMM d, y · h:mm a' }}</td>
+              <td>
+                <button type="button" class="btn btn--ghost btn--danger btn--sm"
+                  [disabled]="deletingId() !== null" [attr.aria-label]="'Permanently delete order ' + o.orderNumber"
+                  (click)="deleteOrder(o, $event)">
+                  {{ deletingId() === o._id ? 'Deleting…' : 'Delete' }}
+                </button>
+              </td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="9">
+              <td colspan="7">
                 <div class="adm-empty">
                   No orders match these filters.
                   @if (hasFilters) {
@@ -113,3 +118,21 @@
     }
   }
 </div>
+
+<dialog #deleteDialog class="adm-modal order-delete-dialog"
+  aria-labelledby="order-delete-title" aria-describedby="order-delete-message"
+  (cancel)="$event.preventDefault(); cancelDelete()">
+  <h3 id="order-delete-title">Permanently delete this order?</h3>
+  <p id="order-delete-message">
+    Are you sure you want to permanently delete order {{ pendingDelete()?.orderNumber }} and its saved payment record?
+    This cannot be undone. Deleting it will not issue a refund or change inventory.
+  </p>
+  <div class="adm-modal__actions">
+    <button type="button" class="btn btn--ghost btn--sm" autofocus
+      [disabled]="deletingId() !== null" (click)="cancelDelete()">No, keep it</button>
+    <button type="button" class="btn btn--danger btn--sm"
+      [disabled]="deletingId() !== null" (click)="confirmDelete()">
+      {{ deletingId() ? 'Deleting…' : 'Yes, delete permanently' }}
+    </button>
+  </div>
+</dialog>

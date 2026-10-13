@@ -1,6 +1,7 @@
 const Category = require('../models/Category');
 const Product = require('../models/Product');
 const ApiError = require('../utils/ApiError');
+const { priceProducts } = require('./recipe-product.service');
 
 // Idempotent migration: existing strings are retained as fallbacks; products
 // gain stable references so a rename never requires a multi-document rewrite.
@@ -36,7 +37,7 @@ async function resolveCategory(group, name) {
 async function decorateProducts(products) {
   const categories = await Category.find({ _id: { $in: products.map((p) => p.categoryId).filter(Boolean) } }).lean();
   const byId = new Map(categories.map((c) => [String(c._id), c]));
-  return products.map((p) => {
+  return (await priceProducts(products)).map((p) => {
     const row = p.toObject ? p.toObject() : p;
     const category = byId.get(String(row.categoryId));
     return { ...row, category: category?.name || row.category, categoryOrder: category?.displayOrder ?? Number.MAX_SAFE_INTEGER };

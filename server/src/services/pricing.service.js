@@ -2,6 +2,7 @@ const Product = require('../models/Product');
 const Coupon = require('../models/Coupon');
 const { getStoreSettings } = require('./store-settings.service');
 const ApiError = require('../utils/ApiError');
+const { linkedCosts } = require('./recipe-product.service');
 
 const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
 
@@ -44,7 +45,7 @@ async function resolveCoupon(couponCode, subtotal) {
  * Tax applies to the discounted subtotal.
  *
  * @param {Array<{productId: string, quantity: number}>} items
- * @param {{ orderType?: string, couponCode?: string }} options
+ * @param {{ orderType?: string, couponCode?: string, settings?: object | Promise<object> }} options
  * @returns items, pricing, and the resolved coupon doc (null when no code).
  */
 async function priceCart(items, { orderType, couponCode, settings: suppliedSettings } = {}) {
@@ -53,21 +54,28 @@ async function priceCart(items, { orderType, couponCode, settings: suppliedSetti
   }
 
   const ids = items.map((i) => i.productId);
-  const products = await Product.find({ _id: { $in: ids } });
+  const [products, costs, settings] = await Promise.all([
+    Product.find({ _id: { $in: ids } }),
+    linkedCosts(ids),
+    suppliedSettings || getStoreSettings(),
+  ]);
   const byId = new Map(products.map((p) => [p._id.toString(), p]));
 
   const lineItems = items.map((item) => {
     const product = byId.get(String(item.productId));
     if (!product || product.archived) throw ApiError.badRequest(`Product not found: ${item.productId}`);
     if (!product.available) throw ApiError.conflict(`"${product.name}" is currently unavailable`);
+    const recipe = costs.get(String(product._id));
+    if (recipe?.error) throw ApiError.conflict(`"${product.name}": ${recipe.error}`);
+    const price = recipe?.sellingPrice ?? product.price;
 
     const quantity = Math.max(1, Math.floor(Number(item.quantity) || 0));
     return {
       product: product._id,
       name: product.name,
-      price: product.price,
+      price,
       quantity,
-      lineTotal: round2(product.price * quantity),
+      lineTotal: round2(price * quantity),
     };
   });
 
@@ -79,7 +87,6 @@ async function priceCart(items, { orderType, couponCode, settings: suppliedSetti
     ({ coupon, discount } = await resolveCoupon(couponCode, subtotal));
   }
 
-  const settings = suppliedSettings || await getStoreSettings();
   const taxable = round2(subtotal - discount);
   const tax = round2(taxable * settings.taxRate);
   const deliveryFee = orderType === 'delivery' ? settings.deliveryFee : 0;
@@ -87,6 +94,9 @@ async function priceCart(items, { orderType, couponCode, settings: suppliedSetti
 
   return {
     items: lineItems,
+    recipeCostSnapshot: [...costs.entries()].filter(([, cost]) => !cost.error).map(([product, cost]) => ({
+      product, unitCost: cost.unitCost, recipeId: cost.recipeId, recipeVersion: cost.version,
+    })),
     coupon,
     pricing: {
       subtotal,

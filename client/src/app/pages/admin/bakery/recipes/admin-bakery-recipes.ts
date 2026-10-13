@@ -3,7 +3,6 @@ import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { CommonModule, CurrencyPipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
 import { BakeryService } from '../../../../core/services/bakery.service';
 import {
   BakeryRecipe,
@@ -11,6 +10,8 @@ import {
   RecipeComponent,
 } from '../../../../core/models/bakery.model';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ActivatedRoute } from '@angular/router';
+import { AdminProductListState } from '../../shared/admin-product-list-state';
 
 @Component({
   selector: 'app-admin-bakery-recipes',
@@ -22,6 +23,12 @@ import { ToastService } from '../../../../core/services/toast.service';
 export class AdminBakeryRecipes implements OnInit {
   private bakery = inject(BakeryService);
   private http = inject(HttpClient);
+  private route = inject(ActivatedRoute);
+  private requestedRecipeOpened = false;
+  private productList = inject(AdminProductListState);
+  priceDrafts = signal<Record<string, number | null>>({});
+  savingPriceId = signal<string | null>(null);
+  private priceRequest?: Subscription;
   previewResult = signal<any>(null);
   previewError = signal('');
   revisions = signal<any[]>([]);
@@ -33,6 +40,7 @@ export class AdminBakeryRecipes implements OnInit {
     inject(DestroyRef).onDestroy(() => {
       this.previewRequest?.unsubscribe();
       this.recipesRequest?.unsubscribe();
+      this.priceRequest?.unsubscribe();
       clearTimeout(this.previewTimer);
     });
   }
@@ -89,10 +97,17 @@ export class AdminBakeryRecipes implements OnInit {
     this.historyRecipe.set(null);
   }
   private toast = inject(ToastService);
-  private router = inject(Router);
 
   recipes = signal<BakeryRecipe[]>([]);
   materials = signal<BakeryMaterial[]>([]);
+
+  materialBackground(name: string): string {
+    const firstLetter = name.trim().charAt(0).toUpperCase();
+    if (!/^[A-Z]$/.test(firstLetter)) return '#f0ece5';
+    const hue = Math.round(((firstLetter.charCodeAt(0) - 65) * 137.508) % 360);
+    return `hsl(${hue}, 65%, 90%)`;
+  }
+
   loading = signal<boolean>(false);
   saving = signal(false);
   editingRecipe = signal<Partial<BakeryRecipe> | null>(null);
@@ -114,7 +129,9 @@ export class AdminBakeryRecipes implements OnInit {
   fetchData() {
     this.loading.set(true);
     this.bakery.getMaterials().subscribe({
-      next: (res) => this.materials.set(res.materials),
+      next: (res) => this.materials.set([...res.materials].sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true }),
+      )),
     });
     this.fetchRecipes();
   }
@@ -126,6 +143,11 @@ export class AdminBakeryRecipes implements OnInit {
         this.recipes.set(res.recipes);
         this.mergeRecipeCategories(res.recipes);
         this.loading.set(false);
+        const requested = this.route.snapshot.queryParamMap.get('recipeId');
+        if (requested && !this.requestedRecipeOpened) {
+          const recipe = res.recipes.find((r) => r._id === requested);
+          if (recipe) { this.requestedRecipeOpened = true; this.editRecipe(recipe); }
+        }
       },
       error: () => this.loading.set(false),
     });
@@ -151,10 +173,6 @@ export class AdminBakeryRecipes implements OnInit {
     return this.recipes().filter((recipe) => recipe.isSubRecipe && recipe._id !== excludeId);
   }
 
-  openCalculator(recipe: BakeryRecipe) {
-    this.router.navigate(['/admin/bakery/calculator'], { queryParams: { recipeId: recipe._id } });
-  }
-
   startNewRecipe() {
     this.resetCategoryEditor();
     this.editingRecipe.set({
@@ -168,6 +186,7 @@ export class AdminBakeryRecipes implements OnInit {
       piecesPerBatch: 1,
       finishedWeightGrams: 500,
       targetMarkupPercent: 50,
+      manualSellingPricePerPiece: null,
       instructions: [''],
       components: [
         {
@@ -184,7 +203,10 @@ export class AdminBakeryRecipes implements OnInit {
 
   editRecipe(recipe: BakeryRecipe) {
     this.resetCategoryEditor();
-    this.editingRecipe.set({ ...JSON.parse(JSON.stringify(recipe)), category: this.displayCategory(recipe) });
+    this.editingRecipe.set({
+      ...JSON.parse(JSON.stringify(recipe)), category: this.displayCategory(recipe),
+      manualSellingPricePerPiece: this.hasAdminPrice(recipe) ? this.savedPiecePrice(recipe) : null,
+    });
     this.preview();
   }
 
@@ -350,10 +372,14 @@ export class AdminBakeryRecipes implements OnInit {
         next: (res) => {
           this.saving.set(false);
           this.toast.success('Recipe updated');
+          this.productList.clear();
+          this.clearPriceDraft(res.recipe._id);
           this.editingRecipe.set(null);
           this.upsertRecipe(res.recipe);
-          // An edited sub-recipe can change the costs of its parent recipes.
-          this.fetchRecipes();
+          // Only recipes that use this recipe can have changed costs.
+          if (this.recipes().some((parent) => [
+            ...parent.components, ...(parent.options || []).flatMap((option) => option.components || []),
+          ].some((component) => component.subRecipeId === res.recipe._id))) this.fetchRecipes();
         },
         error: () => { this.saving.set(false); this.toast.error('Failed to update recipe'); },
       });
@@ -364,11 +390,69 @@ export class AdminBakeryRecipes implements OnInit {
           this.toast.success('Recipe created');
           this.editingRecipe.set(null);
           this.upsertRecipe(res.recipe);
-          this.fetchRecipes();
         },
         error: () => { this.saving.set(false); this.toast.error('Failed to create recipe'); },
       });
     }
+  }
+
+  private savedPiecePrice(recipe: BakeryRecipe): number {
+    return Number(Number(recipe.sellingPricePerPiece ?? 0).toFixed(2));
+  }
+
+  piecePrice(recipe: BakeryRecipe): number | null {
+    const drafts = this.priceDrafts();
+    return Object.hasOwn(drafts, recipe._id) ? drafts[recipe._id] : this.savedPiecePrice(recipe);
+  }
+
+  setPiecePrice(recipe: BakeryRecipe, value: number | null) {
+    this.priceDrafts.update((drafts) => ({ ...drafts, [recipe._id]: value }));
+  }
+
+  priceChanged(recipe: BakeryRecipe): boolean {
+    return this.piecePrice(recipe) !== this.savedPiecePrice(recipe);
+  }
+
+  hasAdminPrice(recipe: BakeryRecipe): boolean {
+    return Number(recipe.manualSellingPricePerPiece ?? 0) > 0 || Number(recipe.manualSellingPrice ?? 0) > 0;
+  }
+
+  savePiecePrice(recipe: BakeryRecipe, useSuggestion = false) {
+    if (this.savingPriceId() || recipe.costingError) return;
+    const price = this.piecePrice(recipe);
+    if (!useSuggestion && (!Number.isFinite(price) || Number(price) <= 0 ||
+      Math.abs(Number(price) * 100 - Math.round(Number(price) * 100)) > 0.000001)) {
+      this.toast.error('Enter a selling price above ₹0, with at most two decimal places');
+      return;
+    }
+    this.savingPriceId.set(recipe._id);
+    this.priceRequest = this.bakery.updateRecipeSellingPrice(recipe._id, {
+      version: Number(recipe.version), pricePerPiece: useSuggestion ? null : price,
+    }).subscribe({
+      next: (res) => {
+        this.recipes.update((recipes) => recipes.map((item) => item._id === res.recipe._id ? res.recipe : item));
+        this.clearPriceDraft(recipe._id);
+        this.productList.clear();
+        this.savingPriceId.set(null);
+        this.toast.success(recipe.productId ? 'Selling price saved and linked product updated' : 'Selling price saved');
+      },
+      error: (e) => {
+        this.savingPriceId.set(null);
+        this.toast.error(e.error?.message || 'Could not save selling price');
+        if (e.status === 409) {
+          this.clearPriceDraft(recipe._id);
+          this.fetchRecipes();
+        }
+      },
+    });
+  }
+
+  private clearPriceDraft(id: string) {
+    this.priceDrafts.update((drafts) => {
+      const remaining = { ...drafts };
+      delete remaining[id];
+      return remaining;
+    });
   }
 
   private upsertRecipe(recipe: BakeryRecipe) {

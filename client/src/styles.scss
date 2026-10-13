@@ -214,6 +214,22 @@ button { font-family: inherit; cursor: pointer; }
 .btn--ghost { background: transparent; color: var(--cocoa); border: 1.5px solid var(--line); }
 .btn--ghost:hover { border-color: var(--caramel); background: var(--white); }
 
+/* Keep destructive actions recognizable across page-specific button styles. */
+:root .btn.btn--danger {
+  color: var(--danger);
+  border: 1px solid var(--danger);
+  background: rgba(192, 57, 43, 0.08);
+}
+:root .btn.btn--danger:hover:not(:disabled) {
+  color: #fff;
+  border-color: var(--danger);
+  background: var(--danger);
+}
+:root .btn.btn--danger:focus-visible {
+  outline: 3px solid var(--danger);
+  outline-offset: 2px;
+}
+
 .btn--ghost-dark { background: rgba(255, 255, 255, 0.05); color: var(--d-text); border: 1.5px solid rgba(247, 236, 220, 0.28); backdrop-filter: blur(6px); }
 .btn--ghost-dark:hover { border-color: var(--gold); color: var(--gold-bright); background: rgba(242, 197, 128, 0.08); }
 
@@ -412,7 +428,7 @@ button { font-family: inherit; cursor: pointer; }
   font-size: 0.92rem;
   letter-spacing: 0.02em;
 }
-.adm-side__brand img { width: 26px; height: 26px; }
+.adm-side__brand img { width: 56px; height: auto; flex-shrink: 0; border-radius: 6px; }
 .adm-side__brand small {
   display: block;
   font-family: var(--font-body);

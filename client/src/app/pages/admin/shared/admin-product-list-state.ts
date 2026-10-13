@@ -7,6 +7,7 @@ export class AdminProductListState {
   private key = '';
   private products: Product[] | null = null;
   private savedAt = 0;
+  clear() { this.products = null; this.savedAt = 0; }
 
   get(key: string): Product[] | null {
     return this.key === key && Date.now() - this.savedAt < 30_000

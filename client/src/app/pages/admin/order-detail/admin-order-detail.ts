@@ -1,6 +1,8 @@
-import { Component, effect, inject, input, signal } from '@angular/core';
+import { Component, DestroyRef, effect, inject, input, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subscription } from 'rxjs';
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UpiPaymentQr } from '../shared/upi-payment-qr';
 import { AdminService } from '../../../core/services/admin.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -10,6 +12,7 @@ import { ConfirmModal } from '../shared/confirm-modal';
 import { NEXT_LABEL, NEXT_STATUS, badgeClass, orderSource } from '../shared/admin-ui';
 
 type ModalKind = 'cancel' | 'refund' | 'cash' | 'manual' | null;
+type CreatedOrderDetail = { createdOrder: AdminOrder; createdPayment: AdminPayment };
 
 @Component({
   selector: 'app-admin-order-detail',
@@ -23,6 +26,10 @@ export class AdminOrderDetail {
   private admin = inject(AdminService);
   private toast = inject(ToastService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private destroyRef = inject(DestroyRef);
+  private detailRequest?: Subscription;
+  private createdDetail?: CreatedOrderDetail;
   protected readonly addAnother = this.route.snapshot.queryParamMap.get('next') === '1';
   protected readonly nextSaleParams = { source: this.route.snapshot.queryParamMap.get('source'), eventName: this.route.snapshot.queryParamMap.get('eventName') };
 
@@ -37,6 +44,12 @@ export class AdminOrderDetail {
   protected readonly nextLabel = NEXT_LABEL;
 
   constructor() {
+    const navigation = this.router.currentNavigation();
+    // Reuse only the fresh save response for this navigation. Refreshes and
+    // browser Back still load the current order from the server.
+    if (navigation?.trigger === 'imperative' && navigation.previousNavigation) {
+      this.createdDetail = navigation.extras.state as CreatedOrderDetail | undefined;
+    }
     effect(() => {
       this.id();
       this.load();
@@ -44,8 +57,17 @@ export class AdminOrderDetail {
   }
 
   protected load(silent = false) {
+    this.detailRequest?.unsubscribe();
+    const created = this.createdDetail;
+    this.createdDetail = undefined;
+    if (created?.createdOrder?._id === this.id() && created.createdPayment) {
+      this.order.set(created.createdOrder);
+      this.payment.set(created.createdPayment);
+      this.loading.set(false);
+      return;
+    }
     if (!silent) this.loading.set(true);
-    this.admin.order(this.id()).subscribe({
+    this.detailRequest = this.admin.order(this.id()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.order.set(res.order);
         this.payment.set(res.payment);
@@ -92,7 +114,6 @@ export class AdminOrderDetail {
       next: (updated) => {
         this.applyOrder(updated);
         this.busy.set(false);
-        this.load(true);
       },
       error: (err) => {
         this.busy.set(false);
@@ -113,7 +134,6 @@ export class AdminOrderDetail {
       this.busy.set(false);
       this.modal.set(null);
       this.toast.success(message);
-      this.load(true);
     };
     const fail = (err: { error?: { message?: string } }) => {
       this.busy.set(false);

@@ -125,16 +125,80 @@
     background: var(--white);
   }
 
-  > div { min-width: 0; }
+  > div, > form { min-width: 0; }
   span, strong { display: block; }
   span { color: var(--muted); font-size: 0.7rem; }
   strong { color: var(--night); font-size: 0.98rem; overflow-wrap: anywhere; }
 }
 
+.recipe-price {
+  padding: 0.4rem 0.5rem;
+  border-radius: 6px;
+
+  &--cost {
+    background: #fff2e5;
+    border-left: 3px solid #a34b12;
+
+    span, strong { color: #8a3e10; }
+  }
+
+  &--sell {
+    background: #eaf6ee;
+    border-left: 3px solid #257348;
+
+    span, strong { color: #1c623b; }
+  }
+}
+
+.recipe-markup {
+  position: relative;
+  flex: 0 0 auto;
+  padding: 0.25rem 0.45rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--night);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: help;
+
+  &__tooltip {
+    position: absolute;
+    z-index: 10;
+    top: calc(100% + 0.35rem);
+    right: 0;
+    width: max-content;
+    max-width: 220px;
+    padding: 0.4rem 0.55rem;
+    border-radius: 6px;
+    background: var(--night);
+    color: var(--cream);
+    box-shadow: var(--shadow-sm);
+    font-size: 0.7rem;
+    font-weight: 500;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  &:hover &__tooltip,
+  &:focus &__tooltip {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+  }
+}
+
 .card-actions {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 0.35rem;
+  grid-template-columns: auto auto;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
 
   .btn {
     width: 100%;
@@ -142,6 +206,59 @@
     white-space: normal;
     line-height: 1.2;
   }
+}
+
+.card-price-editor {
+  min-width: 0;
+
+  > label {
+    display: block;
+    margin-bottom: 0.2rem;
+    color: #1c623b;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+
+  &__input {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.3rem;
+
+    .input {
+      width: 100%;
+      min-width: 0;
+      padding: 0.3rem 0.4rem;
+      border-color: #b5d6bf;
+      background: rgba(255, 255, 255, 0.8);
+      color: #1c623b;
+      font-size: 0.98rem;
+      font-weight: 700;
+    }
+    .btn { padding: 0.35rem 0.45rem; }
+  }
+
+  &__hint {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.2rem 0.4rem;
+    margin-top: 0.25rem;
+    color: var(--muted);
+    font-size: 0.65rem;
+  }
+}
+
+.price-reset {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--choco);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+  &:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 }
 
 .recipe-icon-action {

@@ -41,4 +41,4 @@ form { padding-bottom: 110px; }
   .sale-actions { display: none; }
 }
 .sale-field-error { color: var(--danger, #a52b20); }
-.input.ng-touched.ng-invalid { border-color: var(--danger, #a52b20); }
+.input.ng-touched.ng-invalid, .select.ng-touched.ng-invalid { border-color: var(--danger, #a52b20); }

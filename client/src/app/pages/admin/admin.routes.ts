@@ -9,7 +9,8 @@ export const ADMIN_ROUTES: Routes = [
     children: [
       { path: 'categories', loadComponent: () => import('./categories/admin-categories').then((m) => m.AdminCategories), title: 'Categories — SSS Admin' },
       { path: 'settings', loadComponent: () => import('./settings/admin-settings').then((m) => m.AdminSettings), title: 'Store settings — SSS Admin' },
-      { path: '', loadComponent: () => import('./dashboard/admin-dashboard').then((m) => m.AdminDashboard), title: 'Dashboard — SSS Admin' },
+      { path: '', redirectTo: 'bakery/recipes', pathMatch: 'full' },
+      { path: 'dashboard', loadComponent: () => import('./dashboard/admin-dashboard').then((m) => m.AdminDashboard), title: 'Dashboard — SSS Admin' },
       { path: 'queue', loadComponent: () => import('./queue/admin-queue').then((m) => m.AdminQueue), title: 'Live queue — SSS Admin' },
       { path: 'prep', loadComponent: () => import('./prep/admin-prep').then((m) => m.AdminPrep), title: 'Prep sheet — SSS Admin' },
       { path: 'qr', loadComponent: () => import('./qr/admin-qr').then((m) => m.AdminQr), title: 'Table QRs — SSS Admin' },
@@ -33,6 +34,7 @@ export const ADMIN_ROUTES: Routes = [
       { path: 'bakery/purchasing', loadComponent: () => import('./bakery/purchasing/admin-bakery-purchasing').then(m => m.AdminBakeryPurchasing), title: 'Purchasing — Bakery Operations' },
       { path: 'bakery/calculator', loadComponent: () => import('./bakery/calculator/admin-bakery-calculator').then((m) => m.AdminBakeryCalculator), title: '⚡ Calculator — Bakery Operations' },
       { path: 'bakery/recipes', loadComponent: () => import('./bakery/recipes/admin-bakery-recipes').then((m) => m.AdminBakeryRecipes), title: '📜 Recipes — Bakery Operations' },
+      { path: 'bakery/product-mapping', loadComponent: () => import('./bakery/product-mapping/admin-product-mapping').then((m) => m.AdminProductMapping), title: 'Product mapping — Bakery Operations' },
       { path: 'bakery/materials', loadComponent: () => import('./bakery/materials/admin-bakery-materials').then((m) => m.AdminBakeryMaterials), title: '📦 Materials — Bakery Operations' },
       { path: 'bakery/inventory', loadComponent: () => import('./bakery/inventory/admin-bakery-inventory').then((m) => m.AdminBakeryInventory), title: '📊 Stock & Shortages — Bakery Operations' },
       { path: 'bakery/waste', loadComponent: () => import('./bakery/waste/admin-bakery-waste').then((m) => m.AdminBakeryWaste), title: '🗑️ Waste Tracker — Bakery Operations' },

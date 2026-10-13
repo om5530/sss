@@ -161,6 +161,11 @@
               Cancel plan
             </button>
           }
+          @if (s.status !== 'completed' && !s.actual) {
+            <button type="button" class="btn btn--outline btn--danger" [disabled]="busy()" (click)="deletePlan(s)">
+              Delete permanently
+            </button>
+          }
         </div>
         <details>
           <summary>Ingredients and packaging · saved assumptions</summary>

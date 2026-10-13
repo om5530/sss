@@ -34,6 +34,7 @@ export class AdminProducts {
   protected readonly busy = signal(false);
   protected readonly selectedIds = signal<Set<string>>(new Set());
   protected readonly bulkArchiveOpen = signal(false);
+  protected readonly resetStockOpen = signal(false);
   protected readonly selectableProducts = computed(() => this.products().filter((p) => !p.archived));
   protected readonly allSelected = computed(() =>
     this.selectableProducts().length > 0 && this.selectableProducts().every((p) => this.selectedIds().has(p._id)),
@@ -46,6 +47,24 @@ export class AdminProducts {
       if (selected) next.add(product._id);
       else next.delete(product._id);
       return next;
+    });
+  }
+
+  protected resetStock() {
+    if (this.busy()) return;
+    clearTimeout(this.searchTimer);
+    this.listRequest?.unsubscribe();
+    this.busy.set(true);
+    this.admin.resetProductStock().subscribe({
+      next: (result) => {
+        this.busy.set(false);
+        this.resetStockOpen.set(false);
+        this.productList.clear();
+        this.products.set([]);
+        this.fetch();
+        this.toast.success(`Today's stock reset to 0 for ${result.count} products.`);
+      },
+      error: (err) => { this.busy.set(false); this.toast.error(err.error?.message || 'Could not reset stock. Try again.'); },
     });
   }
 

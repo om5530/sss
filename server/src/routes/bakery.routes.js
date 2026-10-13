@@ -1,5 +1,6 @@
 const express = require('express');
 const ctrl = require('../controllers/bakery.controller');
+const mapping = require('../controllers/product-mapping.controller');
 const { requireAuth, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
@@ -19,10 +20,13 @@ router.patch('/materials/:id', ctrl.updateMaterial);
 router.delete('/materials/:id', ctrl.deleteMaterial);
 
 // Recipes
+router.get('/product-mappings', mapping.list);
+router.patch('/product-mappings/:id', mapping.save);
 router.get('/recipes', ctrl.getRecipes);
 router.get('/recipes/:id', ctrl.getRecipeById);
 router.post('/recipes', ctrl.createRecipe);
 router.patch('/recipes/:id', ctrl.updateRecipe);
+router.patch('/recipes/:id/selling-price', ctrl.updateRecipeSellingPrice);
 router.delete('/recipes/:id', ctrl.deleteRecipe);
 
 // Calculator & Simulation
@@ -31,6 +35,7 @@ router.post('/simulate/multi', ctrl.simulateMultiProduct);
 router.post('/simulate/draft', ctrl.previewRecipe);
 router.get('/costing-sheets', ctrl.getCostingSheets);
 router.post('/costing-sheets', ctrl.saveCostingSheet);
+router.delete('/costing-sheets/:id', ctrl.deleteSheet);
 router.post('/costing-sheets/:id/cancel', ctrl.cancelSheet);
 router.get('/costing-sheets/:id/recalculate', ctrl.recalculateSheet);
 router.post('/costing-sheets/:id/complete', ctrl.completeProduction);

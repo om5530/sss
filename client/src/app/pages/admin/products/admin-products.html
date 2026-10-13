@@ -5,6 +5,8 @@
       <h1>Products</h1>
     </div>
     <div class="adm-head__actions">
+      <button type="button" class="btn btn--ghost btn--sm" [disabled]="busy() || loading()" (click)="resetStockOpen.set(true)">Reset today's stock to 0</button>
+      <a routerLink="/admin/bakery/product-mapping" class="btn btn--ghost btn--sm">Product mapping</a>
       <a routerLink="/admin/products/new" class="btn btn--gold btn--sm">+ New product</a>
     </div>
   </div>
@@ -59,6 +61,7 @@
             <th>Product</th>
             <th>Category</th>
             <th class="num">Price</th>
+            <th class="num">Today's stock</th>
             <th>Diet</th>
             <th>Available</th>
             <th>Featured</th>
@@ -88,6 +91,7 @@
               </td>
               <td>{{ p.category }}</td>
               <td class="num">₹{{ p.price | number: '1.0-2' }}</td>
+              <td class="num">{{ p.stockCount === null || p.stockCount === undefined ? 'Not tracked' : p.stockCount }}</td>
               <td><span class="diet diet--{{ p.dietary }}" [title]="p.dietary"></span></td>
               <td>
                 <label class="adm-switch" [attr.aria-label]="'Toggle availability for ' + p.name">
@@ -109,13 +113,25 @@
               </td>
             </tr>
           } @empty {
-            <tr><td colspan="9"><div class="adm-empty">No products match. Try clearing the filters.</div></td></tr>
+            <tr><td colspan="10"><div class="adm-empty">No products match. Try clearing the filters.</div></td></tr>
           }
         </tbody>
       </table>
     </div>
   }
 </div>
+
+@if (resetStockOpen()) {
+  <adm-confirm-modal
+    title="Reset today's stock for all products?"
+    message="Set today's stock to 0 for every product, including products hidden by filters? Products will be sold out until stock is added again. Prices and event preparation records stay unchanged."
+    confirmLabel="Reset stock to 0"
+    tone="danger"
+    [busy]="busy()"
+    (confirmed)="resetStock()"
+    (cancelled)="!busy() && resetStockOpen.set(false)"
+  />
+}
 
 @if (bulkArchiveOpen()) {
   <adm-confirm-modal

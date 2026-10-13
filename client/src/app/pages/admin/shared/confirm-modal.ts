@@ -33,7 +33,7 @@ import { FormsModule } from '@angular/forms';
           <button
             type="button"
             class="btn btn--sm"
-            [class.btn--accent]="tone() === 'danger'"
+            [class.btn--danger]="tone() === 'danger'"
             [class.btn--primary]="tone() !== 'danger'"
             [disabled]="busy() || (requireReason() && !reasonValue.trim())"
             (click)="confirmed.emit(reasonValue.trim())"

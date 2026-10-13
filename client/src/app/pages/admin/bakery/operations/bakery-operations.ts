@@ -137,6 +137,26 @@ export class BakeryOperations {
       notes: '',
     };
   }
+  deletePlan(s: any) {
+    if (this.busy()) return;
+    this.busy.set(true);
+    this.error.set('');
+    this.notice.set('');
+    this.http.delete(this.base + '/costing-sheets/' + s._id).subscribe({
+      next: () => {
+        this.sheets.update((sheets) => sheets.filter((sheet) => sheet._id !== s._id));
+        if (this.completing?.sheet._id === s._id) this.completing = null;
+        this.comparison = null;
+        this.history = null;
+        this.notice.set('Plan permanently deleted');
+        this.busy.set(false);
+      },
+      error: (e) => {
+        this.error.set(e.error?.message || 'Could not delete plan. Please retry.');
+        this.busy.set(false);
+      },
+    });
+  }
   complete() {
     this.post(
       '/costing-sheets/' + this.completing.sheet._id + '/complete',

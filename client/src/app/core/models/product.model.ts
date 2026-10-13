@@ -2,6 +2,7 @@ export type ProductGroup = 'bakery' | 'savoury';
 export type Dietary = 'veg' | 'non-veg' | 'egg';
 
 export interface Product {
+  recipeLinked?: boolean;
   _id: string;
   name: string;
   slug: string;

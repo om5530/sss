@@ -61,6 +61,10 @@
               <h3 class="recipe-name">{{ r.name }}</h3>
               <small class="recipe-yield">1 batch makes {{ r.piecesPerBatch }} pieces · {{ r.yieldQuantity }} {{ r.yieldUom }}</small>
             </div>
+            <span class="recipe-markup" tabindex="0" [attr.aria-label]="!r.costingError && r.actualMarkupPercent != null ? 'Actual markup: ' + (r.actualMarkupPercent | number: '1.0-2') + '%' : 'Actual markup unavailable'">
+              Markup @if (!r.costingError && r.actualMarkupPercent != null) { {{ r.actualMarkupPercent | number: '1.0-2' }}% } @else { — }
+              <span class="recipe-markup__tooltip" aria-hidden="true">The percentage added to cost: (selling price − cost) ÷ cost × 100. Updates after saving the selling price. Markup is unavailable when cost is zero.</span>
+            </span>
           </div>
           @if (r.costingError) {
             <p role="alert">{{ r.costingError }}</p>
@@ -68,12 +72,43 @@
 
           <div class="recipe-prices">
             <div class="recipe-prices__row">
-              <div><span>Cost / batch</span><strong>{{ r.totalBatchCost | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
-              <div><span>Sell / batch</span><strong>{{ r.sellingPricePerBatch | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
+              <div class="recipe-price recipe-price--cost"><span>Cost / batch</span><strong>{{ r.totalBatchCost | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
+              <div class="recipe-price recipe-price--sell"><span>Sell / batch</span><strong>{{ r.sellingPricePerBatch | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
             </div>
             <div class="recipe-prices__row recipe-prices__row--piece">
-              <div><span>Cost / piece</span><strong>{{ r.costPerPiece | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
-              <div><span>Sell / piece</span><strong>{{ r.sellingPricePerPiece | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
+              <div class="recipe-price recipe-price--cost"><span>Cost / piece</span><strong>{{ r.costPerPiece | currency: 'INR' : 'symbol' : '1.2-2' }}</strong></div>
+              <form class="card-price-editor recipe-price recipe-price--sell" (ngSubmit)="savePiecePrice(r)">
+                <label [for]="'sell-per-piece-' + r._id">Sell / piece (₹)</label>
+                <div class="card-price-editor__input">
+                  <input
+                    [id]="'sell-per-piece-' + r._id"
+                    class="input"
+                    type="number"
+                    inputmode="decimal"
+                    min="0.01"
+                    step="0.01"
+                    required
+                    name="pricePerPiece"
+                    [attr.aria-label]="'Sell per piece for ' + r.name"
+                    [ngModel]="piecePrice(r)"
+                    (ngModelChange)="setPiecePrice(r, $event)"
+                    [disabled]="!!savingPriceId() || !!r.costingError"
+                  />
+                  @if (priceChanged(r) || savingPriceId() === r._id) {
+                    <button type="submit" class="btn btn--accent btn--sm"
+                      [disabled]="!!savingPriceId() || !priceChanged(r) || !!r.costingError"
+                      [attr.aria-label]="'Save selling price for ' + r.name">
+                      {{ savingPriceId() === r._id ? 'Saving…' : 'Save' }}
+                    </button>
+                  }
+                </div>
+                <div class="card-price-editor__hint">
+                  <span>{{ hasAdminPrice(r) ? 'Admin price' : 'Suggested price' }}</span>
+                  @if (hasAdminPrice(r)) {
+                    <button type="button" class="price-reset" [disabled]="!!savingPriceId() || !!r.costingError" (click)="savePiecePrice(r, true)">Use suggestion</button>
+                  }
+                </div>
+              </form>
             </div>
           </div>
 
@@ -84,18 +119,17 @@
               Version history
             </button>
             -->
-            <button type="button" class="btn btn--accent btn--sm" (click)="openCalculator(r)">
-              Calculate batch
-            </button>
-            <button type="button" class="btn btn--outline btn--sm recipe-icon-action" (click)="editRecipe(r)" title="Edit formula" aria-label="Edit formula">
+            <button type="button" class="btn btn--outline btn--sm recipe-icon-action" [disabled]="!!savingPriceId()" (click)="editRecipe(r)" title="Edit formula" aria-label="Edit formula">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m4 20 4.2-1 10.4-10.4a2.1 2.1 0 0 0-3-3L5.2 16 4 20Z" stroke-linejoin="round" /><path d="m14.5 6.5 3 3" stroke-linecap="round" /></svg>
             </button>
+
             <button
               type="button"
               class="btn btn--ghost btn--danger btn--sm recipe-icon-action"
               (click)="deleteRecipe(r._id)"
               title="Archive recipe"
               aria-label="Archive recipe"
+              [disabled]="!!savingPriceId()"
             >
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 8h16v12H4z" stroke-linejoin="round" /><path d="M3 4h18v4H3zM9 13h6" stroke-linecap="round" stroke-linejoin="round" /></svg>
             </button>
@@ -209,8 +243,8 @@
           <input class="input" type="number" inputmode="decimal" min="0" step="any" [(ngModel)]="form.targetMarkupPercent" />
         </div>
         <div class="field">
-          <label class="label" for="batch-selling-price">Selling price for one batch (₹)</label>
-          <input id="batch-selling-price" class="input" type="number" inputmode="decimal" min="0" step="any" [(ngModel)]="form.manualSellingPrice" placeholder="Leave blank to use suggested price" />
+          <label class="label" for="piece-selling-price">Selling price per piece (₹)</label>
+          <input id="piece-selling-price" class="input" type="number" inputmode="decimal" min="0" step="0.01" [(ngModel)]="form.manualSellingPricePerPiece" placeholder="Leave blank to use suggested price" />
           <small>Leave blank or enter 0 to use the markup suggestion.</small>
         </div>
         <div class="field">
@@ -269,7 +303,7 @@
                       >
                         <option value="" disabled>Select Material…</option>
                         @for (m of materials(); track m._id) {
-                          <option [value]="m._id">{{ m.name }} ({{ m.type }})</option>
+                          <option [value]="m._id" [style.background-color]="materialBackground(m.name)" style="color: #30251d">{{ m.name }} ({{ m.type }})</option>
                         }
                       </select>
                     }
@@ -386,7 +420,7 @@
                       (ngModelChange)="onComponentMaterialChange(c, $event)"
                     >
                       @for (m of materials(); track m._id) {
-                        <option [value]="m._id">{{ m.name }}</option>
+                        <option [value]="m._id" [style.background-color]="materialBackground(m.name)" style="color: #30251d">{{ m.name }}</option>
                       }
                     </select></label
                   >

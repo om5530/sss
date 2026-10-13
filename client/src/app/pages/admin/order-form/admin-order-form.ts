@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -7,7 +7,7 @@ import { AdminService, UpiRecipient } from '../../../core/services/admin.service
 import { ToastService } from '../../../core/services/toast.service';
 import { Product } from '../../../core/models/product.model';
 import { CartQuote } from '../../../core/models/cart.model';
-import { ManualOrderPayload } from '../../../core/models/admin.model';
+import { EventSummary, ManualOrderPayload } from '../../../core/models/admin.model';
 
 interface SaleLine { product: Product; quantity: number }
 
@@ -24,7 +24,10 @@ export class AdminOrderForm {
   private route = inject(ActivatedRoute);
   private destroyRef = inject(DestroyRef);
   protected readonly products = signal<Product[]>([]);
-  protected readonly events = signal<string[]>([]);
+  protected readonly events = signal<Pick<EventSummary, 'eventName' | 'status'>[]>([]);
+  protected readonly eventsLoading = signal(true);
+  protected readonly eventsLoadFailed = signal(false);
+  protected readonly hasOpenEvents = computed(() => this.events().some((e) => e.status !== 'closed'));
   protected readonly lines = signal<SaleLine[]>([]);
   protected readonly quote = signal<CartQuote | null>(null);
   protected readonly loading = signal(true);
@@ -48,6 +51,7 @@ export class AdminOrderForm {
   protected showExtraDetails = false;
   protected selectedProduct = '';
   protected saveAnother = false;
+  private showPaymentQr = false;
   protected readonly retryPending = signal(false);
   private pendingPayload: ManualOrderPayload | null = null;
   private requestKey = crypto.randomUUID();
@@ -66,11 +70,27 @@ export class AdminOrderForm {
       next: (settings) => { this.recipients.set(settings.upiRecipients); this.upiRecipientId = settings.defaultUpiRecipientId; },
       error: () => this.error.set('Could not load UPI accounts. Refresh before accepting UPI payments.'),
     });
-    this.admin.eventSales().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (r) => this.events.set(r.events.map((e) => e.eventName)),
-      error: () => {},
-    });
+    this.loadEvents();
     this.destroyRef.onDestroy(() => clearTimeout(this.timer));
+  }
+
+  protected loadEvents() {
+    this.eventsLoading.set(true);
+    this.eventsLoadFailed.set(false);
+    this.admin.eventOptions().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (r) => {
+        const events = r.events.map(({ eventName, status }) => ({ eventName, status }))
+          .sort((a, b) => a.eventName.localeCompare(b.eventName));
+        this.events.set(events);
+        const latestEvent = r.events.filter((e) => e.lastSaleAt)
+          .sort((a, b) => Date.parse(b.lastSaleAt!) - Date.parse(a.lastSaleAt!))[0];
+        const preferredEvent = this.eventName || latestEvent?.eventName || '';
+        const selected = events.find((e) => e.eventName.toLowerCase() === preferredEvent.trim().replace(/\s+/g, ' ').toLowerCase() && e.status !== 'closed');
+        this.eventName = selected?.eventName || '';
+        this.eventsLoading.set(false);
+      },
+      error: () => { this.eventsLoadFailed.set(true); this.eventsLoading.set(false); },
+    });
   }
 
   protected loadProducts() {
@@ -162,9 +182,10 @@ export class AdminOrderForm {
     return this.lines().map((l) => ({ productId: l.product._id, quantity: l.quantity }));
   }
 
-  protected chooseSaveMode(addAnother: boolean): void {
+  protected chooseSaveMode(addAnother: boolean, showPaymentQr = false): void {
     // Returning false from a template click assignment cancels the submit action.
     this.saveAnother = addAnother;
+    this.showPaymentQr = showPaymentQr;
   }
 
   protected save(form: NgForm) {
@@ -179,6 +200,11 @@ export class AdminOrderForm {
         this.error.set(`Complete the required fields: ${[...new Set(invalid)].join(', ')}.`);
         return;
       }
+      if (this.source === 'event' && (this.eventsLoading() || this.eventsLoadFailed() ||
+        !this.events().some((e) => e.eventName === this.eventName && e.status !== 'closed'))) {
+        this.error.set('Choose an open event listed in Event sales before saving.');
+        return;
+      }
       if (!this.quote() || this.pricing()) { this.error.set('Add products and review the total before saving.'); return; }
       if (Number(this.quote()!.pricing.discount ?? 0) !== Number(this.discount ?? 0)) {
         this.reprice();
@@ -191,7 +217,8 @@ export class AdminOrderForm {
         requestKey: this.requestKey, expectedQuote: this.quote()!, items: this.itemsPayload(), discount: Number(this.discount ?? 0), source: this.source,
         eventName: this.source === 'event' ? this.eventName.trim() : undefined,
         customer: { name: this.customerName.trim(), phone: this.customerPhone.trim() }, orderType: this.orderType,
-        paymentMethod: this.paymentMethod, paymentStatus: this.paymentMethod === 'upi' || this.source === 'phone' ? 'pending' : 'paid', orderStatus: this.orderStatus,
+        paymentMethod: this.paymentMethod, paymentStatus: this.showPaymentQr ? 'pending' : 'paid',
+        orderStatus: this.showPaymentQr ? this.orderStatus : 'completed',
         upiRecipientId: this.paymentMethod === 'upi' ? this.upiRecipientId : undefined,
         tableNumber: this.orderType === 'dining' ? this.tableNumber : undefined,
         delivery: this.orderType === 'delivery' ? { ...this.delivery } : undefined, notes: this.notes.trim(),
@@ -200,19 +227,21 @@ export class AdminOrderForm {
     this.saving.set(true);
     this.error.set('');
     this.admin.createManualOrder(this.pendingPayload).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (order) => {
+      next: ({ order, payment }) => {
         this.saving.set(false);
         this.retryPending.set(false);
         this.pendingPayload = null;
         this.saved = true;
         this.toast.success(`${order.orderNumber} saved.`);
-        if (this.saveAnother && order.paymentMethod !== 'upi') {
+        if (this.saveAnother && order.paymentStatus === 'paid') {
           this.lines.set([]); this.quote.set(null); this.discount = 0; this.showExtraDetails = false;
           this.customerName = this.customerPhone = this.notes = this.tableNumber = '';
           this.delivery = { fullAddress: '', area: '', city: '', pincode: '', landmark: '' };
           this.requestKey = crypto.randomUUID(); this.saved = false; this.loadProducts();
-          if (this.source === 'event' && !this.events().includes(this.eventName.trim())) this.events.update((e) => [...e, this.eventName.trim()]);
-        } else this.router.navigate(['/admin/orders', order._id], { queryParams: this.saveAnother ? { next: '1', source: this.source, eventName: this.eventName } : {} });
+        } else this.router.navigate(['/admin/orders', order._id], {
+          queryParams: this.saveAnother ? { next: '1', source: this.source, eventName: this.eventName } : {},
+          state: payment ? { createdOrder: order, createdPayment: payment } : undefined,
+        });
       },
       error: (err) => {
         this.saving.set(false);

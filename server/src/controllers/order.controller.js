@@ -83,7 +83,7 @@ const createOrder = asyncHandler(async (req, res) => {
   const fulfilAt = resolveFulfilAt(req.body.fulfilAt, settings);
 
   // Re-price on the server; never trust client totals.
-  const { items: pricedItems, pricing, coupon } = await priceCart(items, { orderType, couponCode, settings });
+  const { items: pricedItems, pricing, coupon, recipeCostSnapshot } = await priceCart(items, { orderType, couponCode, settings });
   if (!quoteMatches(req.body.expectedQuote, pricedItems, pricing)) {
     return res.status(409).json({
       success: false,
@@ -122,6 +122,7 @@ const createOrder = asyncHandler(async (req, res) => {
       orderNumber: await generateOrderNumber(),
       user: req.user ? req.user._id : null,
       items: pricedItems,
+      recipeCostSnapshot,
       orderType,
       fulfilAt,
       ...fulfilment,
@@ -183,6 +184,7 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
 
   const order = await Order.findById(req.params.id);
   if (!order) throw ApiError.notFound('Order not found');
+  await require('../services/event-sales.service').assertEventOpen(order);
 
   const allowed = NEXT_STATUS[order.orderStatus] || [];
   if (!allowed.includes(status)) {

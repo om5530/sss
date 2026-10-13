@@ -45,6 +45,7 @@
 }
 
 .footer__brand .brand { display: inline-flex; align-items: center; gap: 0.6rem; }
+.footer__brand .brand__mark { width: 88px; height: auto; flex-shrink: 0; border-radius: 8px; }
 .footer__brand .brand__name {
   color: var(--d-text);
   font-family: var(--font-display);

@@ -27,12 +27,7 @@ async function create(overrides = {}) {
   const response = await json('POST', '/admin/orders', body);
   const result = await response.json();
   assert.equal(response.status, 201, JSON.stringify(result));
-  if ((body.paymentMethod || 'upi') === 'upi' && body.paymentStatus === 'paid') {
-    assert.equal(result.order.paymentStatus, 'pending');
-    const settled = await json('POST', '/admin/orders/' + result.order._id + '/settle-manual', {});
-    assert.equal(settled.status, 200);
-    return (await settled.json()).order;
-  }
+  assert.equal(result.order.paymentStatus, body.paymentStatus);
   return result.order;
 }
 
@@ -247,12 +242,60 @@ test('event reports group event names and split received payments, excluding unp
   assert.equal(event.orders, 6); assert.equal(event.paidOrders, 3); assert.equal(event.units, 6);
   assert.equal(event.revenue, 630); assert.equal(event.cash, 210); assert.equal(event.upi, 420); assert.equal(event.card, 0);
   assert.equal(event.pendingAmount, 210); assert.equal(report.products[0].quantity, 6); assert.equal(report.products[0].subtotal, 600);
+  assert.equal(event.cost, null); assert.equal(report.products[0].cost, null);
+  assert.equal(event.profit, null);
   const list = await (await json('GET', '/admin/orders?source=event&eventName=Annual%20Fair')).json();
   assert.equal(list.total, 6); assert.ok(list.orders.some((o) => o._id === cash._id));
   assert.equal((await json('POST', '/admin/orders/' + due._id + '/settle-manual', {})).status, 200);
   const updated = await (await json('GET', '/admin/reports/events?eventName=Annual%20Fair')).json();
   assert.equal(updated.events[0].revenue, 840); assert.equal(updated.events[0].pendingAmount, 0);
   assert.equal(updated.products[0].quantity, 8);
+});
+
+test('event costs use linked recipes and paid units within the selected event', async () => {
+  const Recipe = require('../src/models/BakeryRecipe');
+  const recipe = await Recipe.create({ name: 'Brownie recipe', productId: product._id, overheadPerBatch: '12.345' });
+  try {
+    await create({ eventName: 'Cost Fair', paymentMethod: 'cash' });
+    await create({ eventName: 'Cost Fair', paymentStatus: 'pending' });
+    await create({ eventName: 'Other Cost Fair', paymentMethod: 'cash' });
+    const report = await (await json('GET', '/admin/reports/events?eventName=Cost%20Fair')).json();
+    assert.equal(report.events.length, 1);
+    assert.equal(report.events[0].units, 2);
+    assert.equal(report.events[0].cost, 24.69);
+    assert.equal(report.events[0].profit, 14.2);
+    assert.equal(report.products[0].quantity, 2);
+    assert.equal(report.products[0].cost, 24.69);
+    assert.ok(report.eventNames.includes('Other Cost Fair'));
+    assert.equal(report.events[0].costEstimated, false);
+    await Recipe.updateOne({ _id: recipe._id }, { $set: { overheadPerBatch: '20' } });
+    const preserved = await (await json('GET', '/admin/reports/events?eventName=Cost%20Fair')).json();
+    assert.equal(preserved.events[0].cost, 24.69);
+    assert.equal(preserved.events[0].profit, report.events[0].profit);
+    assert.equal(preserved.products[0].cost, 24.69);
+    await create({ eventName: 'Cost Fair', paymentMethod: 'cash' });
+    const mixed = await (await json('GET', '/admin/reports/events?eventName=Cost%20Fair')).json();
+    assert.equal(mixed.events[0].cost, 64.69);
+    assert.equal(mixed.events[0].profit, 37.2);
+  } finally { await Recipe.deleteOne({ _id: recipe._id }); }
+});
+
+test('event profit preserves losses and break-even amounts', async () => {
+  for (const [eventName, unitCost, expectedProfit] of [
+    ['Profit loss fair', '105.55', -1.1], ['Profit break-even fair', '105', 0],
+  ]) {
+    await Order.create({ orderNumber: `PROFIT-${crypto.randomUUID()}`, source: 'event', eventName,
+      orderType: 'takeaway', paymentMethod: 'cash', paymentStatus: 'paid', orderStatus: 'completed',
+      items: [{ product: product._id, name: product.name, price: 100, quantity: 2, lineTotal: 200 }],
+      pricing: { subtotal: 200, tax: 10, total: 210 },
+      recipeCostSnapshot: [{ product: product._id, unitCost }],
+    });
+    const response = await json('GET', `/admin/reports/events?eventName=${encodeURIComponent(eventName)}`);
+    const report = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(report.events[0].profit, expectedProfit);
+    assert.equal(report.events[0].costEstimated, false);
+  }
 });
 
 test('simultaneous sales cannot oversell tracked stock and duplicate submissions do not persist twice', async () => {
@@ -267,7 +310,7 @@ test('simultaneous sales cannot oversell tracked stock and duplicate submissions
 });
 
 test('personal UPI QR uses saved total and default Harshita account without marking payment received', async () => {
-  const body = await payload({ orderType: 'delivery', customer: { name: 'QR Customer', phone: '9876543210' },
+  const body = await payload({ paymentStatus: 'pending', orderType: 'delivery', customer: { name: 'QR Customer', phone: '9876543210' },
     delivery: { fullAddress: 'Test Road', area: 'Dahisar', city: 'Mumbai', pincode: '400068' } });
   const created = await json('POST', '/admin/orders', body);
   assert.equal(created.status, 201);
@@ -288,6 +331,26 @@ test('personal UPI QR uses saved total and default Harshita account without mark
   assert.equal((await Payment.findOne({ order: order._id })).status, 'requires_payment');
   assert.equal((await json('POST', '/admin/orders/' + order._id + '/settle-manual', {})).status, 200);
   assert.equal((await json('GET', '/admin/orders/' + order._id + '/upi-qr')).status, 409);
+});
+
+test('saving received cash or UPI records a paid completed order and retries do not duplicate payment', async () => {
+  for (const paymentMethod of ['cash', 'upi']) {
+    const body = await payload({ paymentMethod, paymentStatus: 'paid', orderStatus: 'completed' });
+    const response = await json('POST', '/admin/orders', body);
+    assert.equal(response.status, 201);
+    const order = (await response.json()).order;
+    assert.equal(order.paymentStatus, 'paid');
+    assert.equal(order.orderStatus, 'completed');
+    const payment = await Payment.findOne({ order: order._id });
+    assert.equal(payment.status, 'succeeded');
+    assert.equal(payment.method, paymentMethod);
+    assert.equal((await json('POST', '/admin/orders', body)).status, 200);
+    assert.equal(await Payment.countDocuments({ order: order._id }), 1);
+    assert.equal((await json('POST', '/admin/orders/' + order._id + '/settle-manual', {})).status, 409);
+    if (paymentMethod === 'upi') {
+      assert.equal((await json('GET', '/admin/orders/' + order._id + '/upi-qr')).status, 409);
+    }
+  }
 });
 
 test('UPI recipient selection and saved account survive configuration changes; invalid settings are rejected', async () => {

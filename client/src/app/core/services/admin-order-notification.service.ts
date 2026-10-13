@@ -326,8 +326,8 @@ export class AdminOrderNotificationService {
 
       new Notification(`🚨 New Order #${order.orderNumber}`, {
         body: `${typeLabel} • ${totalAmount} • ${itemsCount} ${itemsCount === 1 ? 'item' : 'items'}`,
-        icon: '/icons/golden-batch-icon-192.png',
-        badge: '/icons/golden-batch-icon-192.png',
+        icon: '/icons/golden-batch-icon-192-v3.png',
+        badge: '/icons/golden-batch-icon-192-v3.png',
         tag: `order-${order._id}`,
         requireInteraction: true,
       });

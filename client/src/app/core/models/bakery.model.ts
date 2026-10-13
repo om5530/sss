@@ -47,6 +47,7 @@ export interface RecipeComponent {
 }
 
 export interface BakeryRecipe {
+  productId?: string | null;
   options?: { name: string; components: RecipeComponent[] }[];
   overheadPerBatch?: number;
   expectedLossPercent?: number;
@@ -72,14 +73,24 @@ export interface BakeryRecipe {
   targetMarkupPercent: number;
   suggestedSellingPrice: number;
   manualSellingPrice?: number;
+  manualSellingPricePerPiece?: number | null;
   sellingPricePerBatch?: number;
   costPerPiece?: number;
   sellingPricePerPiece?: number;
+  actualMarginPercent?: number | null;
+  actualMarkupPercent?: number | null;
   instructions?: string[];
   notes?: string;
   isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface ProductRecipeMapping {
+  products: { _id: string; name: string; category: string; price: number; updatedAt: string;
+    recipeId: string | null; recipeName: string; error: string | null }[];
+  recipes: { recipeId: string; recipeName: string; version: number; linkedProductId: string | null;
+    unitCost?: string; sellingPrice?: number; piecesPerBatch?: number; markupPercent?: number; marginPercent?: number; error?: string }[];
 }
 
 export interface ScaledComponent {

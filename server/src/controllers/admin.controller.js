@@ -185,13 +185,35 @@ const listOrders = asyncHandler(async (req, res) => {
 
 const getOrderAdmin = asyncHandler(async (req, res) => {
   assertObjectId(req.params.id, 'Order');
-  const order = await Order.findById(req.params.id)
-    .populate('user', 'name phone email')
-    .populate('items.product', 'name image slug');
+  const [order, payment] = await Promise.all([
+    Order.findById(req.params.id)
+      .populate('user', 'name phone email')
+      .populate('items.product', 'name image slug'),
+    Payment.findOne({ order: req.params.id }),
+  ]);
   if (!order) throw ApiError.notFound('Order not found');
-
-  const payment = await Payment.findOne({ order: order._id });
   res.json({ success: true, order, payment });
+});
+
+const deleteOrder = asyncHandler(async (req, res) => {
+  assertObjectId(req.params.id, 'Order');
+  const order = await mongoose.connection.transaction(async (session) => {
+    const existing = await Order.findById(req.params.id).session(session);
+    if (existing) await require('../services/event-sales.service').assertEventOpen(existing, session);
+    const deleted = await Order.findOneAndDelete({ _id: req.params.id }, { session });
+    if (!deleted) throw ApiError.notFound('Order not found');
+    await Payment.deleteMany({ order: deleted._id }, { session });
+    return deleted;
+  });
+
+  // Deleting a record does not refund a payment or reverse inventory movements.
+  audit(req, {
+    action: 'order.delete',
+    entity: 'order',
+    entityId: order._id,
+    summary: `Permanently deleted order ${order.orderNumber}`,
+  });
+  res.json({ success: true });
 });
 
 /* ============ Cash settlement (B2) ============ */
@@ -202,6 +224,7 @@ const settleCashOrder = asyncHandler(async (req, res) => {
   assertObjectId(req.params.id, 'Order');
   const order = await Order.findById(req.params.id);
   if (!order) throw ApiError.notFound('Order not found');
+  await require('../services/event-sales.service').assertEventOpen(order);
   if (order.paymentMethod !== 'cash') {
     throw ApiError.badRequest('Only cash orders can be settled this way — online orders are confirmed by the payment provider');
   }
@@ -255,6 +278,7 @@ const refundOrder = asyncHandler(async (req, res) => {
 
   const order = await Order.findById(req.params.id);
   if (!order) throw ApiError.notFound('Order not found');
+  await require('../services/event-sales.service').assertEventOpen(order);
   if (order.paymentStatus === 'refunded') throw ApiError.conflict('This order has already been refunded');
   if (order.paymentStatus !== 'paid') throw ApiError.badRequest('Only paid orders can be refunded');
 
@@ -363,6 +387,11 @@ const updateProduct = asyncHandler(async (req, res) => {
   assertObjectId(req.params.id, 'Product');
   const product = await Product.findById(req.params.id);
   if (!product) throw ApiError.notFound('Product not found');
+  const linked = (await require('../services/recipe-product.service').linkedCosts([product._id])).get(String(product._id));
+  if (req.body.price !== undefined && linked) {
+    if (linked.error || Number(req.body.price) !== linked.sellingPrice) throw ApiError.conflict('This product price is managed by its recipe. Change the recipe price or unlink it in Product mapping.');
+    req.body.price = linked.sellingPrice;
+  }
 
   // Optimistic concurrency (AS-10.2): a stale editor is warned, not clobbered.
   if (req.body.ifUnmodifiedSince && product.updatedAt > new Date(req.body.ifUnmodifiedSince)) {
@@ -786,6 +815,7 @@ module.exports = {
   dashboard,
   listOrders,
   getOrderAdmin,
+  deleteOrder,
   settleCashOrder,
   refundOrder,
   listProductsAdmin,

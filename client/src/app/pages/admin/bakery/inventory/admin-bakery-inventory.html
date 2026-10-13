@@ -84,7 +84,6 @@
         <thead>
           <tr>
             <th>Item Name</th>
-            <th>Type</th>
             <th>Pack Size</th>
             <th class="num">Current Stock</th>
             <th class="num">Allocated</th>
@@ -106,9 +105,6 @@
                 @if (m.supplierName) {
                   <small class="text-muted block">Supplier: {{ m.supplierName }}</small>
                 }
-              </td>
-              <td>
-                <span class="tag-type {{ m.type }}">{{ m.type }}</span>
               </td>
               <td class="font-mono text-muted">{{ m.packQuantity }} {{ m.packUom }}</td>
               <td class="num font-mono font-bold stock-cell">
@@ -161,7 +157,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="9" class="empty-state">
+              <td colspan="8" class="empty-state">
                 @if (searchQuery() || filterType() !== 'all') {
                   No materials found matching your current search or filter.
                 } @else {

@@ -29,6 +29,8 @@ const statusEventSchema = new mongoose.Schema(
 const orderSchema = new mongoose.Schema(
   {
     orderNumber: { type: String, required: true, unique: true },
+    // Private cost at sale time; excluded from customer order responses.
+    recipeCostSnapshot: { type: [{ product: mongoose.Schema.Types.ObjectId, unitCost: String, recipeId: mongoose.Schema.Types.ObjectId, recipeVersion: Number }], select: false, default: undefined },
     // Website delivery requires an account; staff-entered delivery does not.
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null, index: true },
     items: {
@@ -66,9 +68,13 @@ const orderSchema = new mongoose.Schema(
     orderStatus: { type: String, enum: ORDER_STATUSES, default: 'placed' },
     statusHistory: { type: [statusEventSchema], default: [] },
   },
-  { timestamps: true },
+  { timestamps: true, toJSON: { transform: (_doc, ret) => { delete ret.recipeCostSnapshot; return ret; } } },
 );
 
 orderSchema.statics.STATUSES = ORDER_STATUSES;
+
+orderSchema.index({ createdAt: -1 });
+orderSchema.index({ orderStatus: 1, createdAt: -1 });
+orderSchema.index({ source: 1, eventName: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Order', orderSchema);

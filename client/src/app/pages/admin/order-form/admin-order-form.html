@@ -15,7 +15,21 @@
               <h3>Order details</h3>
               <div class="field"><label class="label" for="sale-source">Order source</label><select id="sale-source" class="select" name="source" [(ngModel)]="source" (ngModelChange)="sourceChanged()"><option value="phone">Phone order</option><option value="walk-in">Walk-in</option><option value="event">Event / Stall</option></select></div>
               @if (source === 'event') {
-                <div class="field"><label class="label" for="sale-event">Event / Stall name *</label><input id="sale-event" class="input" name="eventName" [(ngModel)]="eventName" list="sale-events" placeholder="e.g. Diwali Fair 2026" maxlength="120" required /><small class="muted">Use the same name for every sale at this event.</small>@if (sale.controls['eventName']?.touched && sale.controls['eventName']?.invalid) { <small class="sale-field-error">Enter the event or stall name.</small> }<datalist id="sale-events">@for (event of events(); track event) { <option [value]="event"></option> }</datalist></div>
+                <div class="field">
+                  <label class="label" for="sale-event">Event / Stall name *</label>
+                  <select id="sale-event" class="select" name="eventName" [(ngModel)]="eventName" [disabled]="eventsLoading() || eventsLoadFailed()" required>
+                    <option value="">{{ eventsLoading() ? 'Loading events…' : 'Choose an event' }}</option>
+                    @for (event of events(); track event.eventName) {
+                      <option [value]="event.eventName" [disabled]="event.status === 'closed'">{{ event.eventName }}{{ event.status === 'closed' ? ' (Closed)' : '' }}</option>
+                    }
+                  </select>
+                  @if (eventsLoadFailed()) {
+                    <small class="sale-field-error" role="alert">Events could not be loaded. <button type="button" class="btn btn--ghost btn--sm" (click)="loadEvents()">Retry</button></small>
+                  } @else if (!eventsLoading() && !hasOpenEvents()) {
+                    <small class="muted">Create or reopen an event in <a routerLink="/admin/events">Event sales</a> first.</small>
+                  }
+                  @if (sale.controls['eventName']?.touched && sale.controls['eventName']?.invalid) { <small class="sale-field-error">Choose an event.</small> }
+                </div>
               }
               <button type="button" class="btn btn--ghost btn--sm sale-extra-toggle" [attr.aria-expanded]="showExtraDetails" (click)="showExtraDetails = !showExtraDetails">
                 {{ showExtraDetails ? 'Hide extra details' : (customerName || customerPhone || notes || tableNumber || delivery.landmark || orderType !== 'takeaway' || orderStatus !== (source === 'phone' ? 'confirmed' : 'completed') ? 'Edit extra details' : '+ Add extra details') }}
@@ -75,7 +89,7 @@
                 @if (q.pricing.deliveryFee) { <dt>Delivery fee</dt><dd>₹{{ q.pricing.deliveryFee | number: '1.2-2' }}</dd> }
               </dl>
               <div class="sale-total"><span>Total (INR)</span><strong>₹{{ q.pricing.total | number: '1.2-2' }}</strong></div>
-              <p class="muted">{{ orderStatus === 'completed' ? 'Will be saved as completed.' : 'Will appear in the live queue and the appropriate prep sheet.' }} Tracked product stock updates when saved.</p>
+              <p class="muted">Save order records payment as paid and the order as completed. @if (paymentMethod === 'upi') { Save &amp; show payment QR keeps payment pending. {{ orderStatus === 'completed' ? 'The order will be completed.' : 'The order will appear in the live queue.' }} } Tracked product stock updates when saved.</p>
             }
           </section>
         </div>
@@ -87,7 +101,10 @@
           <button type="submit" class="btn btn--primary" [disabled]="saving()">{{ saving() ? 'Checking…' : 'Retry this sale' }}</button>
         } @else {
           <button type="submit" class="btn btn--ghost" [disabled]="saving() || pricing() || !quote()" (click)="chooseSaveMode(true)">Save & add another</button>
-          <button type="submit" class="btn btn--primary" [disabled]="saving() || pricing() || !quote()" (click)="chooseSaveMode(false)">{{ saving() ? 'Saving…' : paymentMethod === 'upi' ? 'Save & show payment QR' : 'Save order' }}</button>
+          @if (paymentMethod === 'upi') {
+            <button type="submit" class="btn btn--ghost" [disabled]="saving() || pricing() || !quote()" (click)="chooseSaveMode(false, true)">Save &amp; show payment QR</button>
+          }
+          <button type="submit" class="btn btn--primary" [disabled]="saving() || pricing() || !quote()" (click)="chooseSaveMode(false)">{{ saving() ? 'Saving…' : 'Save order' }}</button>
         }
       </div>
     </form>

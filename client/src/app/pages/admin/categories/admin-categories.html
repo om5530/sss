@@ -19,7 +19,7 @@
             <button type="button" class="btn btn--ghost btn--sm" [disabled]="busy() || i === 0 || category.archived" (click)="move(category, -1)" [attr.aria-label]="'Move ' + category.name + ' up'">↑</button>
             <button type="button" class="btn btn--ghost btn--sm" [disabled]="busy() || last || category.archived" (click)="move(category, 1)" [attr.aria-label]="'Move ' + category.name + ' down'">↓</button>
             <button type="button" class="btn btn--ghost btn--sm" [disabled]="busy() || category.archived" (click)="edit(category)">Rename</button>
-            <button type="button" class="btn btn--ghost btn--sm" [disabled]="busy() || category.archived" (click)="deleteTarget.set(category)">Delete</button>
+            <button type="button" class="btn btn--ghost btn--danger btn--sm" [disabled]="busy() || category.archived" (click)="deleteTarget.set(category)">Delete</button>
             <a class="btn btn--ghost btn--sm" routerLink="/admin/products" [queryParams]="{ category: category.name, group: category.group, archived: 'all' }">View / reassign products</a>
           </div>
         </div>

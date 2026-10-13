@@ -71,6 +71,7 @@ export class AdminProductForm {
   protected category = '';
   protected description = '';
   protected price: number | null = null;
+  protected recipeLinked = false;
   protected image = '';
   protected dietary: 'veg' | 'non-veg' | 'egg' = 'veg';
   protected tags = '';
@@ -109,6 +110,7 @@ export class AdminProductForm {
         this.category = p.category;
         this.description = p.description;
         this.price = p.price;
+        this.recipeLinked = !!p.recipeLinked;
         this.image = p.image;
         this.dietary = p.dietary;
         this.tags = (p.tags || []).join(', ');
@@ -158,7 +160,7 @@ export class AdminProductForm {
       group: this.group,
       category: this.category.trim(),
       description: this.description.trim(),
-      price: Number(this.price),
+      ...(this.recipeLinked ? {} : { price: Number(this.price) }),
       image: this.image.trim(),
       dietary: this.dietary,
       tags: this.tags.split(',').map((t) => t.trim()).filter(Boolean),

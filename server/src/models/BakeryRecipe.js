@@ -85,6 +85,7 @@ const bakeryRecipeSchema = new mongoose.Schema(
     targetMarkupPercent: { type: Number, default: 50, min: 0 },
     suggestedSellingPrice: { type: Number, default: 0 },
     manualSellingPrice: { type: Number, default: 0 },
+    manualSellingPricePerPiece: { type: Number, default: null, min: 0 },
 
     instructions: { type: [String], default: [] },
     notes: { type: String, default: '' },
@@ -102,8 +103,9 @@ bakeryRecipeSchema.pre('validate', function (next) {
   next();
 });
 
-require('./bakeryDecimal')(bakeryRecipeSchema, ['baseBatchUnits', 'yieldQuantity', 'piecesPerBatch', 'finishedWeightGrams', 'ingredientCost', 'packagingCost', 'labourCost', 'resourceCost', 'totalBatchCost', 'costPerUnit', 'targetMarkupPercent', 'suggestedSellingPrice', 'manualSellingPrice']);
+require('./bakeryDecimal')(bakeryRecipeSchema, ['baseBatchUnits', 'yieldQuantity', 'piecesPerBatch', 'finishedWeightGrams', 'ingredientCost', 'packagingCost', 'labourCost', 'resourceCost', 'totalBatchCost', 'costPerUnit', 'targetMarkupPercent', 'suggestedSellingPrice', 'manualSellingPrice', 'manualSellingPricePerPiece']);
 bakeryRecipeSchema.index({ name: 1, category: 1 });
 bakeryRecipeSchema.index({ isSubRecipe: 1 });
+bakeryRecipeSchema.index({ productId: 1 }, { unique: true, partialFilterExpression: { productId: { $type: 'objectId' } } });
 
 module.exports = mongoose.model('BakeryRecipe', bakeryRecipeSchema);

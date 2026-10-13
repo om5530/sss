@@ -18,6 +18,7 @@
   <div class="qr-grid">
     @for (code of codes(); track code.table) {
       <figure class="qr-card">
+        <img class="qr-card__logo" src="golden-batch-logo.jpeg" alt="The Golden Batch" width="80" height="76" />
         <img [src]="code.dataUrl" [alt]="'QR code for table ' + code.table" width="180" height="180" />
         <figcaption>
           <strong>Table {{ code.table }}</strong>
@@ -43,6 +44,7 @@
     break-inside: avoid;
   }
   .qr-card img { width: 100%; max-width: 190px; height: auto; }
+  .qr-card .qr-card__logo { width: 80px; }
   .qr-card figcaption { display: grid; gap: 0.1rem; }
   .qr-card figcaption span { font-size: 0.72rem; color: var(--muted); }
 </style>

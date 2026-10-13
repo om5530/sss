@@ -5,6 +5,8 @@ const Recipe = require("../models/BakeryRecipe");
 const Waste = require("../models/BakeryWaste");
 const O = require("../models/BakeryOperations");
 const E = require("../services/bakeryCost.service");
+const { maps } = require("../services/bakery-context.service");
+const { transaction } = require("../services/bakery-transaction.service");
 const ApiError = require("../utils/ApiError");
 const purchaseLedger = require("../services/purchase-ledger.service");
 const { groupProductionPlans } = require("../services/production-schedule.service");
@@ -49,87 +51,6 @@ async function get(model, value, session) {
 
 // A shared write guard serializes bakery mutations, including recipe graph and stock checks.
 // Mongo transactions make movements, receipt/production state and balances atomic together.
-async function transaction(fn) {
-  try {
-    await O.Migration.updateOne(
-      { key: "write-guard" },
-      { $setOnInsert: { notes: "" } },
-      { upsert: true },
-    );
-  } catch (e) {
-    if (e.code !== 11000) throw e;
-  }
-  return mongoose.connection.transaction(async (session) => {
-    await O.Migration.updateOne(
-      { key: "write-guard" },
-      { $set: { notes: randomUUID() } },
-      { session },
-    );
-    return fn(session);
-  });
-}
-async function maps(session, at = new Date(), excludePlanId, includeRecipes = true, includePlans = true) {
-  const pricesQuery = O.Price.find({ effectiveAt: { $lte: at } })
-    .sort({ effectiveAt: -1, _id: -1 })
-    .session(session || null)
-    .lean();
-  const plansQuery = {
-    status: "scheduled",
-    type: "production_plan",
-    ...(excludePlanId ? { _id: { $ne: id(excludePlanId) } } : {}),
-  };
-  const [materialRows, prices, formatRows, supplierRows, plans, recipeRows] =
-    await Promise.all([
-      read(Material, {}, session),
-      pricesQuery,
-      read(O.Format, {}, session),
-      read(O.Supplier, {}, session),
-      includePlans ? read(O.Sheet, plansQuery, session) : Promise.resolve([]),
-      includeRecipes ? read(Recipe, {}, session) : Promise.resolve([]),
-    ]);
-  const materials = new Map(
-    materialRows.map((m) => [String(m._id), m]),
-  );
-  const latest = new Map();
-  for (const p of prices)
-    if (!latest.has(String(p.formatId))) latest.set(String(p.formatId), p);
-  const formats = new Map(formatRows.map((f) => [String(f._id), f]));
-  const suppliers = new Map(supplierRows.map((s) => [String(s._id), s]));
-  for (const m of materials.values()) {
-    const f = formats.get(String(m.preferredFormatId)),
-      p = f && latest.get(String(f._id));
-    if (f && p)
-      Object.assign(m, {
-        packQuantity: p.packQuantity,
-        packUom: p.packUom,
-        purchasePrice: p.purchasePrice,
-        effectiveUnitCost: E.calculateEffectiveUnitCost(
-          p.packQuantity,
-          p.packUom,
-          p.purchasePrice,
-          m.baseUom,
-          m.densityGramPerMl,
-        ),
-        minimumOrderPacks: f.minimumOrderPacks,
-        supplierName: suppliers.get(String(f.supplierId))?.name || "",
-      });
-    m.allocatedStock = "0";
-  }
-  for (const plan of plans)
-    for (const r of plan.snapshot?.requirements || []) {
-      const m = materials.get(String(r.materialId));
-      if (m && ["ingredient", "packaging"].includes(m.type))
-        m.allocatedStock = new D(m.allocatedStock).add(r.quantity).toString();
-    }
-  return {
-    materials,
-    plans,
-    recipes: new Map(recipeRows.map((r) => [String(r._id), r])),
-    latest,
-    formats,
-    suppliers,
-  };
-}
 async function simulate(body, session) {
   if (
     !Array.isArray(body.items) ||
@@ -448,6 +369,7 @@ const recipeFields = [
   "components",
   "targetMarkupPercent",
   "manualSellingPrice",
+  "manualSellingPricePerPiece",
   "instructions",
   "notes",
   "status",
@@ -456,9 +378,25 @@ const recipeFields = [
   "expectedLossPercent",
   "options",
 ];
+function recipeInput(body) {
+  const input = pick(body, recipeFields);
+  if (body.manualSellingPricePerPiece !== undefined) {
+    const value = body.manualSellingPricePerPiece;
+    const price = value == null || value === '' ? dec(0) : dec(value, 'Selling price per piece');
+    if (!Number.isFinite(price.toNumber()))
+      throw ApiError.badRequest('Selling price per piece is too large');
+    if (price.decimalPlaces() > 2)
+      throw ApiError.badRequest('Selling price per piece can have at most two decimal places');
+    input.manualSellingPricePerPiece = price.gt(0) ? price.toString() : null;
+    // Per-piece editing replaces the legacy batch override, including when reverting to the suggestion.
+    input.manualSellingPrice = '0';
+  }
+  return input;
+}
 async function saveRecipe(req, session, creating) {
+  const input = recipeInput(req.body);
   const r = creating
-    ? new Recipe(pick(req.body, recipeFields))
+    ? new Recipe(input)
     : await get(Recipe, req.params.id, session);
   if (!creating) {
     if (Number(req.body.version) !== r.version)
@@ -468,13 +406,20 @@ async function saveRecipe(req, session, creating) {
       { $setOnInsert: { recipe: r.toObject() } },
       { upsert: true, session },
     );
-    r.set(pick(req.body, recipeFields));
+    r.set(input);
     r.version += 1;
   }
   if (dec(r.expectedLossPercent ?? 0).gte(100))
     throw ApiError.badRequest("Expected loss must be below 100%");
   if (!r.components.length || r.components.length > 200)
     throw ApiError.badRequest("Recipe needs between 1 and 200 components");
+  if (r.productId) {
+    const { sellableRecipe } = require('../services/recipe-product.service');
+    if (!sellableRecipe(r)) throw ApiError.badRequest('Unlink this product before making its recipe inactive or a sub-recipe.');
+    const product = await require('../models/Product').findById(r.productId).session(session);
+    if (!product || product.archived) throw ApiError.badRequest('Linked product is unavailable');
+    if (await Recipe.exists({ _id: { $ne: r._id }, productId: r.productId }).session(session)) throw ApiError.conflict('This product is already linked to another recipe');
+  }
   const m = await maps(session, new Date(), undefined, true, false);
   for (const component of [
     ...r.components,
@@ -531,11 +476,15 @@ async function saveRecipe(req, session, creating) {
     ]),
   );
   await r.save({ session });
+  if (r.productId) {
+    const { recipePrice } = require('../services/recipe-product.service');
+    await require('../models/Product').updateOne({ _id: r.productId }, { $set: { price: recipePrice(r, m).sellingPrice } }, { session });
+  }
   await O.Revision.create(
     [{ recipeId: r._id, version: r.version, recipe: r.toObject() }],
     { session },
   );
-  return { recipe: r };
+  return { recipe: { ...r.toObject(), ...result, components: r.components } };
 }
 exports.createRecipe = handler((req) =>
   transaction((s) => saveRecipe(req, s, true)),
@@ -543,6 +492,16 @@ exports.createRecipe = handler((req) =>
 exports.updateRecipe = handler((req) =>
   transaction((s) => saveRecipe(req, s, false)),
 );
+exports.updateRecipeSellingPrice = handler((req) => {
+  if (req.body.pricePerPiece === undefined)
+    throw ApiError.badRequest('Enter a selling price per piece');
+  if (req.body.pricePerPiece !== null)
+    dec(req.body.pricePerPiece, 'Selling price per piece', true);
+  return transaction((s) => saveRecipe({
+    params: req.params,
+    body: { version: req.body.version, manualSellingPricePerPiece: req.body.pricePerPiece },
+  }, s, false));
+});
 exports.deleteRecipe = handler((req) =>
   transaction(async (session) => {
     if (
@@ -556,6 +515,7 @@ exports.deleteRecipe = handler((req) =>
     )
       throw ApiError.conflict("Recipe is used by another recipe");
     const r = await get(Recipe, req.params.id, session);
+    if (r.productId) throw ApiError.conflict('Unlink the product in Product mapping before deleting this recipe');
     r.isActive = false;
     await r.save({ session });
     return { recipe: r };
@@ -580,7 +540,7 @@ exports.simulateMultiProduct = handler(async (req) => ({
 }));
 exports.previewRecipe = handler(async (req) => {
   const m = await maps(undefined, new Date(), undefined, true, false),
-    r = new Recipe(pick(req.body, recipeFields));
+    r = new Recipe(recipeInput(req.body));
   if (req.body._id) r._id = id(req.body._id);
   await r.validate();
   m.recipes.set(String(r._id), r.toObject());
@@ -613,6 +573,15 @@ exports.saveCostingSheet = handler((req) =>
       { session },
     );
     return { sheet };
+  }),
+);
+exports.deleteSheet = handler((req) =>
+  transaction(async (session) => {
+    const s = await get(O.Sheet, req.params.id, session);
+    if (s.status === "completed" || s.actual)
+      throw ApiError.conflict("Completed batches cannot be deleted because they contain production and inventory history");
+    await s.deleteOne({ session });
+    return { message: "Plan permanently deleted" };
   }),
 );
 exports.cancelSheet = handler((req) =>
@@ -1469,13 +1438,13 @@ function recipeCostChanges(m) {
           costChangePercent: old.isZero()
             ? null
             : diff.div(old).mul(100).toString(),
-          currentMargin: dec(r.manualSellingPrice ?? 0).gt(0)
-            ? dec(r.manualSellingPrice)
-                .sub(c.costPerUnit)
-                .div(r.manualSellingPrice)
+          currentMargin: dec(c.sellingPricePerBatch).gt(0)
+            ? dec(c.sellingPricePerBatch)
+                .sub(c.totalBatchCost)
+                .div(c.sellingPricePerBatch)
                 .mul(100)
                 .toString()
-            : c.marginPercent,
+            : null,
         };
       } catch (e) {
         return { name: r.name, error: e.message };

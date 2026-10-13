@@ -6,6 +6,8 @@ const ApiError = require('../utils/ApiError');
 const generateOrderNumber = require('../utils/orderNumber');
 const Order = require('../models/Order');
 const Payment = require('../models/Payment');
+const { eventSalesReport, assertEventOpen } = require('../services/event-sales.service');
+
 const { priceCart } = require('../services/pricing.service');
 const { quoteMatches } = require('../services/quote.service');
 const { claimStock, releaseStock } = require('../services/order-stock.service');
@@ -66,12 +68,14 @@ const create = asyncHandler(async (req, res) => {
   const details = fulfilment(req.body);
   const eventName = req.body.source === 'event' ? (req.body.eventName || '').trim().replace(/\s+/g, ' ') : '';
   if (req.body.source === 'event' && !eventName) throw ApiError.badRequest('Enter an event or stall name');
+  await assertEventOpen({ source: req.body.source, eventName });
   const fulfilAt = req.body.fulfilAt ? new Date(req.body.fulfilAt) : null;
   if (fulfilAt && (req.body.orderStatus === 'completed' || fulfilAt <= new Date())) {
     throw ApiError.badRequest('Choose a future time for an order that still needs preparation');
   }
 
-  const priced = await priceCart(req.body.items, { orderType: req.body.orderType });
+  const settingsPromise = getStoreSettings();
+  const priced = await priceCart(req.body.items, { orderType: req.body.orderType, settings: settingsPromise });
   const items = priced.items;
   const pricing = applyDiscount(priced.pricing, req.body.discount ?? 0);
   if (!quoteMatches(req.body.expectedQuote, items, pricing)) {
@@ -79,7 +83,7 @@ const create = asyncHandler(async (req, res) => {
   }
   let upiRecipient;
   if (req.body.paymentMethod === 'upi') {
-    const settings = await getStoreSettings();
+    const settings = await settingsPromise;
     const recipient = settings.upiRecipients.find((r) => r.id === (req.body.upiRecipientId || settings.defaultUpiRecipientId));
     if (!recipient) throw ApiError.badRequest('Choose a configured UPI recipient');
     upiPaymentForOrder({ pricing, orderNumber: 'CHECK' }, recipient);
@@ -94,8 +98,8 @@ const create = asyncHandler(async (req, res) => {
   const order = new Order({
     orderNumber, user: null, createdBy: req.user._id,
     source: req.body.source, eventName, ...details, notes: req.body.notes || '', upiRecipient,
-    items, pricing, fulfilAt, orderType: req.body.orderType, paymentMethod: req.body.paymentMethod,
-    paymentStatus: req.body.paymentMethod === 'upi' ? 'pending' : req.body.paymentStatus,
+    items, pricing, recipeCostSnapshot: priced.recipeCostSnapshot, fulfilAt, orderType: req.body.orderType, paymentMethod: req.body.paymentMethod,
+    paymentStatus: req.body.paymentStatus,
     orderStatus: req.body.orderStatus, manualKey, manualHash,
     statusHistory: [{ status: req.body.orderStatus, at: now, note: req.body.orderStatus === 'completed' ? 'Recorded by staff after hand-over' : 'Order accepted by staff' }],
   });
@@ -117,11 +121,13 @@ const create = asyncHandler(async (req, res) => {
   audit(req, { action: 'order.create', entity: 'order', entityId: order._id,
     summary: `${order.orderNumber}: ${order.source}${eventName ? ` (${eventName})` : ''} — ₹${pricing.total}`,
     after: { source: order.source, eventName, total: pricing.total, paymentMethod: order.paymentMethod, paymentStatus: order.paymentStatus, orderStatus: order.orderStatus } });
-  res.status(201).json({ success: true, order });
+  res.status(201).json({ success: true, order, payment });
 });
 
 const settle = asyncHandler(async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id)) throw ApiError.notFound('Order not found');
+  const existing = await Order.findById(req.params.id);
+  if (existing) await assertEventOpen(existing);
   const order = await Order.findOneAndUpdate({ _id: req.params.id, source: { $in: sources },
     paymentStatus: 'pending', orderStatus: { $ne: 'cancelled' } }, { $set: { paymentStatus: 'paid' } }, { new: true });
   if (!order) throw ApiError.conflict('Only an unpaid, active staff-entered order can be marked paid');
@@ -152,42 +158,7 @@ const paymentQr = asyncHandler(async (req, res) => {
 });
 
 const eventReport = asyncHandler(async (req, res) => {
-  const match = { source: 'event' };
-  if (req.query.eventName) match.eventName = new RegExp(`^${escapeRegex(req.query.eventName.trim())}$`, 'i');
-  const paid = { $and: [{ $eq: ['$paymentStatus', 'paid'] }, { $ne: ['$orderStatus', 'cancelled'] }] };
-  const pending = { $and: [{ $eq: ['$paymentStatus', 'pending'] }, { $ne: ['$orderStatus', 'cancelled'] }] };
-  const receivedBy = (method) => ({ $sum: { $cond: [{ $and: [paid, { $eq: ['$paymentMethod', method] }] }, '$pricing.total', 0] } });
-  const [events, products, eventNames] = await Promise.all([
-    Order.aggregate([
-      { $match: match },
-      { $group: { _id: { $toLower: '$eventName' }, eventName: { $last: '$eventName' }, orders: { $sum: 1 },
-        paidOrders: { $sum: { $cond: [paid, 1, 0] } }, revenue: { $sum: { $cond: [paid, '$pricing.total', 0] } },
-        units: { $sum: { $cond: [paid, { $sum: '$items.quantity' }, 0] } },
-        pendingAmount: { $sum: { $cond: [pending, '$pricing.total', 0] } },
-        cash: receivedBy('cash'), upi: receivedBy('upi'), card: receivedBy('card'), lastSaleAt: { $max: '$createdAt' } } },
-      { $sort: { lastSaleAt: -1 } },
-      { $project: { _id: 0, eventName: 1, orders: 1, paidOrders: 1, units: 1, lastSaleAt: 1,
-        revenue: { $round: ['$revenue', 2] }, pendingAmount: { $round: ['$pendingAmount', 2] },
-        cash: { $round: ['$cash', 2] }, upi: { $round: ['$upi', 2] }, card: { $round: ['$card', 2] } } },
-    ]),
-    Order.aggregate([
-      { $match: { ...match, paymentStatus: 'paid', orderStatus: { $ne: 'cancelled' } } }, { $unwind: '$items' },
-      { $group: { _id: '$items.product', name: { $last: '$items.name' }, quantity: { $sum: '$items.quantity' }, subtotal: { $sum: '$items.lineTotal' } } },
-      { $sort: { quantity: -1 } }, { $project: { name: 1, quantity: 1, subtotal: { $round: ['$subtotal', 2] } } },
-    ]),
-    req.query.eventName ? Order.aggregate([
-      { $match: { source: 'event' } },
-      { $group: { _id: { $toLower: '$eventName' }, eventName: { $last: '$eventName' } } },
-      { $sort: { eventName: 1 } },
-      { $project: { _id: 0, eventName: 1 } },
-    ]) : Promise.resolve(null),
-  ]);
-  res.json({
-    success: true,
-    events,
-    products,
-    eventNames: eventNames?.map((event) => event.eventName) || events.map((event) => event.eventName),
-  });
+  res.json({ success: true, ...await eventSalesReport({ eventName: req.query.eventName || '' }) });
 });
 
 const itemRules = () => [

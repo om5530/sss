@@ -20,6 +20,9 @@ import {
   MessageListResponse,
   ManualOrderPayload,
   EventSalesReport,
+  EventPlan,
+  EventPlanPayload,
+  EventPreparationProduct,
   OrderFilters,
   OrderListResponse,
   PaymentListResponse,
@@ -76,7 +79,7 @@ export class AdminService {
   }
 
   createManualOrder(data: ManualOrderPayload) {
-    return this.http.post<{ order: AdminOrder }>(`${this.base}/orders`, data).pipe(map((r) => r.order));
+    return this.http.post<{ order: AdminOrder; payment?: AdminPayment }>(`${this.base}/orders`, data);
   }
 
   settleManual(id: string) {
@@ -91,8 +94,38 @@ export class AdminService {
     return this.http.get<EventSalesReport>(`${this.base}/reports/events`, { params: toParams({ eventName }) });
   }
 
+  eventOptions() {
+    return this.http.get<{ events: Pick<EventSalesReport['events'][number], 'eventName' | 'status' | 'lastSaleAt'>[] }>(`${this.base}/events/options`);
+  }
+
+  eventPreparationProducts() {
+    return this.http.get<{ products: EventPreparationProduct[] }>(`${this.base}/events/products`).pipe(map((r) => r.products));
+  }
+
+  eventPlan(id: string) {
+    return this.http.get<{ plan: EventPlan }>(`${this.base}/events/${id}`).pipe(map((r) => r.plan));
+  }
+
+  saveEventPlan(data: EventPlanPayload, id?: string) {
+    const request = id ? this.http.patch<{ plan: EventPlan }>(`${this.base}/events/${id}`, data)
+      : this.http.post<{ plan: EventPlan }>(`${this.base}/events`, data);
+    return request.pipe(map((r) => r.plan));
+  }
+
+  closeEvent(id: string, version: number, revision: string) {
+    return this.http.post<{ plan: EventPlan }>(`${this.base}/events/${id}/close`, { version, revision }).pipe(map((r) => r.plan));
+  }
+
+  reopenEvent(id: string, version: number) {
+    return this.http.post<{ plan: EventPlan }>(`${this.base}/events/${id}/reopen`, { version }).pipe(map((r) => r.plan));
+  }
+
   order(id: string) {
     return this.http.get<{ order: AdminOrder; payment: AdminPayment | null }>(`${this.base}/orders/${id}`);
+  }
+
+  deleteOrder(id: string) {
+    return this.http.delete<{ success: boolean }>(`${this.base}/orders/${id}`);
   }
 
   updateOrderStatus(id: string, status: OrderStatus, note?: string) {
@@ -139,6 +172,10 @@ export class AdminService {
 
   updateProduct(id: string, data: Partial<Product> & { ifUnmodifiedSince?: string }) {
     return this.http.patch<{ product: Product }>(`${this.base}/products/${id}`, data).pipe(map((r) => r.product));
+  }
+
+  resetProductStock() {
+    return this.http.post<{ success: boolean; count: number }>(`${this.base}/products/reset-stock`, {});
   }
 
   archiveProduct(id: string, archived: boolean) {

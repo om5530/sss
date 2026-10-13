@@ -60,10 +60,11 @@
   width: fit-content;
 }
 .auth__brand img {
-  filter: drop-shadow(0 2px 8px rgba(223, 167, 87, 0.4));
-  transition: transform 0.5s var(--ease-out);
+  width: 72px;
+  height: auto;
+  flex-shrink: 0;
+  border-radius: 8px;
 }
-.auth__brand:hover img { transform: rotate(-10deg) scale(1.08); }
 .auth__brand span {
   font-family: var(--font-display);
   font-weight: 700;

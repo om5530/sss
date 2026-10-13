@@ -119,6 +119,26 @@ test("Saved plan recalculates tampered totals and allocates packaging/material s
   assert.equal(overview.plans[0]._id, plan._id);
   assert.equal(overview.stock[0].allocatedStock, "1000");
 });
+test("Permanent plan deletion removes pending and cancelled plans and releases allocation", async () => {
+  const initial = await api("GET", "/inventory");
+  for (const cancel of [false, true]) {
+    const saved = await api("POST", "/costing-sheets", {
+      type: "production_plan",
+      items: [{ recipeId: recipe._id, quantity: 1 }],
+    });
+    assert.equal(saved.status, 200);
+    const path = `/costing-sheets/${saved.sheet._id}`;
+    assert.equal((await api("DELETE", path, undefined, null)).status, 401);
+    if (cancel) assert.equal((await api("POST", path + "/cancel", {})).status, 200);
+    assert.equal((await api("DELETE", path)).status, 200);
+    assert.equal((await api("DELETE", path)).status, 404);
+    assert.equal((await api("GET", "/costing-sheets")).sheets.some(s => s._id === saved.sheet._id), false);
+    const inventory = await api("GET", "/inventory");
+    assert.equal(inventory.materials[0].allocatedStock, initial.materials[0].allocatedStock);
+    assert.equal(inventory.materials[0].currentStock, initial.materials[0].currentStock);
+    assert.equal(inventory.movements.length, initial.movements.length);
+  }
+});
 test("Effective price updates projection but preserves historical snapshot", async () => {
   let r = await api("POST", `/formats/${formatId}/prices`, {
     purchasePrice: "70",
@@ -184,6 +204,12 @@ test("Production records actual usage, snapshots and idempotent stock consumptio
   const inv = await api("GET", "/inventory");
   assert.equal(inv.materials[0].currentStock, "1950");
   assert.equal(inv.materials[0].allocatedStock, "0");
+});
+test("Completed production cannot be permanently deleted", async () => {
+  assert.equal((await api("DELETE", `/costing-sheets/${plan._id}`)).status, 409);
+  const sheets = await api("GET", "/costing-sheets");
+  assert.equal(sheets.sheets.find(s => s._id === plan._id).status, "completed");
+  assert.equal((await api("GET", "/inventory")).materials[0].currentStock, "1950");
 });
 test("Invalid waste leaves inventory unchanged; explicit units are converted", async () => {
   let r = await api("POST", "/waste", {
