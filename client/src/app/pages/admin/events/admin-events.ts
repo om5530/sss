@@ -24,6 +24,7 @@ export class AdminEvents {
   private version = 0;
   private editorVersion = 0;
   private loadedEventName = '';
+  private readonly eventStorageKey = 'bc_admin_events_event';
   protected readonly report = signal<EventSalesReport | null>(null);
   protected readonly names = signal<string[]>([]);
   protected readonly loading = signal(true);
@@ -43,8 +44,19 @@ export class AdminEvents {
   private editingSummary: EventSummary | undefined;
 
   constructor() {
+    let firstVisit = true;
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-      this.eventName = params.get('eventName') || '';
+      const restoreSelection = firstVisit && !params.has('eventName');
+      firstVisit = false;
+      this.eventName = params.get('eventName') ?? '';
+      try {
+        if (restoreSelection) this.eventName = localStorage.getItem(this.eventStorageKey) ?? '';
+        localStorage.setItem(this.eventStorageKey, this.eventName);
+      } catch { /* Filtering still works when browser storage is unavailable. */ }
+      if (restoreSelection && this.eventName) {
+        this.router.navigate([], { relativeTo: this.route, queryParams: { eventName: this.eventName }, queryParamsHandling: 'merge', replaceUrl: true });
+        return;
+      }
       this.load();
     });
   }
