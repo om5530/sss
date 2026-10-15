@@ -113,13 +113,14 @@ export class AdminEvents {
   protected dismissEditor() { if (!this.saving()) { ++this.editorVersion; this.editor.set(false); this.error.set(''); } }
   protected existingName() { return !!this.editing || !!this.editingSummary; }
   protected choices() { return this.products().filter((p) => !this.lines().some((line) => line.productId === p._id)); }
-  protected addProduct() {
-    const product = this.products().find((p) => p._id === this.selectedProduct);
-    if (!product || product.unitCost === null || this.lines().some((i) => i.productId === product._id)) return;
+  protected addProduct(productId: string) {
+    this.selectedProduct = productId;
+    const product = this.products().find((p) => p._id === productId);
+    if (!product || product.unitCost === null || this.lines().length >= 100 || this.lines().some((i) => i.productId === product._id)) return;
     const stock = this.stockRow(product._id);
-    this.lines.update((items) => [...items, { productId: product._id, name: product.name, prepared: 1, wasted: 0, reusable: 0, returned: 0,
+    this.lines.update((items) => [{ productId: product._id, name: product.name, prepared: 1, wasted: 0, reusable: 0, returned: 0,
       unitCost: product.unitCost, stockOut: (stock?.sold || 0) + (stock?.unpaidHandovers || 0) + (stock?.refundedHandovers || 0),
-      refundedHandovers: stock?.refundedHandovers || 0 }]);
+      refundedHandovers: stock?.refundedHandovers || 0 }, ...items]);
     this.selectedProduct = '';
   }
   protected removeProduct(id: string) { this.lines.update((items) => items.filter((i) => i.productId !== id)); }
