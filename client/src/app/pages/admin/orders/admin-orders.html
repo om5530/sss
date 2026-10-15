@@ -6,9 +6,13 @@
     </div>
     <div class="adm-head__actions">
       <a routerLink="/admin/orders/new" class="btn btn--primary btn--sm">Add order</a>
-      <button type="button" class="btn btn--ghost btn--sm"
+      <button type="button" class="btn btn--ghost btn--sm orders-filter-toggle" aria-label="Filters" title="Filters"
         [attr.aria-expanded]="filtersOpen()" aria-controls="orders-filters"
-        (click)="filtersOpen.set(!filtersOpen())">Filters</button>
+        (click)="filtersOpen.set(!filtersOpen())">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path d="M3 4h18l-7 8v7l-4 2v-9L3 4Z" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
     </div>
   </div>
 
