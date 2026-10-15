@@ -34,6 +34,7 @@ export class AdminOrders {
   protected readonly loading = signal(true);
   protected readonly filtersOpen = signal(false);
   protected readonly deletingId = signal<string | null>(null);
+  protected readonly paymentSavingId = signal<string | null>(null);
   protected readonly pendingDelete = signal<AdminOrder | null>(null);
   private readonly deleteDialog = viewChild.required<ElementRef<HTMLDialogElement>>('deleteDialog');
 
@@ -55,6 +56,34 @@ export class AdminOrders {
       case 'online': return 'Online';
       default: return '—';
     }
+  }
+
+  protected canChangePaymentMethod(order: AdminOrder): boolean {
+    return ['phone', 'walk-in', 'event'].includes(order.source || '') &&
+      ['cash', 'upi'].includes(order.paymentMethod || '') &&
+      ['pending', 'paid'].includes(order.paymentStatus) && order.orderStatus !== 'cancelled';
+  }
+
+  protected changePaymentMethod(order: AdminOrder, event: Event) {
+    event.stopPropagation();
+    const select = event.target as HTMLSelectElement;
+    const method = select.value;
+    select.value = order.paymentMethod || '';
+    if (this.paymentSavingId() || this.deletingId() || !this.canChangePaymentMethod(order) ||
+        (method !== 'cash' && method !== 'upi') || method === order.paymentMethod) return;
+    this.paymentSavingId.set(order._id);
+    this.admin.changePaymentMethod(order._id, method, order.paymentMethod!).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: ({ order: updated }) => {
+        this.orders.update((orders) => orders.map((item) => item._id === updated._id ? { ...item, ...updated, user: item.user } : item));
+        this.paymentSavingId.set(null);
+        this.toast.success(`Payment method changed to ${method === 'cash' ? 'Cash' : 'UPI'}`);
+      },
+      error: (err) => {
+        this.paymentSavingId.set(null);
+        this.toast.error(err.error?.message || 'Could not change the payment method. Please try again.');
+        if (err.status === 409) this.fetch();
+      },
+    });
   }
 
   private listRequest?: Subscription;
@@ -113,7 +142,7 @@ export class AdminOrders {
   protected deleteOrder(order: AdminOrder, event: Event) {
     event.stopPropagation();
     event.preventDefault();
-    if (this.deletingId()) return;
+    if (this.deletingId() || this.paymentSavingId()) return;
     this.pendingDelete.set(order);
     this.deleteDialog().nativeElement.showModal();
   }

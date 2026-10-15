@@ -43,6 +43,7 @@ router.patch('/orders/:id/status', orderCtrl.updateOrderStatus);
 // Records cash changing hands for a cash order (counter / pickup / delivery).
 router.post('/orders/:id/settle-cash', ctrl.settleCashOrder);
 router.post('/orders/:id/settle-manual', manualOrderCtrl.settle);
+router.patch('/orders/:id/payment-method', manualOrderCtrl.validators.changePaymentMethod, validate, manualOrderCtrl.changePaymentMethod);
 router.post('/orders/:id/refund', ctrl.validators.refund, validate, ctrl.refundOrder);
 
 router.get('/products', ctrl.listProductsAdmin);

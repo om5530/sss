@@ -64,15 +64,24 @@
               </td>
               <td role="cell" class="num" data-label="Items">{{ o.items.length }}</td>
               <td role="cell" class="num" data-label="Total">₹{{ o.pricing.total | number: '1.2-2' }}</td>
-              <td role="cell" data-label="Payment method"><span class="adm-badge adm-badge--type"
+              <td role="cell" data-label="Payment method" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+                @if (canChangePaymentMethod(o)) {
+                  <select class="select order-payment-select" [value]="o.paymentMethod"
+                    [disabled]="paymentSavingId() !== null || deletingId() !== null"
+                    [attr.aria-label]="'Payment method for ' + o.orderNumber" (change)="changePaymentMethod(o, $event)">
+                    <option value="upi">UPI</option><option value="cash">Cash</option>
+                  </select>
+                  @if (paymentSavingId() === o._id) { <small role="status">Saving…</small> }
+                } @else { <span class="adm-badge adm-badge--type"
                 [class.payment-method--upi]="o.paymentMethod === 'upi'"
-                [class.payment-method--cash]="o.paymentMethod === 'cash'">{{ paymentMethodLabel(o) }}</span></td>
+                [class.payment-method--cash]="o.paymentMethod === 'cash'">{{ paymentMethodLabel(o) }}</span> }
+              </td>
               <td role="cell" class="nowrap" data-label="Placed">{{ o.createdAt | date: 'MMM d, y · h:mm a' }}</td>
               <td role="cell" data-label="Actions">
                 <a class="btn btn--ghost btn--sm order-open" [routerLink]="['/admin/orders', o._id]"
                   [attr.aria-label]="'View order ' + o.orderNumber" (click)="$event.stopPropagation()">View order</a>
                 <button type="button" class="btn btn--ghost btn--danger btn--sm"
-                  [disabled]="deletingId() !== null" [attr.aria-label]="'Permanently delete order ' + o.orderNumber"
+                  [disabled]="deletingId() !== null || paymentSavingId() !== null" [attr.aria-label]="'Permanently delete order ' + o.orderNumber"
                   (click)="deleteOrder(o, $event)">
                   {{ deletingId() === o._id ? 'Deleting…' : 'Delete' }}
                 </button>

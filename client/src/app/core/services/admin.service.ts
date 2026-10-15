@@ -86,6 +86,10 @@ export class AdminService {
     return this.http.post<{ order: Order; payment: AdminPayment }>(`${this.base}/orders/${id}/settle-manual`, {});
   }
 
+  changePaymentMethod(id: string, paymentMethod: 'cash' | 'upi', expectedMethod: string) {
+    return this.http.patch<{ order: Order }>(`${this.base}/orders/${id}/payment-method`, { paymentMethod, expectedMethod });
+  }
+
   orderUpiQr(id: string) {
     return this.http.get<{ payment: UpiPaymentRequest }>(`${this.base}/orders/${id}/upi-qr`).pipe(map((r) => r.payment));
   }

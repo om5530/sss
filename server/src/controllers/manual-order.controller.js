@@ -157,6 +157,45 @@ const paymentQr = asyncHandler(async (req, res) => {
   res.json({ success: true, payment: upiPaymentForOrder(order, order.upiRecipient) });
 });
 
+const changePaymentMethod = asyncHandler(async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) throw ApiError.notFound('Order not found');
+  const session = await mongoose.startSession();
+  let order, payment, previousMethod;
+  try {
+    await session.withTransaction(async () => {
+      order = await Order.findById(req.params.id).session(session);
+      if (!order) throw ApiError.notFound('Order not found');
+      if (!sources.includes(order.source) || !methods.includes(order.paymentMethod) ||
+          !['pending', 'paid'].includes(order.paymentStatus) || order.orderStatus === 'cancelled') {
+        throw ApiError.conflict('Only active staff-entered cash or UPI orders can have their payment method corrected');
+      }
+      await assertEventOpen(order, session);
+      previousMethod = order.paymentMethod;
+      if (previousMethod !== req.body.expectedMethod) throw ApiError.conflict('The payment method changed. Refresh the order and try again.');
+      payment = await Payment.findOne({ order: order._id }).session(session);
+      if (!payment || payment.provider !== 'manual' || !['requires_payment', 'succeeded'].includes(payment.status)) {
+        throw ApiError.conflict('This payment cannot be corrected as a manual payment');
+      }
+      if (req.body.paymentMethod === 'upi' && !order.upiRecipient?.upiId) {
+        const settings = await getStoreSettings();
+        const recipient = settings.upiRecipients.find((r) => r.id === settings.defaultUpiRecipientId);
+        if (order.paymentStatus === 'pending' && !recipient) throw ApiError.badRequest('Configure a UPI recipient before changing an unpaid order to UPI');
+        if (recipient) order.upiRecipient = { ...recipient };
+      }
+      order.paymentMethod = req.body.paymentMethod;
+      payment.method = req.body.paymentMethod;
+      await order.save({ session });
+      await payment.save({ session });
+    });
+  } finally { await session.endSession(); }
+  if (previousMethod !== order.paymentMethod) audit(req, {
+    action: 'payment.method', entity: 'order', entityId: order._id,
+    summary: `${order.orderNumber}: payment method corrected from ${previousMethod.toUpperCase()} to ${order.paymentMethod.toUpperCase()}`,
+    before: { paymentMethod: previousMethod }, after: { paymentMethod: order.paymentMethod },
+  });
+  res.json({ success: true, order, payment });
+});
+
 const eventReport = asyncHandler(async (req, res) => {
   res.json({ success: true, ...await eventSalesReport({ eventName: req.query.eventName || '' }) });
 });
@@ -167,6 +206,7 @@ const itemRules = () => [
   body('orderType').isIn(['dining', 'takeaway', 'delivery']),
 ];
 const validators = {
+  changePaymentMethod: [body('paymentMethod').isIn(methods), body('expectedMethod').isIn(methods)],
   quote: itemRules(),
   create: [...itemRules(), body('requestKey').isUUID(4), body('source').isIn(sources),
     body('eventName').optional().isString().bail().trim().isLength({ max: 120 }),
@@ -186,4 +226,4 @@ const validators = {
   report: [query('eventName').optional().isString().bail().trim().isLength({ min: 1, max: 120 })],
 };
 
-module.exports = { quote, create, settle, paymentQr, eventReport, validators };
+module.exports = { quote, create, settle, paymentQr, changePaymentMethod, eventReport, validators };

@@ -55,6 +55,67 @@ async function update(p, items, overrides = {}) {
   return api('PATCH', `/admin/events/${p._id}`, { ...p, items: items || p.items, ...overrides });
 }
 
+test('payment method corrections update both records and event totals without changing revenue or stock', async () => {
+  const f = await fixture(); await plan(f);
+  const order = await sale(f, 2);
+  const stockBefore = (await Product.findById(f.product._id)).stockCount;
+  const before = (await report(f)).events[0];
+  const change = (paymentMethod, expectedMethod) => api('PATCH', `/admin/orders/${order._id}/payment-method`, { paymentMethod, expectedMethod });
+  const upi = await change('upi', 'cash');
+  assert.equal(upi.status, 200, JSON.stringify(upi));
+  assert.equal(upi.order.paymentStatus, 'paid'); assert.equal(upi.payment.status, 'succeeded');
+  assert.equal(upi.order.paymentMethod, 'upi'); assert.equal(upi.payment.method, 'upi');
+  assert.equal(upi.order.pricing.total, order.pricing.total);
+  assert.equal((await change('cash', 'cash')).status, 409);
+  const cash = await change('cash', 'upi');
+  assert.equal(cash.status, 200, JSON.stringify(cash));
+  const after = (await report(f)).events[0];
+  assert.equal(after.cash, before.cash); assert.equal(after.upi, before.upi);
+  assert.equal(after.revenue, before.revenue); assert.equal(after.netProfit, before.netProfit);
+  assert.equal((await Product.findById(f.product._id)).stockCount, stockBefore);
+  const middle = await change('upi', 'cash'); assert.equal(middle.status, 200);
+  const upiReport = (await report(f)).events[0];
+  assert.equal(upiReport.upi, order.pricing.total); assert.equal(upiReport.cash, 0);
+});
+
+test('payment corrections reject unauthorized, invalid, refunded, cancelled, website and closed event orders', async () => {
+  const f = await fixture(); await plan(f); const order = await sale(f, 1);
+  const path = `/admin/orders/${order._id}/payment-method`;
+  for (const auth of [null, customerToken]) assert.equal((await api('PATCH', path, { paymentMethod: 'upi', expectedMethod: 'cash' }, auth)).status, auth ? 403 : 401);
+  assert.equal((await api('PATCH', path, { paymentMethod: 'card', expectedMethod: 'cash' })).status, 400);
+  for (const patch of [{ paymentStatus: 'refunded' }, { orderStatus: 'cancelled' }, { source: 'website' }]) {
+    await Order.updateOne({ _id: order._id }, { $set: { paymentStatus: 'paid', orderStatus: 'completed', source: 'event', ...patch } });
+    assert.equal((await api('PATCH', path, { paymentMethod: 'upi', expectedMethod: 'cash' })).status, 409);
+  }
+  await Order.updateOne({ _id: order._id }, { $set: { source: 'event' } });
+  await EventPlan.updateOne({ eventName: f.name }, { $set: { status: 'closed' } });
+  assert.equal((await api('PATCH', path, { paymentMethod: 'upi', expectedMethod: 'cash' })).status, 409);
+});
+
+test('correcting an unpaid UPI order to cash preserves its unpaid status', async () => {
+  const f = await fixture(); await plan(f); const order = await sale(f, 1, { paymentStatus: 'pending' });
+  const Payment = require('../src/models/Payment');
+  await Order.updateOne({ _id: order._id }, { $set: { paymentMethod: 'upi' } });
+  await Payment.updateOne({ order: order._id }, { $set: { method: 'upi' } });
+  const response = await api('PATCH', `/admin/orders/${order._id}/payment-method`, { paymentMethod: 'cash', expectedMethod: 'upi' });
+  assert.equal(response.status, 200, JSON.stringify(response));
+  assert.equal(response.order.paymentStatus, 'pending'); assert.equal(response.payment.status, 'requires_payment');
+  assert.equal(response.payment.method, 'cash');
+});
+
+test('a failed payment-record write rolls back the order method as well', async () => {
+  const f = await fixture(); await plan(f); const order = await sale(f, 1);
+  const Payment = require('../src/models/Payment');
+  const originalSave = Payment.prototype.save;
+  Payment.prototype.save = async function () { throw new Error('Simulated payment write failure'); };
+  try {
+    const response = await api('PATCH', `/admin/orders/${order._id}/payment-method`, { paymentMethod: 'upi', expectedMethod: 'cash' });
+    assert.equal(response.status, 500);
+  } finally { Payment.prototype.save = originalSave; }
+  assert.equal((await Order.findById(order._id)).paymentMethod, 'cash');
+  assert.equal((await Payment.findOne({ order: order._id })).method, 'cash');
+});
+
 test('event management and preparation costs are only available to admins', async () => {
   const id = new mongoose.Types.ObjectId();
   for (const auth of [null, customerToken]) for (const [method, path] of [
