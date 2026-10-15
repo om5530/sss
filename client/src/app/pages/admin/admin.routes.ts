@@ -9,7 +9,7 @@ export const ADMIN_ROUTES: Routes = [
     children: [
       { path: 'categories', loadComponent: () => import('./categories/admin-categories').then((m) => m.AdminCategories), title: 'Categories — SSS Admin' },
       { path: 'settings', loadComponent: () => import('./settings/admin-settings').then((m) => m.AdminSettings), title: 'Store settings — SSS Admin' },
-      { path: '', redirectTo: 'bakery/recipes', pathMatch: 'full' },
+      { path: '', redirectTo: 'orders', pathMatch: 'full' },
       { path: 'dashboard', loadComponent: () => import('./dashboard/admin-dashboard').then((m) => m.AdminDashboard), title: 'Dashboard — SSS Admin' },
       // Temporarily disabled while the bakery records WhatsApp orders manually.
       // { path: 'queue', loadComponent: () => import('./queue/admin-queue').then((m) => m.AdminQueue), title: 'Live queue — SSS Admin' },
