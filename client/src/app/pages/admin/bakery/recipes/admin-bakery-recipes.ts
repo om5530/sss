@@ -160,7 +160,7 @@ export class AdminBakeryRecipes implements OnInit {
     const isSubRecipe = this.recipeView() === 'sub';
     return this.recipes().filter(
       (r) => Boolean(r.isSubRecipe) === isSubRecipe && (cat === 'All' || this.displayCategory(r) === cat),
-    );
+    ).sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true }));
   }
 
   displayCategory(recipe: BakeryRecipe): string {
