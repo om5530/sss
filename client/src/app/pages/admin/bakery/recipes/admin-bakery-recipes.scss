@@ -195,10 +195,11 @@
 
 .card-actions {
   display: grid;
-    grid-template-columns: auto auto auto;
-  justify-content: space-between;
+  grid-template-columns: auto auto 1fr;
   align-items: center;
   gap: 0.5rem;
+
+  > .btn:last-child { justify-self: end; }
 
   .btn {
     width: 100%;
