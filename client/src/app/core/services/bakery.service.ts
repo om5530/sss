@@ -96,8 +96,8 @@ export class BakeryService {
   updateRecipe(
     id: string,
     data: Partial<BakeryRecipe>,
-  ): Observable<{ success: boolean; recipe: BakeryRecipe }> {
-    return this.http.patch<{ success: boolean; recipe: BakeryRecipe }>(
+  ): Observable<{ success: boolean; recipe: BakeryRecipe; message?: string }> {
+    return this.http.patch<{ success: boolean; recipe: BakeryRecipe; message?: string }>(
       `${this.base}/recipes/${id}`,
       data,
     );

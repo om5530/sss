@@ -398,6 +398,8 @@ async function saveRecipe(req, session, creating) {
   const r = creating
     ? new Recipe(input)
     : await get(Recipe, req.params.id, session);
+  const previousProductId = r.productId ? String(r.productId) : null;
+  let removedUnavailableProduct = false;
   if (!creating) {
     if (Number(req.body.version) !== r.version)
       throw ApiError.conflict("Recipe changed. Reload before saving.");
@@ -414,10 +416,17 @@ async function saveRecipe(req, session, creating) {
   if (!r.components.length || r.components.length > 200)
     throw ApiError.badRequest("Recipe needs between 1 and 200 components");
   if (r.productId) {
+    const product = await require('../models/Product').findById(r.productId).session(session);
+    if (!product || product.archived) {
+      if (creating || String(r.productId) !== previousProductId)
+        throw ApiError.badRequest('The selected product was archived or deleted. Choose an existing product in Product mapping.');
+      r.productId = null;
+      removedUnavailableProduct = true;
+    }
+  }
+  if (r.productId) {
     const { sellableRecipe } = require('../services/recipe-product.service');
     if (!sellableRecipe(r)) throw ApiError.badRequest('Unlink this product before making its recipe inactive or a sub-recipe.');
-    const product = await require('../models/Product').findById(r.productId).session(session);
-    if (!product || product.archived) throw ApiError.badRequest('Linked product is unavailable');
     if (await Recipe.exists({ _id: { $ne: r._id }, productId: r.productId }).session(session)) throw ApiError.conflict('This product is already linked to another recipe');
   }
   const m = await maps(session, new Date(), undefined, true, false);
@@ -484,7 +493,10 @@ async function saveRecipe(req, session, creating) {
     [{ recipeId: r._id, version: r.version, recipe: r.toObject() }],
     { session },
   );
-  return { recipe: { ...r.toObject(), ...result, components: r.components } };
+  return {
+    recipe: { ...r.toObject(), ...result, components: r.components },
+    ...(removedUnavailableProduct ? { message: 'Recipe saved. Its link to an archived or deleted product was removed.' } : {}),
+  };
 }
 exports.createRecipe = handler((req) =>
   transaction((s) => saveRecipe(req, s, true)),

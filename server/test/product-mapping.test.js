@@ -96,6 +96,55 @@ test('linked products use per-piece recipe pricing in the catalogue and quotes',
   assert.equal(quote.recipeCostSnapshot, undefined);
   assert.equal((await api('PATCH', `/admin/products/${product._id}`, { price: 1 })).status, 409);
 });
+
+test('recipe saves clear existing archived or deleted product links with a notice', async () => {
+  for (const state of ['archived', 'deleted']) {
+    const { product, recipe } = await fixture(`Cookies-${state}`);
+    assert.equal((await mapProduct(product, recipe)).status, 200);
+    if (state === 'archived') await Product.updateOne({ _id: product._id }, { archived: true });
+    else await Product.deleteOne({ _id: product._id });
+    const saved = await api('PATCH', `/admin/bakery/recipes/${recipe._id}`, {
+      version: recipe.version, notes: 'Cookie recipe changes', productId: String(product._id),
+    });
+    assert.equal(saved.status, 200, saved.message);
+    assert.match(saved.message, /link.*removed/);
+    assert.equal(saved.recipe.productId, null);
+    assert.equal(saved.recipe.notes, 'Cookie recipe changes');
+    assert.equal((await Recipe.findById(recipe._id)).productId, null);
+    if (state === 'archived') {
+      const retained = await Product.findById(product._id);
+      assert.equal(retained.archived, true);
+      assert.equal(retained.price, 40);
+    }
+  }
+});
+
+test('saving a sold-out linked recipe preserves its link and updates its product price', async () => {
+  const { product, recipe } = await fixture('Sold-out-save');
+  assert.equal((await mapProduct(product, recipe)).status, 200);
+  await Product.updateOne({ _id: product._id }, { available: false, stockCount: 0, stockSoldOut: true });
+  const saved = await api('PATCH', `/admin/bakery/recipes/${recipe._id}`, {
+    version: recipe.version, manualSellingPricePerPiece: 55,
+  });
+  assert.equal(saved.status, 200, saved.message);
+  assert.equal(saved.recipe.productId, String(product._id));
+  const retained = await Product.findById(product._id);
+  assert.equal(retained.price, 55);
+  assert.equal(retained.available, false);
+});
+
+test('new links to unavailable products are rejected without changing the recipe', async () => {
+  const { product, recipe } = await fixture('Invalid-new-link');
+  await Product.updateOne({ _id: product._id }, { archived: true });
+  const saved = await api('PATCH', `/admin/bakery/recipes/${recipe._id}`, {
+    version: recipe.version, productId: String(product._id), notes: 'Must not save',
+  });
+  assert.equal(saved.status, 400);
+  assert.match(saved.message, /archived or deleted/);
+  const unchanged = await Recipe.findById(recipe._id);
+  assert.equal(unchanged.productId, null);
+  assert.equal(unchanged.notes, '');
+});
 test('new sales retain private cost snapshots while legacy event costs are marked as estimates', async () => {
   const { product, recipe } = await fixture('Historical');
   await Order.create({ orderNumber: 'OLD-MAPPED', source: 'event', eventName: 'Old Fair', orderType: 'takeaway', paymentStatus: 'paid', orderStatus: 'completed',

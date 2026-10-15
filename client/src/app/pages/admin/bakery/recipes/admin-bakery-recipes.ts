@@ -410,7 +410,7 @@ export class AdminBakeryRecipes implements OnInit {
       this.bakery.updateRecipe(recipe._id, recipe).subscribe({
         next: (res) => {
           this.saving.set(false);
-          this.toast.success('Recipe updated');
+          this.toast.success(res.message || 'Recipe updated');
           this.productList.clear();
           this.clearPriceDraft(res.recipe._id);
           this.editingRecipe.set(null);
