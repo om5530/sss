@@ -10,40 +10,17 @@
   </div>
 
   <div class="adm-filters">
-    <input
-      class="input orders-search"
-      type="search"
-      placeholder="Search order #, name, phone or total…"
-      [(ngModel)]="q"
-      (ngModelChange)="onSearch()"
-      aria-label="Search orders"
-    />
-    <select class="select" [(ngModel)]="status" (ngModelChange)="apply()" aria-label="Filter by status">
-      <option value="">All statuses</option>
-      <option value="placed">Placed</option>
-      <option value="confirmed">Confirmed</option>
-      <option value="preparing">Preparing</option>
-      <option value="ready">Ready</option>
-      <option value="completed">Completed</option>
-      <option value="cancelled">Cancelled</option>
-    </select>
-    <select class="select" [(ngModel)]="type" (ngModelChange)="apply()" aria-label="Filter by order type">
-      <option value="">All types</option>
-      <option value="dining">Dine-in</option>
-      <option value="takeaway">Takeaway</option>
-      <option value="delivery">Delivery</option>
-    </select>
-    <select class="select" [(ngModel)]="payment" (ngModelChange)="apply()" aria-label="Filter by payment">
-      <option value="">All payments</option>
-      <option value="pending">Pending</option>
-      <option value="paid">Paid</option>
-      <option value="failed">Failed</option>
-      <option value="refunded">Refunded</option>
-    </select>
     <input class="input" type="date" [(ngModel)]="from" (ngModelChange)="apply()" aria-label="From date" />
-    <select class="select" [(ngModel)]="source" (ngModelChange)="eventName = ''; apply()" aria-label="Filter by source"><option value="">All sources</option><option value="website">Website</option><option value="phone">Phone order</option><option value="walk-in">Walk-in</option><option value="event">Event / Stall</option></select>
-    @if (source === 'event' || eventName) { <input class="input" [(ngModel)]="eventName" (ngModelChange)="onSearch()" placeholder="Event / Stall name" aria-label="Filter by event name" /> }
     <input class="input" type="date" [(ngModel)]="to" (ngModelChange)="apply()" aria-label="To date" />
+    <select class="select orders-event" [(ngModel)]="eventName" (ngModelChange)="apply()" aria-label="Filter by Event / Stall">
+      <option value="">All events / orders</option>
+      @if (eventName && !eventNames().includes(eventName)) {
+        <option [value]="eventName">{{ eventName }}</option>
+      }
+      @for (name of eventNames(); track name) {
+        <option [value]="name">{{ name }}</option>
+      }
+    </select>
     @if (hasFilters) {
       <button type="button" class="btn btn--ghost btn--sm" (click)="clearFilters()">Clear</button>
     }

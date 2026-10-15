@@ -36,12 +36,9 @@ export class AdminOrders {
   protected readonly pendingDelete = signal<AdminOrder | null>(null);
   private readonly deleteDialog = viewChild.required<ElementRef<HTMLDialogElement>>('deleteDialog');
 
-  // Filters live in the URL so a filtered view can be shared (AS-3.1).
-  protected q = '';
-  protected status = '';
-  protected type = '';
-  protected payment = '';
-  protected source = '';
+  private readonly eventStorageKey = 'bc_admin_orders_event';
+  protected readonly eventNames = signal<string[]>([]);
+  // Date and event filters remain shareable through the URL.
   protected eventName = '';
   protected from = '';
   protected to = '';
@@ -59,36 +56,40 @@ export class AdminOrders {
     }
   }
 
-  private searchTimer: ReturnType<typeof setTimeout> | undefined;
   private listRequest?: Subscription;
 
   constructor() {
     inject(DestroyRef).onDestroy(() => {
-      clearTimeout(this.searchTimer);
       this.listRequest?.unsubscribe();
     });
     const params = this.route.snapshot.queryParamMap;
-    this.q = params.get('q') ?? '';
-    this.status = params.get('status') ?? '';
-    this.type = params.get('type') ?? '';
-    this.payment = params.get('payment') ?? '';
-    this.source = params.get('source') ?? '';
-    this.eventName = params.get('eventName') ?? '';
+    try {
+      this.eventName = params.get('eventName') ?? localStorage.getItem(this.eventStorageKey) ?? '';
+    } catch {
+      this.eventName = params.get('eventName') ?? '';
+    }
+    this.admin.eventOptions().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: ({ events }) => this.eventNames.set(events.map((event) => event.eventName)),
+      error: () => this.toast.error('Could not load events. Please reopen Orders to try again.'),
+    });
     this.from = params.get('from') ?? '';
     this.to = params.get('to') ?? '';
     this.page = Math.max(1, Number(params.get('page')) || 1);
-    this.fetch();
+    this.apply(false);
   }
 
   protected apply(resetPage = true) {
     if (resetPage) this.page = 1;
+    try {
+      localStorage.setItem(this.eventStorageKey, this.eventName);
+    } catch { /* Keep filtering for this visit when browser storage is unavailable. */ }
     const queryParams: Record<string, string | number | null> = {
-      q: this.q || null,
-      status: this.status || null,
-      type: this.type || null,
-      payment: this.payment || null,
+      q: null,
+      status: null,
+      type: null,
+      payment: null,
       amount: null,
-      source: this.source || null,
+      source: this.eventName ? 'event' : null,
       eventName: this.eventName || null,
       from: this.from || null,
       to: this.to || null,
@@ -98,13 +99,8 @@ export class AdminOrders {
     this.fetch();
   }
 
-  protected onSearch() {
-    clearTimeout(this.searchTimer);
-    this.searchTimer = setTimeout(() => this.apply(), 350);
-  }
-
   protected clearFilters() {
-    this.q = this.status = this.type = this.payment = this.source = this.eventName = this.from = this.to = '';
+    this.eventName = this.from = this.to = '';
     this.apply();
   }
 
@@ -149,18 +145,14 @@ export class AdminOrders {
   }
 
   protected get hasFilters(): boolean {
-    return Boolean(this.q || this.status || this.type || this.payment || this.source || this.eventName || this.from || this.to);
+    return Boolean(this.eventName || this.from || this.to);
   }
 
   private fetch() {
     this.listRequest?.unsubscribe();
     this.loading.set(true);
     const filters: OrderFilters = {
-      q: this.q || undefined,
-      status: (this.status as OrderFilters['status']) || undefined,
-      type: (this.type as OrderFilters['type']) || undefined,
-      payment: (this.payment as OrderFilters['payment']) || undefined,
-      source: (this.source as OrderFilters['source']) || undefined,
+      source: this.eventName ? 'event' : undefined,
       eventName: this.eventName || undefined,
       from: this.from || undefined,
       to: this.to || undefined,
