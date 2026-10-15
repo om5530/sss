@@ -111,6 +111,7 @@ export class AdminBakeryRecipes implements OnInit {
 
   loading = signal<boolean>(false);
   saving = signal(false);
+  saveError = signal('');
   editingRecipe = signal<Partial<BakeryRecipe> | null>(null);
 
   selectedCategory = signal<string>('All');
@@ -304,6 +305,7 @@ export class AdminBakeryRecipes implements OnInit {
   }
 
   private resetCategoryEditor() {
+    this.saveError.set('');
     this.addingCategory.set(false);
     this.newCategoryName = '';
   }
@@ -403,6 +405,7 @@ export class AdminBakeryRecipes implements OnInit {
       return;
     }
     this.saving.set(true);
+    this.saveError.set('');
     if (recipe._id) {
       this.bakery.updateRecipe(recipe._id, recipe).subscribe({
         next: (res) => {
@@ -417,7 +420,11 @@ export class AdminBakeryRecipes implements OnInit {
             ...parent.components, ...(parent.options || []).flatMap((option) => option.components || []),
           ].some((component) => component.subRecipeId === res.recipe._id))) this.fetchRecipes();
         },
-        error: () => { this.saving.set(false); this.toast.error('Failed to update recipe'); },
+        error: (e) => {
+          this.saving.set(false);
+          this.saveError.set(e.error?.message || 'Failed to update recipe. Please try again.');
+          this.toast.error(this.saveError());
+        },
       });
     } else {
       this.bakery.createRecipe(recipe).subscribe({
@@ -427,7 +434,11 @@ export class AdminBakeryRecipes implements OnInit {
           this.editingRecipe.set(null);
           this.upsertRecipe(res.recipe);
         },
-        error: () => { this.saving.set(false); this.toast.error('Failed to create recipe'); },
+        error: (e) => {
+          this.saving.set(false);
+          this.saveError.set(e.error?.message || 'Failed to create recipe. Please try again.');
+          this.toast.error(this.saveError());
+        },
       });
     }
   }

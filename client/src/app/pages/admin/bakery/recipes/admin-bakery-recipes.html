@@ -399,6 +399,9 @@
         <button type="button" class="btn btn--outline" (click)="cancelEdit()">Cancel</button>
         <button [appBusy]="saving()" type="button" class="btn btn--accent" [disabled]="saving()" (click)="saveRecipe()">{{ saving() ? 'Saving…' : 'Save Recipe' }}</button>
       </div>
+      @if (saveError()) {
+        <p role="alert">{{ saveError() }}</p>
+      }
       <section>
         <h3>Custom product options</h3>
         <p>

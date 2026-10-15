@@ -34,6 +34,24 @@ async function fixture(name) {
     components: [{ componentType: 'other', name: 'Batch ingredients', itemType: 'other', quantity: 1, uom: 'piece', unitCost: '80' }] });
   return { product, recipe };
 }
+
+test('legacy recipes without a stored version can be edited from the recipe list', async () => {
+  const { recipe } = await fixture('Legacy cookies');
+  await Recipe.collection.updateOne({ _id: recipe._id }, { $unset: { version: '' } });
+  const listed = await api('GET', '/admin/bakery/recipes');
+  const editable = listed.recipes.find((item) => item._id === String(recipe._id));
+  assert.equal(editable.version, 1);
+  const saved = await api('PATCH', `/admin/bakery/recipes/${recipe._id}`, {
+    ...editable, notes: 'Updated cookie recipe',
+  });
+  assert.equal(saved.status, 200, saved.message);
+  assert.equal(saved.recipe.notes, 'Updated cookie recipe');
+  assert.equal(saved.recipe.version, 2);
+  const stale = await api('PATCH', `/admin/bakery/recipes/${recipe._id}`, {
+    ...editable, notes: 'Stale update',
+  });
+  assert.equal(stale.status, 409);
+});
 async function mapProduct(product, recipe) {
   const report = await api('GET', '/admin/bakery/product-mappings');
   assert.equal(report.status, 200, JSON.stringify(report));

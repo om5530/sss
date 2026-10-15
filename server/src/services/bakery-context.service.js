@@ -47,6 +47,8 @@ async function maps(session, at = new Date(), excludePlanId, includeRecipes = tr
     const m = materials.get(String(r.materialId));
     if (m && ['ingredient', 'packaging'].includes(m.type)) m.allocatedStock = new E.Decimal(m.allocatedStock).add(r.quantity).toString();
   }
-  return { materials, plans, recipes: new Map(recipeRows.map((r) => [String(r._id), r])), latest, formats, suppliers };
+  // Lean reads do not apply schema defaults to recipes created before versioning.
+  // Match hydrated documents so clients can submit the first version on save.
+  return { materials, plans, recipes: new Map(recipeRows.map((r) => [String(r._id), { ...r, version: r.version ?? 1 }])), latest, formats, suppliers };
 }
 module.exports = { maps };
