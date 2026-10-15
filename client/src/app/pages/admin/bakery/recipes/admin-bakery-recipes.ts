@@ -217,6 +217,41 @@ export class AdminBakeryRecipes implements OnInit {
     this.previewResult.set(null);
   }
 
+  duplicateRecipe(recipe: BakeryRecipe) {
+    this.resetCategoryEditor();
+    this.editingComponentType.set(null);
+    const copy = JSON.parse(JSON.stringify(recipe)) as BakeryRecipe;
+    const baseName = `${recipe.name} (Copy)`;
+    let name = baseName;
+    let suffix = 2;
+    const names = new Set(this.recipes().map((item) => item.name.toLocaleLowerCase()));
+    while (names.has(name.toLocaleLowerCase())) name = `${baseName} ${suffix++}`;
+
+    this.editingRecipe.set({
+      name,
+      code: 'RCP-' + crypto.randomUUID(),
+      category: this.displayCategory(recipe),
+      isSubRecipe: copy.isSubRecipe,
+      baseBatchUnits: copy.baseBatchUnits,
+      yieldQuantity: copy.yieldQuantity,
+      yieldUom: copy.yieldUom,
+      piecesPerBatch: copy.piecesPerBatch,
+      finishedWeightGrams: copy.finishedWeightGrams,
+      targetMarkupPercent: copy.targetMarkupPercent,
+      manualSellingPricePerPiece: this.hasAdminPrice(recipe) ? this.savedPiecePrice(recipe) : null,
+      overheadPerBatch: copy.overheadPerBatch,
+      expectedLossPercent: copy.expectedLossPercent,
+      instructions: copy.instructions,
+      notes: copy.notes,
+      components: copy.components.map(({ _id, ...component }) => component),
+      options: copy.options?.map((option) => ({
+        name: option.name,
+        components: option.components.map(({ _id, ...component }) => component),
+      })),
+    });
+    this.preview();
+  }
+
   onCategorySelection(recipe: Partial<BakeryRecipe>, value: string) {
     if (value === '__add_new__') {
       this.addingCategory.set(true);

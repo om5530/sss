@@ -115,6 +115,9 @@
 
           <!-- Actions -->
           <div class="card-actions">
+            <button type="button" class="btn btn--outline btn--sm" [disabled]="!!savingPriceId()" (click)="duplicateRecipe(r)" [attr.aria-label]="'Duplicate ' + r.name">
+              Duplicate
+            </button>
             <!-- Temporarily hidden: Version history
             <button type="button" class="btn btn--outline btn--sm" (click)="history(r)">
               Version history
