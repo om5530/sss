@@ -1,5 +1,5 @@
 import { BusyButton } from '../shared/busy-button';
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, EMPTY, merge, switchMap, timer } from 'rxjs';
 import { AdminService } from '../../../core/services/admin.service';
@@ -28,6 +28,7 @@ export class AdminLayout {
   protected readonly bakeryOpen = signal<boolean>(true);
   protected readonly toolsOpen = signal(false);
   protected readonly mobileNavOpen = signal(false);
+  protected readonly mobileViewport = signal(matchMedia('(max-width: 960px)').matches);
   protected readonly isOffline = signal(!navigator.onLine);
   protected readonly wakeLockSupported = typeof navigator !== 'undefined' && 'wakeLock' in navigator;
   protected readonly isScreenAwake = signal(false);
@@ -37,6 +38,19 @@ export class AdminLayout {
   private session = inject(AdminSessionService);
   constructor() {
     const destroy = inject(DestroyRef);
+    const mobileQuery = matchMedia('(max-width: 960px)');
+    const onResize = () => {
+      this.mobileViewport.set(mobileQuery.matches);
+      if (!mobileQuery.matches) this.mobileNavOpen.set(false);
+    };
+    mobileQuery.addEventListener('change', onResize);
+    destroy.onDestroy(() => mobileQuery.removeEventListener('change', onResize));
+    effect((onCleanup) => {
+      if (!this.mobileViewport() || !this.mobileNavOpen()) return;
+      const previous = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      onCleanup(() => document.body.style.overflow = previous);
+    });
     const revealTools = (url: string) => {
       if (/^\/admin\/(dashboard|activity|qr|reports|coupons|enquiries|prep|queue)(?:[/?#]|$)/.test(url)) {
         this.toolsOpen.set(true);
@@ -45,7 +59,7 @@ export class AdminLayout {
     revealTools(this.router.url);
     this.router.events.pipe(takeUntilDestroyed(destroy)).subscribe((event) => {
       if (event instanceof NavigationEnd) {
-        this.mobileNavOpen.set(false);
+        if (this.mobileNavOpen()) this.closeMobileNav();
         revealTools(event.urlAfterRedirects);
       }
     });
@@ -81,6 +95,31 @@ export class AdminLayout {
       document.removeEventListener('visibilitychange', onVisibilityChange);
       this.releaseWakeLock();
     });
+  }
+
+  protected openMobileNav() {
+    this.mobileNavOpen.set(true);
+    setTimeout(() => document.getElementById('admin-menu-close')?.focus());
+  }
+
+  protected closeMobileNav() {
+    this.mobileNavOpen.set(false);
+    document.getElementById('admin-menu-toggle')?.focus();
+  }
+
+  protected onMenuKeydown(event: KeyboardEvent) {
+    if (!this.mobileViewport() || !this.mobileNavOpen()) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closeMobileNav();
+    }
+    if (event.key !== 'Tab') return;
+    const controls = Array.from(document.querySelectorAll<HTMLElement>('#admin-menu a[href], #admin-menu button, #admin-menu [tabindex="0"]'))
+      .filter((element) => element.getClientRects().length && !element.hasAttribute('disabled'));
+    const first = controls[0];
+    const last = controls[controls.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
   }
 
   async toggleWakeLock() {

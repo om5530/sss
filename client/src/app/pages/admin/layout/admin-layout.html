@@ -8,7 +8,11 @@
       </span>
     </a>
 
-    <button class="adm-menu-toggle" type="button" [attr.aria-expanded]="mobileNavOpen()" aria-controls="admin-navigation" (click)="mobileNavOpen.set(!mobileNavOpen())">{{mobileNavOpen() ? 'Close menu' : 'Menu'}}</button>
+    <a routerLink="/" class="adm-mobile-home" aria-label="View store" title="View store"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5M5.5 9v11h13V9" stroke-linecap="round" stroke-linejoin="round" /></svg></a>
+    <button id="admin-menu-toggle" class="adm-menu-toggle" type="button" [attr.aria-expanded]="mobileNavOpen()" aria-controls="admin-menu" aria-label="Open menu" (click)="openMobileNav()"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" /></svg></button>
+    <div class="adm-menu-backdrop" [class.is-open]="mobileNavOpen()" (click)="closeMobileNav()" aria-hidden="true"></div>
+    <div id="admin-menu" class="adm-drawer" [attr.inert]="mobileViewport() && !mobileNavOpen() ? '' : null" [attr.role]="mobileViewport() ? 'dialog' : null" [attr.aria-modal]="mobileViewport() && mobileNavOpen() ? 'true' : null" aria-label="Operations menu" (keydown)="onMenuKeydown($event)">
+    <div class="adm-drawer__head"><strong>Menu</strong><button id="admin-menu-close" type="button" class="adm-menu-toggle" aria-label="Close menu" (click)="closeMobileNav()">✕</button></div>
     <nav id="admin-navigation" class="adm-side__nav" aria-label="Admin" data-lenis-prevent tabindex="0">
 
       <!-- Bakery Operations — primary PWA use case, placed first -->
@@ -195,6 +199,7 @@
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
             <circle cx="12" cy="12" r="8" /><path d="M12 4a8 8 0 0 1 0 16Z" fill="currentColor" stroke="none" />
           </svg>
+          <span class="adm-utility-label">{{ theme.theme() === 'dark' ? 'Light mode' : 'Dark mode' }}</span>
         </button>
         @if (wakeLockSupported) {
           <button
@@ -207,10 +212,11 @@
             aria-label="Keep screen awake"
           >
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+            <span class="adm-utility-label">Keep screen awake</span>
           </button>
         }
       </div>
-      <a routerLink="/" class="adm-side__link" aria-label="View store">
+      <a routerLink="/" class="adm-side__link adm-desktop-home" aria-label="View store">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
           <path d="M3 10.5 12 3l9 7.5M5.5 9v11h13V9" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
@@ -223,9 +229,10 @@
         <span>Sign out</span>
       </button>
     </div>
+    </div>
   </aside>
 
-  <main class="adm-main">
+  <main class="adm-main" [attr.inert]="mobileViewport() && mobileNavOpen() ? '' : null">
     @if (requestActivity.kind()) {
       <div class="adm-request-status no-print" role="status" aria-live="polite" aria-atomic="true">
         <span class="adm-loading-spinner" aria-hidden="true"></span>

@@ -916,7 +916,8 @@ button { font-family: inherit; cursor: pointer; }
 .adm-main .field { margin-bottom: 0.75rem; }
 .adm-main .label { margin-bottom: 0.25rem; font-size: 0.75rem; }
 
-.adm-menu-toggle { display:none; }
+.adm-menu-toggle, .adm-mobile-home, .adm-drawer__head, .adm-menu-backdrop, .adm-utility-label { display:none; }
+.adm-drawer { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .adm-install { display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:8px 10px; border-bottom:1px solid var(--line); }
 .adm-install .btn { min-height:44px; font-size:.8rem; padding:6px 10px; }
 .adm-install p { flex-basis:100%; margin:0; font-size:.85rem; }
@@ -1156,7 +1157,7 @@ button { font-family: inherit; cursor: pointer; }
   50% { opacity: 0.5; }
 }
 
-/* Phones and tablets share a labelled, collapsible operations menu. */
+/* Phones and tablets use a right-hand navigation drawer. */
 @media (max-width: 960px) {
   .adm-shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
   .adm-side {
@@ -1168,16 +1169,33 @@ button { font-family: inherit; cursor: pointer; }
     gap: 0.4rem;
     padding: 0.4rem 0.6rem;
     overflow: visible;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
   }
   .adm-side__brand { padding: 0 0.3rem 0 0; }
   .adm-side__brand span { display: none; }
-  .adm-menu-toggle { display:block; margin-left:auto; padding:.45rem .65rem; min-height:40px; color:var(--d-text); background:transparent; border:1px solid var(--d-line); border-radius:7px; font-size: 0.8rem; }
-  .adm-side__nav { display:none; }
-  .adm-side--open .adm-side__nav { display:flex; order:3; flex: 1 0 100%; flex-direction:column; align-items:stretch; max-height:calc(100dvh - 70px); overflow-y:auto; }
+  .adm-menu-toggle, .adm-mobile-home { display:grid; place-items:center; padding:.45rem .65rem; width:44px; min-height:44px; color:var(--d-text); background:transparent; border:1px solid var(--d-line); border-radius:7px; font-size: 1rem; }
+  .adm-mobile-home { margin-left: auto; }
+  .adm-drawer {
+    position: fixed; inset: 0 0 0 auto; width: min(340px, 88vw); height: 100dvh;
+    padding: max(1rem, env(safe-area-inset-top)) max(.8rem, env(safe-area-inset-right)) max(.8rem, env(safe-area-inset-bottom)) .8rem;
+    background: linear-gradient(180deg, var(--night-2), var(--night));
+    border-left: 1px solid var(--d-line); box-shadow: -12px 0 40px rgba(0,0,0,.25);
+    z-index: 42; transform: translateX(105%); visibility: hidden;
+    transition: transform .25s ease, visibility .25s; overflow: hidden;
+  }
+  .adm-side--open .adm-drawer { transform: translateX(0); visibility: visible; }
+  .adm-drawer__head { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding-bottom:.8rem; color:var(--d-text); }
+  .adm-menu-backdrop { display:block; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:41; opacity:0; visibility:hidden; transition:opacity .25s, visibility .25s; }
+  .adm-menu-backdrop.is-open { opacity:1; visibility:visible; }
+  .adm-side__nav { display:flex; overflow-y:auto; }
   .adm-side__link { padding: 0.4rem 0.55rem; white-space: nowrap; font-size: 0.8rem; }
-  .adm-side__foot { flex-direction: row; border-top: none; padding-top: 0; }
-  .adm-side__foot .adm-side__link span { display: none; }
+  .adm-side__foot { flex-direction:column; margin-top:.6rem; padding-top:.6rem; border-top:1px solid var(--d-line); }
+  .adm-side__foot .adm-side__link { min-height:44px; }
+  .adm-desktop-home { display:none; }
+  .adm-side__utility-icons { flex-direction:column; padding:0 0 .4rem; }
+  .adm-side__utility-btn { display:flex; gap:.65rem; width:100%; min-height:44px; padding:.5rem .6rem; text-align:left; }
+  .adm-utility-label { display:inline; font-size:.82rem; }
+  .adm-side__utility-btn::after { display:none; }
   /* Tooltips must stay within the mobile header, even while transparent. */
   .adm-side__utility-btn::after {
     left: auto;
@@ -1188,6 +1206,10 @@ button { font-family: inherit; cursor: pointer; }
   .adm-side__utility-btn:hover::after,
   .adm-side__utility-btn:focus-visible::after { transform: translateY(0); }
   .adm-kv { grid-template-columns: 95px 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adm-drawer, .adm-menu-backdrop { transition:none; }
 }
 
 /* ============ Scrollbar ============ */
