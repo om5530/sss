@@ -1,5 +1,5 @@
 import { BusyButton } from '../shared/busy-button';
-import { Component, DestroyRef, effect, inject, signal } from '@angular/core';
+import { Component, DestroyRef, Injector, afterNextRender, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, EMPTY, merge, switchMap, timer } from 'rxjs';
 import { AdminService } from '../../../core/services/admin.service';
@@ -19,13 +19,14 @@ import { AdminRequestActivity } from '../../../core/services/admin-request-activ
   templateUrl: './admin-layout.html',
 })
 export class AdminLayout {
+  private readonly injector = inject(Injector);
   protected readonly requestActivity = inject(AdminRequestActivity);
   protected readonly theme = inject(AdminThemeService);
   protected readonly install = inject(AppInstallService);
   // Cafe live order alerts are temporarily disabled for manual WhatsApp orders.
   // protected readonly orderNotification = inject(AdminOrderNotificationService);
   protected readonly unreadEnquiries = signal<number | null>(null);
-  protected readonly bakeryOpen = signal<boolean>(true);
+  protected readonly bakeryOpen = signal<boolean>(false);
   protected readonly toolsOpen = signal(false);
   protected readonly mobileNavOpen = signal(false);
   protected readonly mobileViewport = signal(matchMedia('(max-width: 960px)').matches);
@@ -98,8 +99,11 @@ export class AdminLayout {
   }
 
   protected openMobileNav() {
+    this.bakeryOpen.set(false);
     this.mobileNavOpen.set(true);
-    setTimeout(() => document.getElementById('admin-menu-close')?.focus());
+    afterNextRender(() => requestAnimationFrame(() => {
+      if (this.mobileNavOpen()) document.getElementById('admin-menu-close')?.focus();
+    }), { injector: this.injector });
   }
 
   protected closeMobileNav() {
