@@ -6,10 +6,14 @@
     </div>
     <div class="adm-head__actions">
       <a routerLink="/admin/orders/new" class="btn btn--primary btn--sm">Add order</a>
+      <button type="button" class="btn btn--ghost btn--sm"
+        [attr.aria-expanded]="filtersOpen()" aria-controls="orders-filters"
+        (click)="filtersOpen.set(!filtersOpen())">Filters</button>
     </div>
   </div>
 
-  <div class="adm-filters">
+  @if (filtersOpen()) {
+  <div class="adm-filters" id="orders-filters">
     <input class="input" type="date" [(ngModel)]="from" (ngModelChange)="apply()" aria-label="From date" />
     <input class="input" type="date" [(ngModel)]="to" (ngModelChange)="apply()" aria-label="To date" />
     <select class="select orders-event" [(ngModel)]="eventName" (ngModelChange)="apply()" aria-label="Filter by Event / Stall">
@@ -25,6 +29,7 @@
       <button type="button" class="btn btn--ghost btn--sm" (click)="clearFilters()">Clear</button>
     }
   </div>
+  }
 
   @if (loading()) {
     <div class="skeleton" style="height: 320px" aria-hidden="true"></div>

@@ -32,6 +32,7 @@ export class AdminOrders {
   protected readonly total = signal(0);
   protected readonly pages = signal(1);
   protected readonly loading = signal(true);
+  protected readonly filtersOpen = signal(false);
   protected readonly deletingId = signal<string | null>(null);
   protected readonly pendingDelete = signal<AdminOrder | null>(null);
   private readonly deleteDialog = viewChild.required<ElementRef<HTMLDialogElement>>('deleteDialog');
