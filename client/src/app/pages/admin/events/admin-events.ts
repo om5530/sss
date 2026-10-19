@@ -1,3 +1,4 @@
+import { QuantityCaret } from '../shared/quantity-caret';
 import { BusyButton } from '../shared/busy-button';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
@@ -12,7 +13,7 @@ import { downloadCsv } from '../shared/admin-ui';
 import { ConfirmModal } from '../shared/confirm-modal';
 import { AdminProductListState } from '../shared/admin-product-list-state';
 
-@Component({ selector: 'app-admin-events', imports: [BusyButton, RouterLink, FormsModule, DatePipe, DecimalPipe, ConfirmModal],
+@Component({ selector: 'app-admin-events', imports: [QuantityCaret, BusyButton, RouterLink, FormsModule, DatePipe, DecimalPipe, ConfirmModal],
   templateUrl: './admin-events.html', styleUrl: './admin-events.scss' })
 export class AdminEvents {
   private admin = inject(AdminService);
