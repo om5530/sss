@@ -208,7 +208,7 @@ const exportOrders = asyncHandler(async (req, res) => {
 const getOrderAdmin = asyncHandler(async (req, res) => {
   assertObjectId(req.params.id, 'Order');
   const [order, payment] = await Promise.all([
-    Order.findById(req.params.id)
+    Order.findById(req.params.id).select('+comment')
       .populate('user', 'name phone email')
       .populate('items.product', 'name image slug'),
     Payment.findOne({ order: req.params.id }),

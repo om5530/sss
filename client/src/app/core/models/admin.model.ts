@@ -64,6 +64,7 @@ export interface ManualOrderPayload {
   tableNumber?: string;
   delivery?: Order['delivery'];
   notes: string;
+  comment?: string;
 }
 
 export interface EventStockRow {

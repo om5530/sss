@@ -49,6 +49,7 @@ export class AdminOrderForm {
   protected tableNumber = '';
   protected delivery = { fullAddress: '', area: '', city: '', pincode: '', landmark: '' };
   protected notes = '';
+  protected comment = '';
   protected showExtraDetails = false;
   protected selectedProduct = '';
   protected saveAnother = false;
@@ -222,7 +223,7 @@ export class AdminOrderForm {
         orderStatus: this.showPaymentQr ? this.orderStatus : 'completed',
         upiRecipientId: this.paymentMethod === 'upi' ? this.upiRecipientId : undefined,
         tableNumber: this.orderType === 'dining' ? this.tableNumber : undefined,
-        delivery: this.orderType === 'delivery' ? { ...this.delivery } : undefined, notes: this.notes.trim(),
+        delivery: this.orderType === 'delivery' ? { ...this.delivery } : undefined, notes: this.notes.trim(), comment: this.comment.trim(),
       };
     }
     this.saving.set(true);
@@ -236,7 +237,7 @@ export class AdminOrderForm {
         this.toast.success(`${order.orderNumber} saved.`);
         if (this.saveAnother && order.paymentStatus === 'paid') {
           this.lines.set([]); this.quote.set(null); this.discount = 0; this.showExtraDetails = false;
-          this.customerName = this.customerPhone = this.notes = this.tableNumber = '';
+          this.customerName = this.customerPhone = this.notes = this.comment = this.tableNumber = '';
           this.delivery = { fullAddress: '', area: '', city: '', pincode: '', landmark: '' };
           this.requestKey = crypto.randomUUID(); this.saved = false; this.loadProducts();
         } else this.router.navigate(['/admin/orders', order._id], {
@@ -260,7 +261,7 @@ export class AdminOrderForm {
 
   canLeave() {
     if (this.saving()) return false;
-    return this.saved || (!this.lines().length && !this.customerName && !this.customerPhone && !this.notes) ||
+    return this.saved || (!this.lines().length && !this.customerName && !this.customerPhone && !this.notes && !this.comment) ||
       window.confirm(this.retryPending() ? 'This sale may already be saved. Check Orders before entering it again. Leave this page?' : 'Leave without saving this order?');
   }
 }

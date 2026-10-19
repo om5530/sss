@@ -57,7 +57,7 @@ const create = asyncHandler(async (req, res) => {
   const manualKey = `${req.user._id}/${req.body.requestKey}`;
   const manualHash = crypto.createHash('sha256').update(JSON.stringify(canonical(req.body))).digest('hex');
   const replay = async () => {
-    const existing = await Order.findOne({ manualKey }).select('+manualHash');
+    const existing = await Order.findOne({ manualKey }).select('+manualHash +comment');
     if (!existing) return false;
     if (existing.manualHash !== manualHash) throw ApiError.conflict('This submission was already saved with different details. Open the saved order before entering another sale.');
     res.json({ success: true, order: existing, replayed: true });
@@ -97,7 +97,7 @@ const create = asyncHandler(async (req, res) => {
   const now = new Date();
   const order = new Order({
     orderNumber, user: null, createdBy: req.user._id,
-    source: req.body.source, eventName, ...details, notes: req.body.notes || '', upiRecipient,
+    source: req.body.source, eventName, ...details, notes: req.body.notes || '', comment: req.body.comment || '', upiRecipient,
     items, pricing, recipeCostSnapshot: priced.recipeCostSnapshot, fulfilAt, orderType: req.body.orderType, paymentMethod: req.body.paymentMethod,
     paymentStatus: req.body.paymentStatus,
     orderStatus: req.body.orderStatus, manualKey, manualHash,
@@ -215,6 +215,7 @@ const validators = {
     body('delivery').optional().isObject(),
     ...['fullAddress', 'area', 'city', 'pincode', 'landmark'].map((k) => body(`delivery.${k}`).optional().isString().bail().trim().isLength({ max: 240 })),
     body('tableNumber').optional().isString().bail().trim().isLength({ max: 40 }),
+    body('comment').optional().isString().bail().trim().isLength({ max: 1000 }),
     body('notes').optional().isString().bail().trim().isLength({ max: 1000 }),
     body('fulfilAt').optional({ values: 'falsy' }).isISO8601(),
     body('paymentMethod').default('upi').isIn(methods), body('paymentStatus').isIn(['pending', 'paid']),

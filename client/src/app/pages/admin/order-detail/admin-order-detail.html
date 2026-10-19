@@ -78,10 +78,18 @@
             <input class="input" [id]="'qty-' + $index" type="number" min="1" max="10000" step="1" [(ngModel)]="item.quantity" [disabled]="busy() || reviewing" />
           </div>
         }
+        <div class="field">
+          <label class="label" for="edit-order-comment">Comment / reason (optional)</label>
+          <textarea id="edit-order-comment" class="textarea" [(ngModel)]="draftComment" maxlength="1000" rows="3" [disabled]="busy() || reviewing" placeholder="e.g. Complimentary for a friend, display sample, or reason for discount / zero total"></textarea>
+          <small class="muted">For staff reference.</small>
+        </div>
         <p>Original total: ₹{{ o.pricing.total | number:'1.2-2' }} · New total: ₹{{ draftTotal() | number:'1.2-2' }}</p>
         <button class="btn btn--primary btn--sm" type="button" [disabled]="busy() || !validDraft()" (click)="reviewing = true">Review changes</button>
         <button class="btn btn--ghost btn--sm" type="button" [disabled]="busy()" (click)="editing = false">Cancel changes</button>
       </div>
+    }
+    @if (o.comment) {
+      <div class="adm-card"><h3>Comment / reason</h3><p style="white-space: pre-wrap; overflow-wrap: anywhere">{{ o.comment }}</p></div>
     }
     <div class="adm-cols" [style.grid-template-columns]="(manualDue() && o.paymentMethod === 'upi') || o.notes || o.orderType !== 'takeaway' ? 'minmax(0, 1.4fr) minmax(0, 1fr)' : 'minmax(0, 1fr)'">
       <div>
@@ -193,7 +201,7 @@
 
 @if (reviewing && order(); as o) {
   <adm-confirm-modal [title]="'Confirm changes to ' + o.orderNumber + '?'"
-    [message]="'Total changes from ₹' + o.pricing.total.toFixed(2) + ' to ₹' + draftTotal().toFixed(2) + '. Confirm the prices and quantities above. Any additional collection or refund must be handled separately.'"
+    [message]="'Total changes from ₹' + o.pricing.total.toFixed(2) + ' to ₹' + draftTotal().toFixed(2) + '. Confirm the prices, quantities and comment above. Any additional collection or refund must be handled separately.'"
     confirmLabel="Confirm update" [requireReason]="true" reasonLabel="Reason for modification" [busy]="busy()"
     (confirmed)="saveChanges($event)" (cancelled)="!busy() && (reviewing = false)" />
 }

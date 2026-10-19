@@ -45,6 +45,7 @@ export interface Order {
   upiRecipient?: { id: string; name: string; upiId: string; payeeName: string };
   customer?: { name?: string; phone?: string };
   notes?: string;
+  comment?: string;
   dining?: { tableNumber?: string; customerName?: string };
   takeaway?: { customerName?: string; phone?: string };
   delivery?: { fullAddress?: string; area?: string; city?: string; pincode?: string; landmark?: string };

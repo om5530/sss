@@ -43,6 +43,7 @@ const orderSchema = new mongoose.Schema(
     upiRecipient: { id: String, name: String, upiId: String, payeeName: String },
     customer: { name: { type: String, maxlength: 120 }, phone: { type: String, maxlength: 20 } },
     notes: { type: String, maxlength: 1000, default: '' },
+    comment: { type: String, trim: true, maxlength: 1000, default: '', select: false },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     // A retried staff submission must not create another sale or claim stock twice.
     manualKey: { type: String, unique: true, sparse: true, select: false },

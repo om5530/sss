@@ -510,3 +510,24 @@ test('completed paid orders can be cancelled with a reason and still require a r
   assert.equal(response.order.paymentStatus, 'paid');
   assert.equal((await api('PATCH', path, { status: 'cancelled', note: 'Repeat' })).status, 400);
 });
+
+test('staff comments are saved on creation and editable without exposing them in customer queries', async () => {
+  const f = await fixture(); await plan(f);
+  const created = await sale(f, 1, { comment: 'Complimentary for a friend' });
+  assert.equal(created.comment, 'Complimentary for a friend');
+  const detail = await api('GET', `/admin/orders/${created._id}`);
+  assert.equal(detail.order.comment, 'Complimentary for a friend');
+  assert.equal((await Order.findById(created._id).lean()).comment, undefined);
+  const payload = { confirmed: true, expectedUpdatedAt: detail.order.updatedAt, reason: 'Clarify reason',
+    items: detail.order.items.map(i => ({ price: i.price, quantity: i.quantity })), comment: '  Display sample  ' };
+  const updated = await api('PATCH', `/admin/orders/${created._id}`, payload);
+  assert.equal(updated.status, 200, JSON.stringify(updated));
+  assert.equal(updated.order.comment, 'Display sample');
+  assert.equal(updated.order.pricing.total, created.pricing.total);
+  assert.equal((await api('GET', `/admin/orders/${created._id}`)).order.comment, 'Display sample');
+  const invalid = await api('PATCH', `/admin/orders/${created._id}`, { ...payload, expectedUpdatedAt: updated.order.updatedAt, comment: 'x'.repeat(1001) });
+  assert.equal(invalid.status, 400);
+  const cleared = await api('PATCH', `/admin/orders/${created._id}`, { ...payload, expectedUpdatedAt: updated.order.updatedAt, comment: '' });
+  assert.equal(cleared.status, 200, JSON.stringify(cleared));
+  assert.equal(cleared.order.comment, '');
+});

@@ -32,7 +32,7 @@
                 </div>
               }
               <button type="button" class="btn btn--ghost btn--sm sale-extra-toggle" [attr.aria-expanded]="showExtraDetails" (click)="showExtraDetails = !showExtraDetails">
-                {{ showExtraDetails ? 'Hide extra details' : (customerName || customerPhone || notes || tableNumber || delivery.landmark || orderType !== 'takeaway' || orderStatus !== (source === 'phone' ? 'confirmed' : 'completed') ? 'Edit extra details' : '+ Add extra details') }}
+                {{ showExtraDetails ? 'Hide extra details' : (customerName || customerPhone || notes || comment || tableNumber || delivery.landmark || orderType !== 'takeaway' || orderStatus !== (source === 'phone' ? 'confirmed' : 'completed') ? 'Edit extra details' : '+ Add extra details') }}
               </button>
               @if (showExtraDetails) {
               <div id="sale-extra-details" class="sale-fields">
@@ -55,6 +55,7 @@
                 </div>
                 <div class="field"><label class="label" for="sale-landmark">Landmark (optional)</label><input id="sale-landmark" class="input" name="landmark" [(ngModel)]="delivery.landmark" maxlength="240" /></div>
               }
+              <div class="field"><label class="label" for="sale-comment">Comment / reason (optional)</label><textarea id="sale-comment" class="textarea" name="comment" [(ngModel)]="comment" rows="3" maxlength="1000" placeholder="e.g. Complimentary for a friend, display sample, or reason for discount / zero total"></textarea><small class="muted">For staff reference.</small></div>
               <div class="field"><label class="label" for="sale-notes">Special instructions (optional)</label><textarea id="sale-notes" class="textarea" name="notes" [(ngModel)]="notes" rows="2" maxlength="1000" placeholder="Packing, allergies or delivery instructions"></textarea></div>
               }
             </section>
