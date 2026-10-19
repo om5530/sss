@@ -111,3 +111,5 @@ td small { display: block; font-size: .72rem; margin-top: .2rem; }
   .adm-table td::before { display: none; }
   .adm-table thead { position: static; width: auto; height: auto; clip-path: none; display: table-header-group; }
 }
+
+.event-row-actions .btn.event-edit-action { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 44px; width: 44px; min-width: 44px; min-height: 44px; padding: .5rem; }
