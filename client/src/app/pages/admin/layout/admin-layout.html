@@ -229,7 +229,7 @@
     </div>
   </aside>
 
-  <main class="adm-main" [attr.inert]="mobileViewport() && mobileNavOpen() ? '' : null">
+  <main class="adm-main" data-lenis-prevent [attr.inert]="mobileViewport() && mobileNavOpen() ? '' : null">
     @if (requestActivity.kind()) {
       <div class="adm-request-status no-print" role="status" aria-live="polite" aria-atomic="true">
         <span class="adm-loading-spinner" aria-hidden="true"></span>

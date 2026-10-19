@@ -398,10 +398,17 @@ button { font-family: inherit; cursor: pointer; }
    All classes are prefixed `adm-` and used only under /admin.
    ============================================================ */
 
+html.adm-viewport, html.adm-viewport body { overflow: hidden; overscroll-behavior: none; }
+
 .adm-shell {
+  position: fixed;
+  inset: 0;
+  height: 100dvh;
+  overflow: hidden;
   display: grid;
   grid-template-columns: 210px minmax(0, 1fr);
-  min-height: 100dvh;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr);
   background: var(--cream);
 }
 
@@ -573,7 +580,7 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ---- Main column ---- */
 
-.adm-main { grid-column: 2; min-width: 0; }
+.adm-main { grid-column: 2; min-width: 0; min-height: 0; overflow: auto; overscroll-behavior: contain; }
 
 /* Offline connectivity indicator for kitchen/production environments */
 .adm-offline-bar {
@@ -1161,7 +1168,7 @@ button { font-family: inherit; cursor: pointer; }
 
 /* Phones and tablets use a right-hand navigation drawer. */
 @media (max-width: 960px) {
-  .adm-shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
+  .adm-shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
   .adm-main { grid-column: 1; }
   .adm-side {
     position: sticky;
@@ -1272,8 +1279,9 @@ button { font-family: inherit; cursor: pointer; }
   .no-print {
     display: none !important;
   }
-  .adm-shell { display: block; }
-  .adm-main { padding: 0 !important; }
+  html.adm-viewport, html.adm-viewport body { overflow: visible; }
+  .adm-shell { display: block; position: static; height: auto; overflow: visible; }
+  .adm-main { padding: 0 !important; overflow: visible; }
   body { background: #fff; }
   .adm-card,
   .adm-table-wrap { box-shadow: none !important; border-color: #ccc !important; }

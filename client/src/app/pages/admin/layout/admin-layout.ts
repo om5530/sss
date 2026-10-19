@@ -39,6 +39,8 @@ export class AdminLayout {
   private session = inject(AdminSessionService);
   constructor() {
     const destroy = inject(DestroyRef);
+    document.documentElement.classList.add('adm-viewport');
+    destroy.onDestroy(() => document.documentElement.classList.remove('adm-viewport'));
     const mobileQuery = matchMedia('(max-width: 960px)');
     const onResize = () => {
       this.mobileViewport.set(mobileQuery.matches);
@@ -54,6 +56,7 @@ export class AdminLayout {
     });
     this.router.events.pipe(takeUntilDestroyed(destroy)).subscribe((event) => {
       if (event instanceof NavigationEnd) {
+        document.querySelector('.adm-main')?.scrollTo(0, 0);
         if (this.mobileNavOpen()) this.closeMobileNav();
         this.toolsOpen.set(false);
       }
