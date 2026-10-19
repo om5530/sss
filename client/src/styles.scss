@@ -408,8 +408,10 @@ button { font-family: inherit; cursor: pointer; }
 /* ---- Sidebar ---- */
 
 .adm-side {
-  position: sticky;
-  top: 0;
+  // Keep navigation anchored independently of the long orders page (including iPad Safari).
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 210px;
   height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -571,7 +573,7 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ---- Main column ---- */
 
-.adm-main { min-width: 0; }
+.adm-main { grid-column: 2; min-width: 0; }
 
 /* Offline connectivity indicator for kitchen/production environments */
 .adm-offline-bar {
@@ -1160,9 +1162,12 @@ button { font-family: inherit; cursor: pointer; }
 /* Phones and tablets use a right-hand navigation drawer. */
 @media (max-width: 960px) {
   .adm-shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
+  .adm-main { grid-column: 1; }
   .adm-side {
     position: sticky;
+    inset: auto;
     top: 0;
+    width: auto;
     height: auto;
     flex-direction: row;
     align-items: center;
