@@ -56,6 +56,7 @@ export interface Order {
   paymentStatus: PaymentStatus;
   orderStatus: OrderStatus;
   statusHistory: StatusEvent[];
+  updatedAt?: string;
   createdAt: string;
 }
 

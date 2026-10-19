@@ -1,3 +1,4 @@
+const modifyOrderCtrl = require('../controllers/modify-order.controller');
 const express = require('express');
 const categories = require('../controllers/category.controller');
 const ctrl = require('../controllers/admin.controller');
@@ -40,6 +41,7 @@ router.get('/orders/:id', ctrl.getOrderAdmin);
 router.delete('/orders/:id', ctrl.deleteOrder);
 router.get('/orders/:id/upi-qr', manualOrderCtrl.paymentQr);
 // Same lifecycle-enforced handler as the legacy /api/orders/:id/status route.
+router.patch('/orders/:id', modifyOrderCtrl.validators, validate, modifyOrderCtrl.modify);
 router.patch('/orders/:id/status', orderCtrl.updateOrderStatus);
 // Records cash changing hands for a cash order (counter / pickup / delivery).
 router.post('/orders/:id/settle-cash', ctrl.settleCashOrder);

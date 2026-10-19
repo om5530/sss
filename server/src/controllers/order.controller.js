@@ -173,7 +173,7 @@ const NEXT_STATUS = {
   confirmed: ['preparing', 'cancelled'],
   preparing: ['ready', 'cancelled'],
   ready: ['completed', 'cancelled'],
-  completed: [],
+  completed: ['cancelled'],
   cancelled: [],
 };
 

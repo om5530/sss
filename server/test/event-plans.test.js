@@ -475,3 +475,38 @@ test('after reset each event restores its unsold pieces once and removing an unr
   assert.equal(restoredAgain.status, 200, JSON.stringify(restoredAgain));
   assert.equal((await Product.findById(f.product._id)).stockCount, 9);
 });
+
+test('paid orders require confirmation to modify prices and quantities, with stock and stale-edit protection', async () => {
+  const f = await fixture(); await plan(f);
+  const order = await sale(f, 2);
+  const body = { confirmed: true, expectedUpdatedAt: order.updatedAt, reason: 'Correct quantity and agreed price', items: [{ price: 35, quantity: 3 }] };
+  const path = `/admin/orders/${order._id}`;
+  const stockBefore = (await Product.findById(f.product._id)).stockCount;
+  assert.equal((await api('PATCH', path, body, customerToken)).status, 403);
+  assert.equal((await api('PATCH', path, { ...body, confirmed: false })).status, 400);
+  assert.equal((await api('PATCH', path, { ...body, items: [{ price: -1, quantity: 3 }] })).status, 400);
+  const updated = await api('PATCH', path, body);
+  assert.equal(updated.status, 200, JSON.stringify(updated));
+  assert.equal(updated.order.paymentStatus, 'paid');
+  assert.equal(updated.order.pricing.subtotal, 105);
+  assert.equal(updated.order.items[0].quantity, 3);
+  assert.equal((await Product.findById(f.product._id)).stockCount, stockBefore - 1);
+  const Payment = require('../src/models/Payment');
+  assert.equal((await Payment.findOne({ order: order._id })).amount, updated.order.pricing.total);
+  assert.equal((await api('PATCH', path, body)).status, 409);
+  const excessive = await api('PATCH', path, { ...body, expectedUpdatedAt: updated.order.updatedAt, items: [{ price: 35, quantity: 10000 }] });
+  assert.equal(excessive.status, 409);
+  assert.equal((await Order.findById(order._id)).items[0].quantity, 3);
+});
+
+test('completed paid orders can be cancelled with a reason and still require a refund', async () => {
+  const f = await fixture(); await plan(f);
+  const order = await sale(f, 2);
+  const path = `/admin/orders/${order._id}/status`;
+  assert.equal((await api('PATCH', path, { status: 'cancelled' })).status, 400);
+  const response = await api('PATCH', path, { status: 'cancelled', note: 'Customer cancelled after payment' });
+  assert.equal(response.status, 200, JSON.stringify(response));
+  assert.equal(response.order.orderStatus, 'cancelled');
+  assert.equal(response.order.paymentStatus, 'paid');
+  assert.equal((await api('PATCH', path, { status: 'cancelled', note: 'Repeat' })).status, 400);
+});

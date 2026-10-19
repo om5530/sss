@@ -132,6 +132,10 @@ export class AdminService {
     return this.http.get<{ order: AdminOrder; payment: AdminPayment | null }>(`${this.base}/orders/${id}`);
   }
 
+  modifyOrder(id: string, payload: { items: { price: number; quantity: number }[]; expectedUpdatedAt: string; confirmed: boolean; reason: string }) {
+    return this.http.patch<{ order: Order }>(`${this.base}/orders/${id}`, payload).pipe(map(r => r.order));
+  }
+
   deleteOrder(id: string) {
     return this.http.delete<{ success: boolean }>(`${this.base}/orders/${id}`);
   }

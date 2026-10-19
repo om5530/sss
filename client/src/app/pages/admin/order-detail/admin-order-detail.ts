@@ -1,3 +1,4 @@
+import { FormsModule } from '@angular/forms';
 import { BusyButton } from '../shared/busy-button';
 import { Component, DestroyRef, effect, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -17,7 +18,7 @@ type CreatedOrderDetail = { createdOrder: AdminOrder; createdPayment: AdminPayme
 
 @Component({
   selector: 'app-admin-order-detail',
-  imports: [BusyButton, RouterLink, DatePipe, DecimalPipe, ConfirmModal, UpiPaymentQr],
+  imports: [FormsModule, BusyButton, RouterLink, DatePipe, DecimalPipe, ConfirmModal, UpiPaymentQr],
   templateUrl: './admin-order-detail.html',
 })
 export class AdminOrderDetail {
@@ -33,6 +34,33 @@ export class AdminOrderDetail {
   private createdDetail?: CreatedOrderDetail;
   protected readonly addAnother = this.route.snapshot.queryParamMap.get('next') === '1';
   protected readonly nextSaleParams = { source: this.route.snapshot.queryParamMap.get('source'), eventName: this.route.snapshot.queryParamMap.get('eventName') };
+
+  protected editing = false;
+  protected reviewing = false;
+  protected draft: { price: number; quantity: number }[] = [];
+  protected startEdit() {
+    this.draft = this.order()!.items.map(i => ({ price: i.price, quantity: i.quantity }));
+    this.editing = true;
+  }
+  protected validDraft() {
+    return this.draft.every(i => Number.isFinite(i.price) && i.price >= 0 && i.price <= 1000000 && Math.abs(i.price * 100 - Math.round(i.price * 100)) < 0.000001 && Number.isInteger(i.quantity) && i.quantity > 0 && i.quantity <= 10000);
+  }
+  protected draftTotal() {
+    const p = this.order()!.pricing;
+    const round = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
+    const sub = round(this.draft.reduce((sum, i) => sum + round(i.price * i.quantity), 0));
+    const discount = p.discount || 0;
+    return round(sub - discount + round(p.subtotal > discount ? (sub - discount) * p.tax / (p.subtotal - discount) : 0) + (p.deliveryFee || 0));
+  }
+  protected saveChanges(reason: string) {
+    const o = this.order();
+    if (!o?.updatedAt || this.busy() || !this.validDraft()) return;
+    this.busy.set(true);
+    this.admin.modifyOrder(o._id, { items: this.draft, expectedUpdatedAt: o.updatedAt, confirmed: true, reason }).subscribe({
+      next: updated => { this.applyOrder(updated); this.busy.set(false); this.editing = false; this.reviewing = false; this.load(true); this.toast.success('Order updated.'); },
+      error: err => { this.busy.set(false); this.reviewing = false; this.toast.error(err.error?.message || 'Could not modify order.'); },
+    });
+  }
 
   protected readonly order = signal<AdminOrder | null>(null);
   protected readonly payment = signal<AdminPayment | null>(null);

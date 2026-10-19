@@ -22,12 +22,15 @@
       <div class="adm-head__actions no-print">
         @if (addAnother) { <a routerLink="/admin/orders/new" [queryParams]="nextSaleParams" class="btn btn--ghost btn--sm">Next sale</a> }
         <button type="button" class="btn btn--ghost btn--sm" onclick="window.print()">Print</button>
+        @if (o.orderStatus !== 'cancelled' && o.paymentStatus !== 'refunded') {
+          <button type="button" class="btn btn--ghost btn--sm" [disabled]="busy() || editing" (click)="startEdit()">Modify order</button>
+        }
         @if (nextStatus(); as next) {
           <button [appBusy]="busy()" type="button" class="btn btn--primary btn--sm" [disabled]="busy()" (click)="advance()">
             {{ nextLabel[o.orderStatus] }}
           </button>
         }
-        @if (o.orderStatus !== 'completed' && o.orderStatus !== 'cancelled') {
+        @if (o.orderStatus !== 'cancelled') {
           <button [appBusy]="busy()" type="button" class="btn btn--ghost btn--sm" [disabled]="busy()" (click)="modal.set('cancel')">
             Cancel order
           </button>
@@ -62,6 +65,24 @@
       <div class="adm-alert" role="status">This order is completed with ₹{{ o.pricing.total | number: '1.2-2' }} unpaid. Use <strong>Mark payment received</strong> after collecting the payment.</div>
     }
 
+    @if (editing) {
+      <div class="adm-card no-print">
+        <h3>Modify order</h3>
+        <p>Update unit prices and quantities. For paid orders, confirm any extra payment or money returned with the customer separately. Saving corrects the order record; it does not transfer money.</p>
+        @for (item of draft; track $index) {
+          <div class="field">
+            <strong>{{ o.items[$index].name }}</strong>
+            <label class="label" [for]="'price-' + $index">Unit price (₹)</label>
+            <input class="input" [id]="'price-' + $index" type="number" min="0" max="1000000" step="0.01" [(ngModel)]="item.price" [disabled]="busy() || reviewing" />
+            <label class="label" [for]="'qty-' + $index">Quantity</label>
+            <input class="input" [id]="'qty-' + $index" type="number" min="1" max="10000" step="1" [(ngModel)]="item.quantity" [disabled]="busy() || reviewing" />
+          </div>
+        }
+        <p>Original total: ₹{{ o.pricing.total | number:'1.2-2' }} · New total: ₹{{ draftTotal() | number:'1.2-2' }}</p>
+        <button class="btn btn--primary btn--sm" type="button" [disabled]="busy() || !validDraft()" (click)="reviewing = true">Review changes</button>
+        <button class="btn btn--ghost btn--sm" type="button" [disabled]="busy()" (click)="editing = false">Cancel changes</button>
+      </div>
+    }
     <div class="adm-cols" [style.grid-template-columns]="(manualDue() && o.paymentMethod === 'upi') || o.notes || o.orderType !== 'takeaway' ? 'minmax(0, 1.4fr) minmax(0, 1fr)' : 'minmax(0, 1fr)'">
       <div>
         <!-- Items & pricing -->
@@ -168,4 +189,11 @@
       (cancelled)="modal.set(null)"
     />
   }
+}
+
+@if (reviewing && order(); as o) {
+  <adm-confirm-modal [title]="'Confirm changes to ' + o.orderNumber + '?'"
+    [message]="'Total changes from ₹' + o.pricing.total.toFixed(2) + ' to ₹' + draftTotal().toFixed(2) + '. Confirm the prices and quantities above. Any additional collection or refund must be handled separately.'"
+    confirmLabel="Confirm update" [requireReason]="true" reasonLabel="Reason for modification" [busy]="busy()"
+    (confirmed)="saveChanges($event)" (cancelled)="!busy() && (reviewing = false)" />
 }
