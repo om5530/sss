@@ -11,13 +11,13 @@ import {
   RecipeComponent,
 } from '../../../../core/models/bakery.model';
 import { ToastService } from '../../../../core/services/toast.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AdminProductListState } from '../../shared/admin-product-list-state';
 
 @Component({
   selector: 'app-admin-bakery-recipes',
   standalone: true,
-  imports: [BusyButton, CommonModule, FormsModule, CurrencyPipe],
+  imports: [BusyButton, CommonModule, FormsModule, CurrencyPipe, RouterLink],
   templateUrl: './admin-bakery-recipes.html',
   styleUrl: './admin-bakery-recipes.scss',
 })
