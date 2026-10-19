@@ -41,31 +41,14 @@
 
 // Keep zero-total orders distinct in desktop rows and mobile list cards.
 .orders-table tbody tr.order-zero-total > td {
-  background: color-mix(in srgb, #d69225 13%, var(--white));
+  background: color-mix(in srgb, #8b5cf6 14%, var(--white));
 }
 .orders-table tbody tr.order-zero-total:hover > td {
-  background: color-mix(in srgb, #d69225 21%, var(--white));
+  background: color-mix(in srgb, #8b5cf6 23%, var(--white));
 }
 .orders-table tbody tr.order-zero-total > td:first-child {
-  box-shadow: inset 3px 0 #b67b18;
+  box-shadow: inset 3px 0 #8b5cf6;
 }
-.order-zero-total-label {
-  display: block;
-  width: fit-content;
-  margin: .3rem 0 0 auto;
-  padding: .15rem .45rem;
-  border: 1px solid #b67b18;
-  border-radius: 5px;
-  color: var(--ink);
-  background: color-mix(in srgb, #d69225 22%, var(--white));
-  font-size: .7rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-@media (max-width: 900px) {
-  .order-zero-total-label { margin-inline-start: 0; }
-}
-
 .order-actions__buttons { display: flex; align-items: center; gap: .4rem; }
 .orders-table .order-actions .order-icon-action {
   display: inline-grid; place-items: center;

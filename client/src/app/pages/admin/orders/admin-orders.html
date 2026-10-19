@@ -68,7 +68,6 @@
               </td>
               <td role="cell" class="num" data-label="Items">{{ o.items.length }}</td>
               <td role="cell" class="num" data-label="Total">₹{{ o.pricing.total | number: '1.2-2' }}
-                @if (o.pricing.total === 0) { <span class="order-zero-total-label">Zero total</span> }
               </td>
               <td role="cell" data-label="Payment method" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
                 @if (canChangePaymentMethod(o)) {
