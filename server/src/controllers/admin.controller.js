@@ -126,30 +126,29 @@ const dashboard = asyncHandler(async (req, res) => {
 
 /* ============ Orders (AS-3.1 / AS-2.2) ============ */
 
-const listOrders = asyncHandler(async (req, res) => {
-  const { status, type, payment, q, active } = req.query;
-  const { page, limit, skip } = parsePagination(req.query);
+async function orderFilter(query) {
+  const { status, type, payment, q, active } = query;
 
   const filter = {};
   if (active === 'true') filter.orderStatus = { $in: ACTIVE_STATUSES };
   if (status) filter.orderStatus = status;
   if (type) filter.orderType = type;
   if (payment) filter.paymentStatus = payment;
-  if (req.query.amount !== undefined && req.query.amount !== '') {
-    const amount = String(req.query.amount);
+  if (query.amount !== undefined && query.amount !== '') {
+    const amount = String(query.amount);
     if (!/^(?:0|[1-9]\d*)(?:\.\d{1,2})?$/.test(amount) || Number(amount) > 10000000) {
       throw ApiError.badRequest('Enter a valid order total with up to two decimal places');
     }
     const total = Number(amount);
     filter['pricing.total'] = { $gte: total - 0.005, $lt: total + 0.005 };
   }
-  if (req.query.source === 'website') filter.$and = [{ $or: [{ source: 'website' }, { source: { $exists: false } }] }];
-  else if (['phone', 'walk-in', 'event'].includes(req.query.source)) filter.source = req.query.source;
-  if (typeof req.query.eventName === 'string' && req.query.eventName.trim()) {
-    filter.eventName = new RegExp(`^${escapeRegex(req.query.eventName.trim())}$`, 'i');
+  if (query.source === 'website') filter.$and = [{ $or: [{ source: 'website' }, { source: { $exists: false } }] }];
+  else if (['phone', 'walk-in', 'event'].includes(query.source)) filter.source = query.source;
+  if (typeof query.eventName === 'string' && query.eventName.trim()) {
+    filter.eventName = new RegExp(`^${escapeRegex(query.eventName.trim())}$`, 'i');
   }
-  if (req.query.from || req.query.to) {
-    const { start, endExclusive } = parseRange(req.query);
+  if (query.from || query.to) {
+    const { start, endExclusive } = parseRange(query);
     filter.createdAt = { $gte: start, $lt: endExclusive };
   }
 
@@ -175,12 +174,29 @@ const listOrders = asyncHandler(async (req, res) => {
     }
   }
 
+  return filter;
+}
+
+const listOrders = asyncHandler(async (req, res) => {
+  const filter = await orderFilter(req.query);
+  const { page, limit, skip } = parsePagination(req.query);
   const [orders, total] = await Promise.all([
     Order.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).populate('user', 'name phone email'),
     Order.countDocuments(filter),
   ]);
 
   res.json({ success: true, orders, total, page, pages: Math.max(1, Math.ceil(total / limit)) });
+});
+
+const exportOrders = asyncHandler(async (req, res) => {
+  const filter = await orderFilter(req.query);
+  const { buildOrdersWorkbook } = require('../services/order-export.service');
+  const orders = Order.find(filter).sort({ createdAt: -1 }).lean().cursor();
+  const workbook = await buildOrdersWorkbook(orders);
+  const buffer = await workbook.xlsx.writeBuffer();
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', 'attachment; filename="orders.xlsx"');
+  res.send(buffer);
 });
 
 const getOrderAdmin = asyncHandler(async (req, res) => {
@@ -814,6 +830,7 @@ module.exports = {
   setCustomerActive,
   dashboard,
   listOrders,
+  exportOrders,
   getOrderAdmin,
   deleteOrder,
   settleCashOrder,

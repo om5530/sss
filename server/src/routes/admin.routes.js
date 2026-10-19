@@ -33,6 +33,7 @@ router.get('/settings', settingsCtrl.list);
 router.patch('/settings', settingsCtrl.validators, validate, settingsCtrl.update);
 
 router.get('/orders', ctrl.listOrders);
+router.get('/orders/export', ctrl.exportOrders);
 router.post('/orders/quote', manualOrderCtrl.validators.quote, validate, manualOrderCtrl.quote);
 router.post('/orders', manualOrderCtrl.validators.create, validate, manualOrderCtrl.create);
 router.get('/orders/:id', ctrl.getOrderAdmin);

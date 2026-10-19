@@ -113,3 +113,35 @@ test('a confirmed manual save returns its payment and agrees with fresh order de
   assert.equal(detail.order.recipeCostSnapshot, undefined);
   assert.equal((await api('GET', `/admin/orders/${new mongoose.Types.ObjectId()}`)).status, 404);
 });
+
+test('Excel export matches list filters, ignores pagination, and requires admin access', async () => {
+  const ExcelJS = require('exceljs');
+  const eventName = `Export-${randomUUID()}`;
+  const product = new mongoose.Types.ObjectId();
+  await Order.insertMany(Array.from({ length: 31 }, (_, i) => ({
+    orderNumber: `${eventName}-${i}`, source: 'event', eventName,
+    items: [{ product, name: 'Export cake', price: 0, quantity: 2, lineTotal: 0 }],
+    orderType: 'takeaway', pricing: { subtotal: 0, total: i === 30 ? 199 : 0, tax: 0 },
+    paymentMethod: 'cash', paymentStatus: 'paid', createdAt: new Date('2026-10-10T12:00:00Z'),
+  })));
+  const filters = new URLSearchParams({ source: 'event', eventName, from: '2026-10-10', to: '2026-10-10', amount: '0', payment: 'paid' });
+  const listed = await api('GET', `/admin/orders?${filters}&limit=5&page=2`);
+  assert.equal(listed.total, 30);
+  const response = await fetch(`${base}/admin/orders/export?${filters}&limit=5&page=2`, {
+    headers: { Authorization: `Bearer ${adminToken}` },
+  });
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get('content-type'), /spreadsheetml/);
+  assert.match(response.headers.get('cache-control'), /no-store/);
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(Buffer.from(await response.arrayBuffer()));
+  assert.equal(workbook.getWorksheet('Orders').rowCount, 31);
+  for (const token of [customerToken, '']) {
+    const denied = await fetch(`${base}/admin/orders/export`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    assert.ok([401, 403].includes(denied.status));
+  }
+  const invalid = await api('GET', '/admin/orders/export?amount=invalid');
+  assert.equal(invalid.status, 400);
+});

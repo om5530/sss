@@ -74,6 +74,10 @@ export class AdminService {
     return this.http.get<OrderListResponse>(`${this.base}/orders`, { params: toParams(filters) });
   }
 
+  exportOrders(filters: OrderFilters = {}) {
+    return this.http.get(`${this.base}/orders/export`, { params: toParams(filters), responseType: 'blob' });
+  }
+
   quoteManualOrder(data: Pick<ManualOrderPayload, 'items' | 'orderType' | 'discount'>) {
     return this.http.post<CartQuote>(`${this.base}/orders/quote`, data);
   }

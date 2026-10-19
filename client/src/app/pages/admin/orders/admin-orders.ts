@@ -2,7 +2,7 @@ import { Component, DestroyRef, ElementRef, inject, signal, viewChild } from '@a
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Subscription } from 'rxjs';
+import { Subscription, finalize } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AdminService } from '../../../core/services/admin.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -32,6 +32,8 @@ export class AdminOrders {
   protected readonly total = signal(0);
   protected readonly pages = signal(1);
   protected readonly loading = signal(true);
+  protected readonly exporting = signal(false);
+  private appliedFilters: OrderFilters = {};
   protected readonly filtersOpen = signal(false);
   protected readonly deletingId = signal<string | null>(null);
   protected readonly paymentSavingId = signal<string | null>(null);
@@ -178,6 +180,26 @@ export class AdminOrders {
     return Boolean(this.eventName || this.from || this.to);
   }
 
+  protected downloadExcel() {
+    if (this.exporting() || this.loading()) return;
+    this.exporting.set(true);
+    this.admin.exportOrders(this.appliedFilters).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => this.exporting.set(false)),
+    ).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `orders-${new Date().toISOString().slice(0, 10)}.xlsx`;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        this.toast.success('Orders downloaded');
+      },
+      error: () => this.toast.error('Could not download orders. Please try again.'),
+    });
+  }
+
   private fetch() {
     this.listRequest?.unsubscribe();
     this.loading.set(true);
@@ -188,6 +210,8 @@ export class AdminOrders {
       to: this.to || undefined,
       page: this.page,
     };
+    const { page, ...exportFilters } = filters;
+    this.appliedFilters = exportFilters;
     this.listRequest = this.admin.orders(filters).subscribe({
       next: (res) => {
         this.orders.set(res.orders);

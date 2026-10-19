@@ -5,6 +5,10 @@
       <h1>Orders</h1>
     </div>
     <div class="adm-head__actions">
+      <button type="button" class="btn btn--ghost btn--sm" (click)="downloadExcel()"
+        [disabled]="loading() || exporting() || total() === 0" title="Download all orders matching the applied filters">
+        {{ exporting() ? 'Downloading…' : 'Download Excel' }}
+      </button>
       <a routerLink="/admin/orders/new" class="btn btn--primary btn--sm">Add order</a>
       <button type="button" class="btn btn--ghost btn--sm orders-filter-toggle" aria-label="Filters" title="Filters"
         [attr.aria-expanded]="filtersOpen()" aria-controls="orders-filters"
