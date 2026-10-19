@@ -26,7 +26,7 @@ export class AdminLayout {
   // Cafe live order alerts are temporarily disabled for manual WhatsApp orders.
   // protected readonly orderNotification = inject(AdminOrderNotificationService);
   protected readonly unreadEnquiries = signal<number | null>(null);
-  protected readonly bakeryOpen = signal<boolean>(false);
+  protected readonly bakeryOpen = signal<boolean>(true);
   protected readonly toolsOpen = signal(false);
   protected readonly mobileNavOpen = signal(false);
   protected readonly mobileViewport = signal(matchMedia('(max-width: 960px)').matches);
@@ -52,16 +52,10 @@ export class AdminLayout {
       document.body.style.overflow = 'hidden';
       onCleanup(() => document.body.style.overflow = previous);
     });
-    const revealTools = (url: string) => {
-      if (/^\/admin\/(dashboard|activity|qr|reports|coupons|enquiries|prep|queue)(?:[/?#]|$)/.test(url)) {
-        this.toolsOpen.set(true);
-      }
-    };
-    revealTools(this.router.url);
     this.router.events.pipe(takeUntilDestroyed(destroy)).subscribe((event) => {
       if (event instanceof NavigationEnd) {
         if (this.mobileNavOpen()) this.closeMobileNav();
-        revealTools(event.urlAfterRedirects);
+        this.toolsOpen.set(false);
       }
     });
     const admin = inject(AdminService);
@@ -99,7 +93,7 @@ export class AdminLayout {
   }
 
   protected openMobileNav() {
-    this.bakeryOpen.set(false);
+    this.toolsOpen.set(false);
     this.mobileNavOpen.set(true);
     afterNextRender(() => requestAnimationFrame(() => {
       if (this.mobileNavOpen()) document.getElementById('admin-menu-close')?.focus();

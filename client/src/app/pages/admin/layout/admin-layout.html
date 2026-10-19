@@ -15,7 +15,23 @@
     <div class="adm-drawer__head"><strong>Menu</strong><button id="admin-menu-close" type="button" class="adm-menu-toggle" aria-label="Close menu" (click)="closeMobileNav()">✕</button></div>
     <nav id="admin-navigation" class="adm-side__nav" aria-label="Admin" data-lenis-prevent tabindex="0">
 
-      <!-- Bakery Operations — primary PWA use case, placed first -->
+      <a routerLink="/admin/orders" routerLinkActive="active" class="adm-side__link" aria-label="Orders">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path d="M6 3h12v18l-2-1.4L14 21l-2-1.4L10 21l-2-1.4L6 21V3Z" stroke-linejoin="round" /><path d="M9 8h6M9 12h6" stroke-linecap="round" />
+        </svg>
+        Orders
+      </a>
+      <a routerLink="/admin/events" routerLinkActive="active" class="adm-side__link" aria-label="Event sales">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 10h16M5 10v10h14V10M3 10l2-6h14l2 6M9 20v-6h6v6" stroke-linejoin="round" /></svg>
+        Event sales
+      </a>
+      <a routerLink="/admin/products" routerLinkActive="active" class="adm-side__link" aria-label="Products">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path d="M4 8.5 12 4l8 4.5v7L12 20l-8-4.5v-7Z" stroke-linejoin="round" /><path d="M4 8.5 12 13l8-4.5M12 13v7" stroke-linejoin="round" />
+        </svg>
+        Products
+      </a>
+      <!-- Bakery Operations stays expanded until manually collapsed. -->
       <div class="adm-side__dropdown">
         <button
           type="button"
@@ -60,22 +76,6 @@
         }
       </div>
 
-      <a routerLink="/admin/orders" routerLinkActive="active" class="adm-side__link" aria-label="Orders">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-          <path d="M6 3h12v18l-2-1.4L14 21l-2-1.4L10 21l-2-1.4L6 21V3Z" stroke-linejoin="round" /><path d="M9 8h6M9 12h6" stroke-linecap="round" />
-        </svg>
-        Orders
-      </a>
-      <a routerLink="/admin/events" routerLinkActive="active" class="adm-side__link" aria-label="Event sales">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 10h16M5 10v10h14V10M3 10l2-6h14l2 6M9 20v-6h6v6" stroke-linejoin="round" /></svg>
-        Event sales
-      </a>
-      <a routerLink="/admin/products" routerLinkActive="active" class="adm-side__link" aria-label="Products">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-          <path d="M4 8.5 12 4l8 4.5v7L12 20l-8-4.5v-7Z" stroke-linejoin="round" /><path d="M4 8.5 12 13l8-4.5M12 13v7" stroke-linejoin="round" />
-        </svg>
-        Products
-      </a>
       <div class="adm-side__dropdown">
         <button
           type="button"
