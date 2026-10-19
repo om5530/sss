@@ -3,7 +3,7 @@ import { Component, DestroyRef, ElementRef, inject, signal, viewChild } from '@a
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Subscription, finalize } from 'rxjs';
+import { Subscription, finalize, map } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AdminService } from '../../../core/services/admin.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -46,7 +46,9 @@ export class AdminOrders {
   // Date and event filters remain shareable through the URL.
   protected eventName = '';
   protected productId = '';
-  protected readonly products = signal<Product[]>([]);
+  protected readonly products = signal<Pick<Product, '_id' | 'name' | 'archived'>[]>([]);
+  protected readonly productsLoading = signal(false);
+  private productsRequest?: Subscription;
   protected from = '';
   protected to = '';
   protected page = 1;
@@ -96,6 +98,7 @@ export class AdminOrders {
   constructor() {
     inject(DestroyRef).onDestroy(() => {
       this.listRequest?.unsubscribe();
+      this.productsRequest?.unsubscribe();
     });
     const params = this.route.snapshot.queryParamMap;
     try {
@@ -109,14 +112,44 @@ export class AdminOrders {
     });
     this.productId = params.get('productId') ?? '';
     if (this.productId) this.filtersOpen.set(true);
-    this.admin.products({ archived: 'all' }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: products => this.products.set([...products].sort((a, b) => a.name.localeCompare(b.name))),
-      error: () => this.toast.error('Could not load products. Reopen Orders to try again.'),
-    });
+    this.loadProducts();
     this.from = params.get('from') ?? '';
     this.to = params.get('to') ?? '';
     this.page = Math.max(1, Number(params.get('page')) || 1);
     this.apply(false);
+  }
+
+  protected changeEvent() {
+    this.productId = '';
+    this.loadProducts();
+    this.apply();
+  }
+
+  private loadProducts() {
+    this.productsRequest?.unsubscribe();
+    this.products.set([]);
+    this.productsLoading.set(true);
+    // Event stock includes both planned products and historical sales, including
+    // archived products, independently of the current orders page/date filters.
+    const request = this.eventName
+      ? this.admin.eventSales(this.eventName).pipe(map(report => report.stock.map(row => ({
+          _id: row.productId, name: row.name,
+        }))))
+      : this.admin.products({ archived: 'all' });
+    this.productsRequest = request.pipe(
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => this.productsLoading.set(false)),
+    ).subscribe({
+      next: products => {
+        const unique = [...new Map(products.map(product => [product._id, product])).values()];
+        this.products.set(unique.sort((a, b) => a.name.localeCompare(b.name)));
+        if (this.productId && !unique.some(product => product._id === this.productId)) {
+          this.productId = '';
+          this.apply();
+        }
+      },
+      error: () => this.toast.error('Could not load products. Select the event again to retry.'),
+    });
   }
 
   protected apply(resetPage = true) {
@@ -143,6 +176,7 @@ export class AdminOrders {
 
   protected clearFilters() {
     this.productId = this.eventName = this.from = this.to = '';
+    this.loadProducts();
     this.apply();
   }
 

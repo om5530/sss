@@ -24,7 +24,7 @@
   <div class="adm-filters" id="orders-filters">
     <input class="input" type="date" [(ngModel)]="from" (ngModelChange)="apply()" aria-label="From date" />
     <input class="input" type="date" [(ngModel)]="to" (ngModelChange)="apply()" aria-label="To date" />
-    <select class="select orders-event" [(ngModel)]="eventName" (ngModelChange)="apply()" aria-label="Filter by Event / Stall">
+    <select class="select orders-event" [(ngModel)]="eventName" (ngModelChange)="changeEvent()" aria-label="Filter by Event / Stall">
       <option value="">All events / orders</option>
       @if (eventName && !eventNames().includes(eventName)) {
         <option [value]="eventName">{{ eventName }}</option>
@@ -33,8 +33,8 @@
         <option [value]="name">{{ name }}</option>
       }
     </select>
-    <select class="select orders-event" [(ngModel)]="productId" (ngModelChange)="apply()" aria-label="Filter by product">
-      <option value="">All products</option>
+    <select class="select orders-event" [(ngModel)]="productId" (ngModelChange)="apply()" aria-label="Filter by product" [disabled]="productsLoading()">
+      <option value="">{{ productsLoading() ? 'Loading products…' : 'All products' }}</option>
       @for (product of products(); track product._id) {
         <option [value]="product._id">{{ product.name }}{{ product.archived ? ' (archived)' : '' }}</option>
       }
@@ -56,6 +56,7 @@
             <th>Products</th>
             <th class="num">Items</th>
             <th class="num">Total</th>
+            <th>Payment status</th>
             <th>Payment method</th>
             <th>Placed</th>
             <th>Action</th>
@@ -74,6 +75,16 @@
               </td>
               <td role="cell" class="num" data-label="Items">{{ o.items.length }}</td>
               <td role="cell" class="num" data-label="Total">₹{{ o.pricing.total | number: '1.2-2' }}
+              </td>
+              <td role="cell" data-label="Payment status">
+                <span [class]="'adm-badge adm-badge--' + o.paymentStatus">
+                  @switch (o.paymentStatus) {
+                    @case ('paid') { Paid }
+                    @case ('pending') { Unpaid }
+                    @case ('failed') { Failed }
+                    @case ('refunded') { Refunded }
+                  }
+                </span>
               </td>
               <td role="cell" data-label="Payment method" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
                 @if (canChangePaymentMethod(o)) {
@@ -112,7 +123,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="7">
+              <td colspan="8">
                 <div class="adm-empty">
                   No orders match these filters.
                   @if (hasFilters) {
