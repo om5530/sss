@@ -124,7 +124,11 @@ test('Excel export matches list filters, ignores pagination, and requires admin 
     orderType: 'takeaway', pricing: { subtotal: 0, total: i === 30 ? 199 : 0, tax: 0 },
     paymentMethod: 'cash', paymentStatus: 'paid', createdAt: new Date('2026-10-10T12:00:00Z'),
   })));
-  const filters = new URLSearchParams({ source: 'event', eventName, from: '2026-10-10', to: '2026-10-10', amount: '0', payment: 'paid' });
+  await Order.create({ orderNumber: `${eventName}-other`, source: 'event', eventName,
+    items: [{ product: new mongoose.Types.ObjectId(), name: 'Other cake', price: 0, quantity: 1, lineTotal: 0 }],
+    orderType: 'takeaway', pricing: { subtotal: 0, total: 0, tax: 0 }, paymentStatus: 'paid',
+    createdAt: new Date('2026-10-10T12:00:00Z') });
+  const filters = new URLSearchParams({ productId: String(product), source: 'event', eventName, from: '2026-10-10', to: '2026-10-10', amount: '0', payment: 'paid' });
   const listed = await api('GET', `/admin/orders?${filters}&limit=5&page=2`);
   assert.equal(listed.total, 30);
   const response = await fetch(`${base}/admin/orders/export?${filters}&limit=5&page=2`, {
@@ -144,4 +148,7 @@ test('Excel export matches list filters, ignores pagination, and requires admin 
   }
   const invalid = await api('GET', '/admin/orders/export?amount=invalid');
   assert.equal(invalid.status, 400);
+  assert.equal((await api('GET', '/admin/orders?productId=invalid')).status, 400);
+  assert.equal((await api('GET', '/admin/orders/export?productId=invalid')).status, 400);
+  assert.equal((await api('GET', `/admin/orders?productId=${new mongoose.Types.ObjectId()}`)).total, 0);
 });

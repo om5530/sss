@@ -33,6 +33,12 @@
         <option [value]="name">{{ name }}</option>
       }
     </select>
+    <select class="select orders-event" [(ngModel)]="productId" (ngModelChange)="apply()" aria-label="Filter by product">
+      <option value="">All products</option>
+      @for (product of products(); track product._id) {
+        <option [value]="product._id">{{ product.name }}{{ product.archived ? ' (archived)' : '' }}</option>
+      }
+    </select>
     @if (hasFilters) {
       <button type="button" class="btn btn--ghost btn--sm" (click)="clearFilters()">Clear</button>
     }

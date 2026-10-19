@@ -32,6 +32,7 @@ export interface OrderListResponse extends Paged {
 }
 
 export interface OrderFilters {
+  productId?: string;
   source?: OrderSource | '';
   eventName?: string;
   status?: OrderStatus | '';

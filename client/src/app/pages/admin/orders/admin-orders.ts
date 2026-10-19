@@ -1,3 +1,4 @@
+import { Product } from '../../../core/models/product.model';
 import { Component, DestroyRef, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -44,6 +45,8 @@ export class AdminOrders {
   protected readonly eventNames = signal<string[]>([]);
   // Date and event filters remain shareable through the URL.
   protected eventName = '';
+  protected productId = '';
+  protected readonly products = signal<Product[]>([]);
   protected from = '';
   protected to = '';
   protected page = 1;
@@ -104,6 +107,12 @@ export class AdminOrders {
       next: ({ events }) => this.eventNames.set(events.map((event) => event.eventName)),
       error: () => this.toast.error('Could not load events. Please reopen Orders to try again.'),
     });
+    this.productId = params.get('productId') ?? '';
+    if (this.productId) this.filtersOpen.set(true);
+    this.admin.products({ archived: 'all' }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: products => this.products.set([...products].sort((a, b) => a.name.localeCompare(b.name))),
+      error: () => this.toast.error('Could not load products. Reopen Orders to try again.'),
+    });
     this.from = params.get('from') ?? '';
     this.to = params.get('to') ?? '';
     this.page = Math.max(1, Number(params.get('page')) || 1);
@@ -116,6 +125,7 @@ export class AdminOrders {
       localStorage.setItem(this.eventStorageKey, this.eventName);
     } catch { /* Keep filtering for this visit when browser storage is unavailable. */ }
     const queryParams: Record<string, string | number | null> = {
+      productId: this.productId || null,
       q: null,
       status: null,
       type: null,
@@ -132,7 +142,7 @@ export class AdminOrders {
   }
 
   protected clearFilters() {
-    this.eventName = this.from = this.to = '';
+    this.productId = this.eventName = this.from = this.to = '';
     this.apply();
   }
 
@@ -184,7 +194,7 @@ export class AdminOrders {
   }
 
   protected get hasFilters(): boolean {
-    return Boolean(this.eventName || this.from || this.to);
+    return Boolean(this.productId || this.eventName || this.from || this.to);
   }
 
   protected downloadExcel() {
@@ -211,6 +221,7 @@ export class AdminOrders {
     this.listRequest?.unsubscribe();
     this.loading.set(true);
     const filters: OrderFilters = {
+      productId: this.productId || undefined,
       source: this.eventName ? 'event' : undefined,
       eventName: this.eventName || undefined,
       from: this.from || undefined,

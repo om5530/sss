@@ -130,6 +130,12 @@ async function orderFilter(query) {
   const { status, type, payment, q, active } = query;
 
   const filter = {};
+  if (query.productId !== undefined && query.productId !== '') {
+    if (typeof query.productId !== 'string' || !/^[a-fA-F0-9]{24}$/.test(query.productId)) {
+      throw ApiError.badRequest('Choose a valid product');
+    }
+    filter['items.product'] = query.productId;
+  }
   if (active === 'true') filter.orderStatus = { $in: ACTIVE_STATUSES };
   if (status) filter.orderStatus = status;
   if (type) filter.orderType = type;
