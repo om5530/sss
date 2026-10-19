@@ -52,7 +52,7 @@
             <th class="num">Total</th>
             <th>Payment method</th>
             <th>Placed</th>
-            <th>Delete</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -83,14 +83,26 @@
                 [class.payment-method--cash]="o.paymentMethod === 'cash'">{{ paymentMethodLabel(o) }}</span> }
               </td>
               <td role="cell" class="nowrap" data-label="Placed">{{ o.createdAt | date: 'MMM d, y · h:mm a' }}</td>
-              <td role="cell" data-label="Actions">
-                <a class="btn btn--ghost btn--sm order-open" [routerLink]="['/admin/orders', o._id]"
-                  [attr.aria-label]="'View order ' + o.orderNumber" (click)="$event.stopPropagation()">View order</a>
-                <button type="button" class="btn btn--ghost btn--danger btn--sm"
-                  [disabled]="deletingId() !== null || paymentSavingId() !== null" [attr.aria-label]="'Permanently delete order ' + o.orderNumber"
-                  (click)="deleteOrder(o, $event)">
-                  {{ deletingId() === o._id ? 'Deleting…' : 'Delete' }}
-                </button>
+              <td role="cell" data-label="Action" class="order-actions">
+                <div class="order-actions__buttons">
+                  <button type="button" class="btn btn--ghost btn--sm order-icon-action"
+                    [disabled]="deletingId() !== null || paymentSavingId() !== null || o.orderStatus === 'cancelled' || o.paymentStatus === 'refunded'"
+                    [attr.aria-label]="'Edit order ' + o.orderNumber" title="Edit order"
+                    (click)="editOrder(o, $event)">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m4 20 4.2-1L19 8.2a2.1 2.1 0 0 0-3-3L5.2 16 4 20Z" stroke-linejoin="round" /><path d="m14.5 6.5 3 3" stroke-linecap="round" /></svg>
+                  </button>
+                  <button type="button" class="btn btn--ghost btn--danger btn--sm order-icon-action"
+                    [disabled]="deletingId() !== null || paymentSavingId() !== null"
+                    [attr.aria-label]="(deletingId() === o._id ? 'Deleting order ' : 'Delete order ') + o.orderNumber"
+                    [attr.aria-busy]="deletingId() === o._id" title="Delete order"
+                    (click)="deleteOrder(o, $event)">
+                    @if (deletingId() === o._id) {
+                      <span class="adm-loading-spinner" aria-hidden="true"></span>
+                    } @else {
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    }
+                  </button>
+                </div>
               </td>
             </tr>
           } @empty {

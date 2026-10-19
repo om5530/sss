@@ -2,7 +2,6 @@
 .orders-filter-toggle { width: 44px; min-height: 44px; padding: 0; flex-shrink: 0; }
 .orders-event { flex: 1 1 220px; }
 .order-products { min-width: 13rem; overflow-wrap: anywhere; }
-.order-open { display: none; }
 .order-delete-dialog { width: min(480px, calc(100vw - 24px)); }
 
 @media (max-width: 900px) {
@@ -31,7 +30,6 @@
   .orders-table td:last-child { display: flex; flex-wrap: wrap; gap: .5rem; border: 0; }
   .orders-table td:last-child::before { display: none; }
   .orders-table td:last-child .btn { flex: 1; min-height: 44px; }
-  .order-open { display: inline-flex; }
   .orders-table td[colspan] { grid-column: 1 / -1; display: block; }
   .orders-table td[colspan]::before { display: none; }
   .adm-pagination { justify-content: space-between; gap: .5rem; flex-wrap: wrap; }
@@ -66,4 +64,10 @@
 }
 @media (max-width: 900px) {
   .order-zero-total-label { margin-inline-start: 0; }
+}
+
+.order-actions__buttons { display: flex; align-items: center; gap: .4rem; }
+.orders-table .order-actions .order-icon-action {
+  display: inline-grid; place-items: center;
+  width: 44px; min-width: 44px; height: 44px; padding: 0; flex: 0 0 44px;
 }

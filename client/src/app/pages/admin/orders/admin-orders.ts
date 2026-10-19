@@ -141,6 +141,13 @@ export class AdminOrders {
     this.apply(false);
   }
 
+  protected editOrder(order: AdminOrder, event: Event) {
+    event.stopPropagation();
+    event.preventDefault();
+    if (this.deletingId() || this.paymentSavingId() || order.orderStatus === 'cancelled' || order.paymentStatus === 'refunded') return;
+    this.router.navigate(['/admin/orders', order._id], { queryParams: { edit: '1' } });
+  }
+
   protected deleteOrder(order: AdminOrder, event: Event) {
     event.stopPropagation();
     event.preventDefault();

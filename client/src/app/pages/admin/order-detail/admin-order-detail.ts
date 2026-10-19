@@ -39,7 +39,9 @@ export class AdminOrderDetail {
   protected reviewing = false;
   protected draft: { price: number; quantity: number }[] = [];
   protected startEdit() {
-    this.draft = this.order()!.items.map(i => ({ price: i.price, quantity: i.quantity }));
+    const order = this.order();
+    if (!order || this.busy() || order.orderStatus === 'cancelled' || order.paymentStatus === 'refunded') return;
+    this.draft = order.items.map(i => ({ price: i.price, quantity: i.quantity }));
     this.editing = true;
   }
   protected validDraft() {
@@ -93,6 +95,7 @@ export class AdminOrderDetail {
       this.order.set(created.createdOrder);
       this.payment.set(created.createdPayment);
       this.loading.set(false);
+      if (!silent && this.route.snapshot.queryParamMap.get('edit') === '1') this.startEdit();
       return;
     }
     if (!silent) this.loading.set(true);
@@ -101,6 +104,7 @@ export class AdminOrderDetail {
         this.order.set(res.order);
         this.payment.set(res.payment);
         this.loading.set(false);
+        if (!silent && this.route.snapshot.queryParamMap.get('edit') === '1') this.startEdit();
       },
       error: () => this.loading.set(false),
     });
