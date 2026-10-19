@@ -57,7 +57,7 @@
         </thead>
         <tbody>
           @for (o of orders(); track o._id) {
-            <tr class="is-clickable" role="row" [routerLink]="['/admin/orders', o._id]">
+            <tr class="is-clickable" [class.order-zero-total]="o.pricing.total === 0" role="row" [routerLink]="['/admin/orders', o._id]">
               <td role="cell" data-label="Source"><span class="adm-badge adm-badge--type">{{ orderSource(o) }}</span>@if (o.eventName) { <div class="muted">{{ o.eventName }}</div> }</td>
               <td role="cell" data-label="Products" class="order-products">
                 @for (item of o.items; track $index) {
@@ -67,7 +67,9 @@
                 }
               </td>
               <td role="cell" class="num" data-label="Items">{{ o.items.length }}</td>
-              <td role="cell" class="num" data-label="Total">₹{{ o.pricing.total | number: '1.2-2' }}</td>
+              <td role="cell" class="num" data-label="Total">₹{{ o.pricing.total | number: '1.2-2' }}
+                @if (o.pricing.total === 0) { <span class="order-zero-total-label">Zero total</span> }
+              </td>
               <td role="cell" data-label="Payment method" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
                 @if (canChangePaymentMethod(o)) {
                   <select class="select order-payment-select" [value]="o.paymentMethod"
