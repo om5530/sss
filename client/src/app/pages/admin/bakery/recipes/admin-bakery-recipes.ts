@@ -1,3 +1,4 @@
+import { setRecipeComponentQuantity } from './recipe-component-usage';
 import { BusyButton } from '../../shared/busy-button';
 import { Component, computed, inject, signal, OnInit, DestroyRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
@@ -378,15 +379,21 @@ export class AdminBakeryRecipes implements OnInit {
     this.preview();
   }
 
+  setComponentQuantity(comp: RecipeComponent, quantity: number) {
+    setRecipeComponentQuantity(comp, quantity);
+    this.preview();
+  }
+
   onComponentMaterialChange(comp: RecipeComponent, matId: string) {
     const mat = this.materials().find((m) => m._id === matId);
     if (mat) {
       comp.materialId = mat._id;
       comp.name = mat.name;
       comp.itemType = mat.type;
+      comp.scalingMethod = 'linear';
       comp.uom = mat.baseUom;
       if (mat.type === 'resource') {
-        comp.scalingMethod = 'stepped';
+        comp.scalingMethod = 'linear';
         comp.capacityPerCycle = 4;
         comp.cycleMinutes = 60;
       }

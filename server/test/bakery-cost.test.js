@@ -274,3 +274,17 @@ test("Weight requests, fixed batch costs and missing materials are deterministic
     /unavailable/,
   );
 });
+
+test('explicit 50-minute oven usage recalculates costs instead of legacy 180-minute cycles', () => {
+  const materials = new Map([['oven', { name: 'Baking oven', type: 'resource', baseUom: 'minute', effectiveUnitCost: '2' }]]);
+  const recipe = { _id: 'oven-recipe', name: 'Oven recipe', yieldQuantity: 12, yieldUom: 'piece', piecesPerBatch: 12,
+    targetMarkupPercent: 50, components: [{ componentType: 'material', materialId: 'oven', quantity: 50,
+      uom: 'minute', scalingMethod: 'stepped', capacityPerCycle: 4, cycleMinutes: 60 }] };
+  assert.equal(E.evaluateRecipeCost(recipe, materials, new Map()).resourceCost, '360');
+  recipe.components[0].scalingMethod = 'linear';
+  const result = E.evaluateRecipeCost(recipe, materials, new Map());
+  assert.equal(result.components[0].quantity, '50');
+  assert.equal(result.resourceCost, '100');
+  assert.equal(result.suggestedSellingPrice, '150');
+  assert.equal(E.scaleRecipeForQuantity(recipe, 24, materials).components[0].quantity, '100');
+});

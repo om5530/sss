@@ -357,9 +357,29 @@
                       type="number"
                       step="any"
                       min="0"
-                      [(ngModel)]="comp.quantity"
+                      [ngModel]="comp.quantity"
+                      (ngModelChange)="setComponentQuantity(comp, $event)"
                       [attr.aria-label]="'Quantity for ingredient ' + (idx + 1)"
                     />
+                    @if (comp.itemType === 'resource') {
+                      <small>Usage per recipe batch. Editing this value uses the entered time.</small>
+                      <label class="label">Calculate usage
+                        <select class="select" [(ngModel)]="comp.scalingMethod">
+                          <option value="linear">Entered usage per batch</option>
+                          <option value="stepped">Capacity and baking cycles</option>
+                          <option value="fixed">Entered usage per whole batch</option>
+                        </select>
+                      </label>
+                      @if (comp.scalingMethod === 'stepped') {
+                        <label class="label">Items per cycle
+                          <input class="input" type="number" min="1" step="any" [(ngModel)]="comp.capacityPerCycle" />
+                        </label>
+                        <label class="label">Minutes per cycle
+                          <input class="input" type="number" min="0.01" step="any" [(ngModel)]="comp.cycleMinutes" />
+                        </label>
+                        <small>Cycle mode uses these settings instead of the quantity above.</small>
+                      }
+                    }
                   </td>
                   <td role="cell" data-label="Unit">
                     @if (comp.componentType === 'material') {
@@ -463,7 +483,7 @@
                 }
                 <label class="field"
                   ><span class="label">Quantity</span
-                  ><input class="input" type="number" [(ngModel)]="c.quantity" /></label
+                  ><input class="input" type="number" [ngModel]="c.quantity" (ngModelChange)="setComponentQuantity(c, $event)" /></label
                 ><label class="field"
                   ><span class="label">Unit</span>
                   @if (c.componentType === 'material') {
@@ -476,7 +496,27 @@
                     <input class="input" [(ngModel)]="c.uom" />
                   }
                 </label
-                ><button class="btn btn--outline" (click)="o.components.splice(ci, 1); preview()">
+                >
+                    @if (c.itemType === 'resource') {
+                      <small>Usage per recipe batch. Editing this value uses the entered time.</small>
+                      <label class="label">Calculate usage
+                        <select class="select" [(ngModel)]="c.scalingMethod">
+                          <option value="linear">Entered usage per batch</option>
+                          <option value="stepped">Capacity and baking cycles</option>
+                          <option value="fixed">Entered usage per whole batch</option>
+                        </select>
+                      </label>
+                      @if (c.scalingMethod === 'stepped') {
+                        <label class="label">Items per cycle
+                          <input class="input" type="number" min="1" step="any" [(ngModel)]="c.capacityPerCycle" />
+                        </label>
+                        <label class="label">Minutes per cycle
+                          <input class="input" type="number" min="0.01" step="any" [(ngModel)]="c.cycleMinutes" />
+                        </label>
+                        <small>Cycle mode uses these settings instead of the quantity above.</small>
+                      }
+                    }
+                <button class="btn btn--outline" (click)="o.components.splice(ci, 1); preview()">
                   Remove component
                 </button>
               </div>
