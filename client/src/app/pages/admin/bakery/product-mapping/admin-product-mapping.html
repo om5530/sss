@@ -1,6 +1,6 @@
 <div class="adm-page">
   <div class="adm-head">
-    <div><span class="eyebrow eyebrow--bare">Bakery Operations</span><h1>Product mapping</h1><p>Connect each sale product to its recipe. Selling prices follow the recipe automatically.</p></div>
+    <div><span class="eyebrow eyebrow--bare">Bakery Operations</span><h1>Product mapping</h1><p>Select one recipe revision per product. Switch to another revision whenever needed. Selling prices follow the recipe automatically.</p></div>
     <div class="adm-head__actions">
       <a routerLink="/admin/bakery/recipes" class="btn btn--ghost btn--sm">Recipes</a>
       <a routerLink="/admin/events" class="btn btn--ghost btn--sm">Event sales</a>
@@ -18,17 +18,17 @@
   @else if (data(); as d) {
     <p class="muted mapping-status" role="status">{{ linkedCount() }} of {{ d.products.length }} products linked · {{ products().length }} shown</p>
     <div class="adm-table-wrap"><table class="adm-table">
-      <thead><tr><th>Product</th><th>Linked recipe</th><th class="num">Cost per unit</th><th class="num">Margin</th><th class="num">Selling price</th><th>Actions</th></tr></thead>
+      <thead><tr><th>Product</th><th>Linked recipe revision</th><th class="num">Cost per unit</th><th class="num">Margin</th><th class="num">Selling price</th><th>Actions</th></tr></thead>
       <tbody>
         @for (p of products(); track p._id) {
           <tr>
             <td><strong>{{ p.name }}</strong><span class="muted mapping-hint">{{ p.category }}</span></td>
             <td>
-              <select class="select mapping-select" [attr.aria-label]="'Recipe for ' + p.name" [ngModel]="selectedId(p)" (ngModelChange)="choose(p, $event)" [disabled]="busyId() !== null">
+              <select class="select mapping-select" [attr.aria-label]="'Recipe revision for ' + p.name" [ngModel]="selectedId(p)" (ngModelChange)="choose(p, $event)" [disabled]="busyId() !== null">
                 <option value="">No linked recipe</option>
                 @if (p.recipeId && !selectedRecipe(p) && !changed(p)) { <option [value]="p.recipeId">{{ p.recipeName }} (unavailable)</option> }
                 @for (r of d.recipes; track r.recipeId) {
-                  <option [value]="r.recipeId" [disabled]="!!r.error || (!!r.linkedProductId && r.linkedProductId !== p._id)">{{ r.recipeName }}{{ r.error ? ' (cost unavailable)' : r.linkedProductId && r.linkedProductId !== p._id ? ' (already linked)' : '' }}</option>
+                  <option [value]="r.recipeId" [disabled]="!!r.error || (!!r.linkedProductId && r.linkedProductId !== p._id)">{{ r.recipeName }} · Rev {{ r.revisionNumber || 1 }}{{ r.revisionLabel ? ' · ' + r.revisionLabel : '' }}{{ r.piecesPerBatch ? ' · ' + r.piecesPerBatch + ' pcs' : '' }}{{ r.error ? ' (cost unavailable)' : r.linkedProductId && r.linkedProductId !== p._id ? ' (already linked)' : '' }}</option>
                 }
               </select>
               @if (p.error) { <span class="error-text mapping-hint">{{ p.error }}</span> }

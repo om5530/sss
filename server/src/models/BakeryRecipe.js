@@ -57,6 +57,10 @@ const bakeryRecipeSchema = new mongoose.Schema(
     code: { type: String, trim: true, uppercase: true },
     category: { type: String, trim: true, default: 'Cakes' },
     version: { type: Number, default: 1 },
+    // Selectable formula variants share a family; version remains the edit concurrency token.
+    revisionFamilyId: { type: mongoose.Schema.Types.ObjectId, ref: 'BakeryRecipe', default: null, index: true },
+    revisionNumber: { type: Number, default: 1, min: 1 },
+    revisionLabel: { type: String, trim: true, maxlength: 120, default: '' },
     status: { type: String, enum: ['draft', 'active'], default: 'active' },
     productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', default: null },
     overheadPerBatch: { type: String, default: '0' },

@@ -14,8 +14,8 @@ const list = asyncHandler(async (req, res) => {
   ]);
   const recipes = [...context.recipes.values()].filter(sellableRecipe).map((r) => {
     try { return { ...recipePrice(r, context), linkedProductId: r.productId ? String(r.productId) : null }; }
-    catch (err) { return { recipeId: String(r._id), recipeName: r.name, version: r.version, linkedProductId: r.productId ? String(r.productId) : null, error: err.message }; }
-  }).sort((a, b) => a.recipeName.localeCompare(b.recipeName));
+    catch (err) { return { recipeId: String(r._id), recipeName: r.name, version: r.version, revisionFamilyId: String(r.revisionFamilyId || r._id), revisionNumber: r.revisionNumber || 1, revisionLabel: r.revisionLabel || '', linkedProductId: r.productId ? String(r.productId) : null, error: err.message }; }
+  }).sort((a, b) => a.recipeName.localeCompare(b.recipeName) || a.revisionFamilyId.localeCompare(b.revisionFamilyId) || a.revisionNumber - b.revisionNumber);
   res.json({ success: true, recipes, products: products.map((p) => {
     const linked = [...context.recipes.values()].filter((r) => r.productId && String(r.productId) === String(p._id));
     const price = recipes.find((r) => r.recipeId === String(linked[0]?._id));

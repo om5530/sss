@@ -296,3 +296,77 @@ test('resetting a legacy batch override restores the markup suggestion', async (
   assert.equal(reset.recipe.manualSellingPricePerPiece, null);
   assert.equal(reset.recipe.sellingPricePerPiece, '40');
 });
+
+test('recipe revisions retain separate formulas and allow switching one product between revisions', async () => {
+  const { product, recipe } = await fixture('Revision-biscoff');
+  await Recipe.updateOne({ _id: recipe._id }, { piecesPerBatch: 8 });
+  assert.equal((await mapProduct(product, recipe)).status, 200);
+  const quote = await api('POST', '/admin/orders/quote', { items: [{ productId: String(product._id), quantity: 1 }], orderType: 'takeaway' });
+  const sale = await api('POST', '/admin/orders', { items: [{ productId: String(product._id), quantity: 1 }], orderType: 'takeaway', source: 'event', eventName: 'Revision fair', paymentMethod: 'cash', paymentStatus: 'paid', orderStatus: 'completed', requestKey: randomUUID(), expectedQuote: quote });
+  assert.equal(sale.status, 201, JSON.stringify(sale));
+  const before = await Order.findById(sale.order._id).select('+recipeCostSnapshot').lean();
+  const created = await api('POST', `/admin/bakery/recipes/${recipe._id}/revisions`, {
+    version: 1, revisionLabel: '9 pieces, new ingredients', piecesPerBatch: 9,
+    components: [{ componentType: 'other', name: 'New ingredients', itemType: 'other', quantity: 1, uom: 'piece', unitCost: '180' }],
+    // A revision must never steal an existing mapping even if requested explicitly.
+    productId: String(product._id), revisionNumber: 99,
+  });
+  assert.equal(created.status, 200, JSON.stringify(created));
+  const revised = created.recipe;
+  assert.equal(revised.name, recipe.name);
+  assert.equal(revised.revisionNumber, 2);
+  assert.equal(revised.revisionFamilyId, String(recipe._id));
+  assert.equal(revised.revisionLabel, '9 pieces, new ingredients');
+  assert.equal(revised.productId, null);
+  assert.equal(Number(revised.costPerPiece), 20);
+  assert.equal((await Recipe.findById(recipe._id)).piecesPerBatch, '8');
+  assert.equal(String((await Recipe.findById(recipe._id)).productId), String(product._id));
+  assert.equal((await mapProduct(product, revised)).status, 200);
+  assert.equal((await Recipe.findById(recipe._id)).productId, null);
+  assert.equal(await Recipe.countDocuments({ productId: product._id }), 1);
+  assert.equal((await Product.findById(product._id)).price, 40);
+  const mapping = await api('GET', '/admin/bakery/product-mappings');
+  const choice = mapping.recipes.find(r => r.recipeId === revised._id);
+  assert.equal(choice.revisionNumber, 2);
+  assert.equal(choice.piecesPerBatch, 9);
+  assert.equal(choice.revisionFamilyId, String(recipe._id));
+  assert.equal((await mapProduct(product, recipe)).status, 200);
+  assert.equal((await Product.findById(product._id)).price, 20);
+  const after = await Order.findById(sale.order._id).select('+recipeCostSnapshot').lean();
+  assert.deepEqual(after.recipeCostSnapshot, before.recipeCostSnapshot);
+  assert.deepEqual(after.pricing, before.pricing);
+});
+
+test('revisions share family numbering independently of edit versions, including branching and archived siblings', async () => {
+  const { recipe } = await fixture('Revision-family');
+  const path = `/admin/bakery/recipes/${recipe._id}`;
+  assert.equal((await api('POST', path + '/revisions', { version: 2 })).status, 409);
+  assert.equal((await api('POST', '/admin/bakery/recipes/invalid/revisions', { version: 1 })).status, 400);
+  assert.equal((await api('POST', path + '/revisions', { version: 1 }, customerToken)).status, 403);
+  assert.equal((await api('POST', path + '/revisions', { version: 1, revisionLabel: 'x'.repeat(121) })).status, 400);
+  const second = await api('POST', path + '/revisions', { version: 1, revisionLabel: 'Second' });
+  assert.equal(second.status, 200, JSON.stringify(second));
+  const edited = await api('PATCH', `/admin/bakery/recipes/${second.recipe._id}`, { version: 1, revisionFamilyId: new mongoose.Types.ObjectId(), revisionNumber: 77, notes: 'Edit this revision only' });
+  assert.equal(edited.status, 200, JSON.stringify(edited));
+  assert.equal(edited.recipe.version, 2);
+  assert.equal(edited.recipe.revisionNumber, 2);
+  assert.equal(edited.recipe.revisionFamilyId, String(recipe._id));
+  const third = await api('POST', `/admin/bakery/recipes/${second.recipe._id}/revisions`, { version: 2 });
+  assert.equal(third.status, 200, JSON.stringify(third));
+  assert.equal(third.recipe.revisionNumber, 3);
+  assert.equal(third.recipe.revisionFamilyId, String(recipe._id));
+  assert.equal(third.recipe.notes, 'Edit this revision only');
+  assert.equal((await api('DELETE', `/admin/bakery/recipes/${third.recipe._id}`)).status, 200);
+  const fourth = await api('POST', path + '/revisions', { version: 1 });
+  assert.equal(fourth.recipe.revisionNumber, 4);
+  assert.equal((await api('POST', `/admin/bakery/recipes/${third.recipe._id}/revisions`, { version: 1 })).status, 400);
+});
+
+test('concurrent revision creation assigns distinct numbers and preserves inherited batch pricing', async () => {
+  const { recipe } = await fixture('Revision-concurrent');
+  await Recipe.updateOne({ _id: recipe._id }, { manualSellingPrice: '240' });
+  const results = await Promise.all([1, 2].map(() => api('POST', `/admin/bakery/recipes/${recipe._id}/revisions`, { version: 1 })));
+  results.forEach(r => assert.equal(r.status, 200, JSON.stringify(r)));
+  assert.deepEqual(results.map(r => r.recipe.revisionNumber).sort(), [2, 3]);
+  results.forEach(r => assert.equal(Number(r.recipe.sellingPricePerPiece), 60));
+});

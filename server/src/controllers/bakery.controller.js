@@ -358,6 +358,7 @@ exports.getRecipeById = handler(async (req) => {
 });
 const recipeFields = [
   "name",
+  "revisionLabel",
   "code",
   "category",
   "isSubRecipe",
@@ -393,11 +394,12 @@ function recipeInput(body) {
   }
   return input;
 }
-async function saveRecipe(req, session, creating) {
+async function saveRecipe(req, session, creating, revisionMetadata) {
   const input = recipeInput(req.body);
   const r = creating
     ? new Recipe(input)
     : await get(Recipe, req.params.id, session);
+  if (revisionMetadata) r.set(revisionMetadata);
   const previousProductId = r.productId ? String(r.productId) : null;
   let removedUnavailableProduct = false;
   if (!creating) {
@@ -501,6 +503,23 @@ async function saveRecipe(req, session, creating) {
 exports.createRecipe = handler((req) =>
   transaction((s) => saveRecipe(req, s, true)),
 );
+// Each selectable revision is a separate recipe, so existing production snapshots
+// and the original formula are untouched. The bakery write guard serializes numbering.
+exports.createRecipeRevision = handler((req) => transaction(async (session) => {
+  const source = await get(Recipe, req.params.id, session);
+  if (!source.isActive) throw ApiError.badRequest('Cannot revise an archived recipe');
+  if (Number(req.body.version) !== source.version)
+    throw ApiError.conflict('Source recipe changed. Reload before creating a revision.');
+  const familyId = source.revisionFamilyId || source._id;
+  const siblings = await Recipe.find({ $or: [{ _id: familyId }, { revisionFamilyId: familyId }] }).session(session);
+  const revisionNumber = Math.max(1, ...siblings.map((r) => r.revisionNumber || 1)) + 1;
+  const body = { ...pick(source.toObject(), recipeFields), ...recipeInput(req.body),
+    productId: null, code: `RCP-${randomUUID()}` };
+  // Inherit a legacy batch-price override unless the new revision explicitly replaces it.
+  if (req.body.manualSellingPricePerPiece === undefined && source.manualSellingPricePerPiece == null)
+    delete body.manualSellingPricePerPiece;
+  return saveRecipe({ body }, session, true, { revisionFamilyId: familyId, revisionNumber });
+}));
 exports.updateRecipe = handler((req) =>
   transaction((s) => saveRecipe(req, s, false)),
 );

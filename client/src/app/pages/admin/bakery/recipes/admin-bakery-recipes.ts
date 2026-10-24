@@ -114,6 +114,7 @@ export class AdminBakeryRecipes implements OnInit {
   saving = signal(false);
   saveError = signal('');
   editingRecipe = signal<Partial<BakeryRecipe> | null>(null);
+  revisionSource = signal<BakeryRecipe | null>(null);
 
   selectedCategory = signal<string>('All');
   recipeView = signal<'main' | 'sub'>('main');
@@ -161,7 +162,7 @@ export class AdminBakeryRecipes implements OnInit {
     const isSubRecipe = this.recipeView() === 'sub';
     return this.recipes().filter(
       (r) => Boolean(r.isSubRecipe) === isSubRecipe && (cat === 'All' || this.displayCategory(r) === cat),
-    ).sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true }));
+    ).sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true }) || (a.revisionNumber || 1) - (b.revisionNumber || 1));
   }
 
   displayCategory(recipe: BakeryRecipe): string {
@@ -177,6 +178,7 @@ export class AdminBakeryRecipes implements OnInit {
   }
 
   startNewRecipe() {
+    this.revisionSource.set(null);
     this.resetCategoryEditor();
     this.editingRecipe.set({
       name: '',
@@ -205,6 +207,7 @@ export class AdminBakeryRecipes implements OnInit {
   }
 
   editRecipe(recipe: BakeryRecipe) {
+    this.revisionSource.set(null);
     this.resetCategoryEditor();
     this.editingRecipe.set({
       ...JSON.parse(JSON.stringify(recipe)), category: this.displayCategory(recipe),
@@ -214,12 +217,14 @@ export class AdminBakeryRecipes implements OnInit {
   }
 
   cancelEdit() {
+    this.revisionSource.set(null);
     this.resetCategoryEditor();
     this.editingRecipe.set(null);
     this.previewResult.set(null);
   }
 
   duplicateRecipe(recipe: BakeryRecipe) {
+    this.revisionSource.set(null);
     this.resetCategoryEditor();
     this.editingComponentType.set(null);
     const copy = JSON.parse(JSON.stringify(recipe)) as BakeryRecipe;
@@ -252,6 +257,12 @@ export class AdminBakeryRecipes implements OnInit {
       })),
     });
     this.preview();
+  }
+
+  createRevision(recipe: BakeryRecipe) {
+    this.duplicateRecipe(recipe);
+    this.revisionSource.set(recipe);
+    this.editingRecipe.update((draft) => ({ ...draft, name: recipe.name, revisionLabel: '' }));
   }
 
   onCategorySelection(recipe: Partial<BakeryRecipe>, value: string) {
@@ -434,10 +445,15 @@ export class AdminBakeryRecipes implements OnInit {
         },
       });
     } else {
-      this.bakery.createRecipe(recipe).subscribe({
+      const source = this.revisionSource();
+      const request = source
+        ? this.http.post<{ recipe: BakeryRecipe }>('/api/admin/bakery/recipes/' + source._id + '/revisions', { ...recipe, version: source.version })
+        : this.bakery.createRecipe(recipe);
+      request.subscribe({
         next: (res) => {
           this.saving.set(false);
-          this.toast.success('Recipe created');
+          this.toast.success(source ? 'Revision created. Choose it in Product mapping when ready.' : 'Recipe created');
+          this.revisionSource.set(null);
           this.editingRecipe.set(null);
           this.upsertRecipe(res.recipe);
         },

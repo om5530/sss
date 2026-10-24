@@ -59,6 +59,7 @@
                 <span class="sub-recipe-badge">Sub-recipe</span>
               }
               <h3 class="recipe-name">{{ r.name }}</h3>
+              <small class="recipe-yield">Revision {{ r.revisionNumber || 1 }}{{ r.revisionLabel ? ' · ' + r.revisionLabel : '' }}{{ r.productId ? ' · Mapped to product' : '' }}</small>
               <small class="recipe-yield">1 batch makes {{ r.piecesPerBatch }} pieces · {{ r.yieldQuantity }} {{ r.yieldUom }}</small>
             </div>
             <span class="recipe-markup" tabindex="0" [attr.aria-label]="!r.costingError && r.actualMarkupPercent != null ? 'Actual markup: ' + (r.actualMarkupPercent | number: '1.0-2') + '%' : 'Actual markup unavailable'">
@@ -113,6 +114,8 @@
             </div>
           </div>
 
+          <button type="button" class="btn btn--outline btn--sm" [disabled]="!!savingPriceId()" (click)="createRevision(r)" [attr.aria-label]="'Create revision of ' + r.name">New revision</button>
+
           <!-- Actions -->
           <div class="card-actions">
             <a class="btn btn--outline btn--sm recipe-icon-action"
@@ -157,11 +160,16 @@
   @if (editingRecipe(); as form) {
     <div class="edit-panel card" (input)="preview()" (change)="preview()">
       <div class="panel-head">
-        <h2>{{ form._id ? 'Edit Formula: ' + form.name : 'Create New Bakery Recipe' }}</h2>
+        <h2>{{ revisionSource() ? 'Create revision: ' + form.name : form._id ? 'Edit Formula: ' + form.name : 'Create New Bakery Recipe' }}</h2>
         <button type="button" class="btn btn--ghost" (click)="cancelEdit()">✕ Cancel</button>
       </div>
 
+      @if (revisionSource(); as source) { <p class="muted">Based on revision {{ source.revisionNumber || 1 }}. Adjust the yield or ingredients below. Save, then select the new revision in Product mapping.</p> }
       <div class="form-grid">
+        <div class="field">
+          <label class="label" for="revision-label">Revision label (optional)</label>
+          <input id="revision-label" class="input" [(ngModel)]="form.revisionLabel" maxlength="120" placeholder="e.g. 9 pieces · less sugar" />
+        </div>
         <div class="field">
           <label class="label">Recipe Name</label>
           <input class="input" [(ngModel)]="form.name" placeholder="e.g. Belgian Chocolate Cake" />

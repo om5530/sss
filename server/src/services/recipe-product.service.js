@@ -12,6 +12,8 @@ function recipePrice(recipe, context) {
   const cost = E.dec(result.costPerPiece);
   return {
     recipeId: String(recipe._id), recipeName: recipe.name, version: recipe.version,
+    revisionFamilyId: String(recipe.revisionFamilyId || recipe._id),
+    revisionNumber: recipe.revisionNumber || 1, revisionLabel: recipe.revisionLabel || '',
     unitCost: cost.toString(), sellingPrice, piecesPerBatch: Number(result.piecesPerBatch),
     markupPercent: Number(recipe.targetMarkupPercent),
     marginPercent: new E.Decimal(result.actualMarginPercent).toDecimalPlaces(2).toNumber(),

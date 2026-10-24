@@ -38,7 +38,7 @@ export class AdminProductMapping {
   protected readonly products = computed(() => {
     const q = this.q().trim().toLowerCase();
     return (this.data()?.products || []).filter((p) =>
-      (!q || `${p.name} ${p.category} ${p.recipeName} ${this.selectedRecipe(p)?.recipeName || ''}`.toLowerCase().includes(q)) &&
+      (!q || `${p.name} ${p.category} ${p.recipeName} ${this.selectedRecipe(p)?.recipeName || ''} ${this.selectedRecipe(p)?.revisionLabel || ''}`.toLowerCase().includes(q)) &&
       (this.filter() === 'all' || (this.filter() === 'linked' ? !!p.recipeId : !p.recipeId)));
   });
   constructor() { this.load(); }

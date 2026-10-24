@@ -25,6 +25,7 @@ router.patch('/product-mappings/:id', mapping.save);
 router.get('/recipes', ctrl.getRecipes);
 router.get('/recipes/:id', ctrl.getRecipeById);
 router.post('/recipes', ctrl.createRecipe);
+router.post('/recipes/:id/revisions', ctrl.createRecipeRevision);
 router.patch('/recipes/:id', ctrl.updateRecipe);
 router.patch('/recipes/:id/selling-price', ctrl.updateRecipeSellingPrice);
 router.delete('/recipes/:id', ctrl.deleteRecipe);
