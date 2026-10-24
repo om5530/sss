@@ -28,8 +28,6 @@
   .products-table .adm-thumb { width: 48px; height: 48px; }
   .products-table .product-name { grid-column: 2 / -1; grid-row: 1 / 3; }
   .products-table td.product-name::before { display: none; }
-  .products-table td[data-label="Category"] { grid-column: 1 / -1; }
-  .products-table td[data-label="Category"]::before { display: inline; margin-right: .5rem; }
   .products-table td[data-label="Price"] { grid-column: 1 / 3; }
   .products-table td[data-label="Today's stock"] { grid-column: 3; font-size: 1.1rem; font-weight: 600; }
   .products-table td[data-label="Available"], .products-table td[data-label="Featured"] { min-height: 60px; }

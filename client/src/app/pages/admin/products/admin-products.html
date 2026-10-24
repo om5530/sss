@@ -64,10 +64,8 @@
             </th>
             <th><span class="sr-only">Photo</span></th>
             <th>Product</th>
-            <th>Category</th>
             <th class="num">Price</th>
             <th class="num">Today's stock</th>
-            <th>Diet</th>
             <th>Available</th>
             <th>Featured</th>
             <th>Actions</th>
@@ -94,10 +92,8 @@
                 }
                 <div class="muted" style="font-size: 0.78rem; text-transform: capitalize">{{ p.group }}</div>
               </td>
-              <td role="cell" data-label="Category">{{ p.category }}</td>
               <td role="cell" class="num product-price" data-label="Price">₹{{ p.price | number: '1.0-2' }}</td>
               <td role="cell" class="num" data-label="Today's stock">{{ p.stockCount === null || p.stockCount === undefined ? 'Not tracked' : p.stockCount }}</td>
-              <td role="cell" data-label="Diet"><span class="diet diet--{{ p.dietary }}" [title]="p.dietary"></span></td>
               <td role="cell" data-label="Available">
                 <label class="adm-switch" [attr.aria-label]="'Toggle availability for ' + p.name">
                   <input type="checkbox" [checked]="p.available" [disabled]="busy() || p.archived" (change)="toggle(p, 'available')" />
@@ -122,7 +118,7 @@
               </td>
             </tr>
           } @empty {
-            <tr><td role="cell" colspan="10"><div class="adm-empty">No products match. Try clearing the filters.</div></td></tr>
+            <tr><td role="cell" colspan="8"><div class="adm-empty">No products match. Try clearing the filters.</div></td></tr>
           }
         </tbody>
       </table>
