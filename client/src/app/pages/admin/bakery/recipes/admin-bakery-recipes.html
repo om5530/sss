@@ -608,3 +608,15 @@
     </section>
   }
 </div>
+
+@if (suggestionTarget(); as target) {
+  <adm-confirm-modal
+    [title]="'Use suggested price for “' + target.name + '”?'"
+    [message]="suggestionMessage(target)"
+    confirmLabel="Use suggested price"
+    tone="danger"
+    [busy]="!!savingPriceId()"
+    (confirmed)="confirmSuggestion()"
+    (cancelled)="!savingPriceId() && suggestionTarget.set(null)"
+  />
+}

@@ -1,5 +1,6 @@
 import { groupRecipeRevisions, selectRecipeRevision, type RecipeRevisionGroup } from './recipe-revision-groups';
 import { setRecipeComponentQuantity } from './recipe-component-usage';
+import { ConfirmModal } from '../../shared/confirm-modal';
 import { BusyButton } from '../../shared/busy-button';
 import { Component, computed, inject, signal, OnInit, DestroyRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
@@ -19,7 +20,7 @@ import { AdminProductListState } from '../../shared/admin-product-list-state';
 @Component({
   selector: 'app-admin-bakery-recipes',
   standalone: true,
-  imports: [BusyButton, CommonModule, FormsModule, CurrencyPipe, RouterLink],
+  imports: [ConfirmModal, BusyButton, CommonModule, FormsModule, CurrencyPipe, RouterLink],
   templateUrl: './admin-bakery-recipes.html',
   styleUrl: './admin-bakery-recipes.scss',
 })
@@ -31,6 +32,7 @@ export class AdminBakeryRecipes implements OnInit {
   private productList = inject(AdminProductListState);
   priceDrafts = signal<Record<string, number | null>>({});
   savingPriceId = signal<string | null>(null);
+  protected readonly suggestionTarget = signal<BakeryRecipe | null>(null);
   private priceRequest?: Subscription;
   previewResult = signal<any>(null);
   previewError = signal('');
@@ -503,6 +505,26 @@ export class AdminBakeryRecipes implements OnInit {
 
   savePiecePrice(recipe: BakeryRecipe, useSuggestion = false) {
     if (this.savingPriceId() || recipe.costingError) return;
+    if (useSuggestion) {
+      this.suggestionTarget.set(recipe);
+      return;
+    }
+    this.persistPiecePrice(recipe);
+  }
+
+  protected suggestionMessage(recipe: BakeryRecipe): string {
+    const price = Number(recipe.suggestedSellingPrice) / Number(recipe.piecesPerBatch);
+    return `Replace the saved selling price of ₹${this.savedPiecePrice(recipe).toFixed(2)} per piece with the suggested price of ₹${price.toFixed(2)} per piece? This removes your custom price.` +
+      (recipe.productId ? ' The linked product price will also be updated.' : '');
+  }
+
+  protected confirmSuggestion() {
+    const recipe = this.suggestionTarget();
+    if (recipe && !this.savingPriceId()) this.persistPiecePrice(recipe, true);
+  }
+
+  private persistPiecePrice(recipe: BakeryRecipe, useSuggestion = false) {
+    if (this.savingPriceId() || recipe.costingError) return;
     const price = this.piecePrice(recipe);
     if (!useSuggestion && (!Number.isFinite(price) || Number(price) <= 0 ||
       Math.abs(Number(price) * 100 - Math.round(Number(price) * 100)) > 0.000001)) {
@@ -518,11 +540,13 @@ export class AdminBakeryRecipes implements OnInit {
         this.clearPriceDraft(recipe._id);
         this.productList.clear();
         this.savingPriceId.set(null);
+        if (useSuggestion) this.suggestionTarget.set(null);
         this.toast.success(recipe.productId ? 'Selling price saved and linked product updated' : 'Selling price saved');
       },
       error: (e) => {
         this.savingPriceId.set(null);
         this.toast.error(e.error?.message || 'Could not save selling price');
+        if (useSuggestion) this.suggestionTarget.set(null);
         if (e.status === 409) {
           this.clearPriceDraft(recipe._id);
           this.fetchRecipes();
