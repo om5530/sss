@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { groupRecipeRevisions, selectRecipeRevision } from '../src/app/pages/admin/bakery/recipes/recipe-revision-groups.ts';
+import { groupRecipeRevisions, searchRecipeGroups, selectRecipeRevision } from '../src/app/pages/admin/bakery/recipes/recipe-revision-groups.ts';
 
 const recipe = (id: string, fields: object = {}) => ({ _id: id, name: 'Biscoff', ...fields }) as any;
 
@@ -34,4 +34,20 @@ test('empty lists and legacy recipes work without revision metadata', () => {
   const [family] = groupRecipeRevisions([recipe('a')]);
   assert.equal(family.revisions.length, 1);
   assert.equal(selectRecipeRevision(family)._id, 'a');
+});
+
+test('search is case insensitive, ignores excess whitespace and matches names, codes and revision labels', () => {
+  const groups = groupRecipeRevisions([
+    recipe('a', { name: 'Biscoff Cheesecake', category: 'Cakes', code: 'BIS-01' }),
+    recipe('b', { name: 'Biscoff Cheesecake', revisionFamilyId: 'a', revisionLabel: 'Less sugar', revisionNumber: 2 }),
+    recipe('c', { name: 'Brownie', category: 'Brownies' }),
+  ]);
+  for (const query of [' BIScoff ', 'bis-01', 'cakes', '  BISCOFF   less sugar ']) {
+    const found = searchRecipeGroups(groups, query);
+    assert.equal(found.length, 1);
+    assert.equal(found[0].id, 'a');
+    assert.equal(found[0].revisions.length, 2);
+  }
+  assert.equal(searchRecipeGroups(groups, '  '), groups);
+  assert.equal(searchRecipeGroups(groups, 'tiramisu').length, 0);
 });

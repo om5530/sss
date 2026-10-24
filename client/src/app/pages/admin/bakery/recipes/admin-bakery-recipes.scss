@@ -642,3 +642,10 @@
 @media (min-width: 961px) and (max-width: 1366px) {
   .recipe-cards-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+.recipe-search { display: flex; align-items: flex-end; flex-wrap: wrap; gap: .6rem; }
+.recipe-search__field { flex: 1 1 18rem; min-width: 0; max-width: 36rem; }
+.recipe-search__field .input { width: 100%; min-height: 48px; font-size: 1rem; }
+.recipe-search .btn { min-height: 48px; }
+.recipe-search__count { padding: .7rem 0; font-size: .9rem; }
+.recipe-search-empty { grid-column: 1 / -1; padding: 2rem 1rem; text-align: center; border: 1px solid var(--line); border-radius: 10px; background: var(--white); }

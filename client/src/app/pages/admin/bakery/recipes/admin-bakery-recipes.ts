@@ -1,4 +1,4 @@
-import { groupRecipeRevisions, selectRecipeRevision, type RecipeRevisionGroup } from './recipe-revision-groups';
+import { groupRecipeRevisions, searchRecipeGroups, selectRecipeRevision, type RecipeRevisionGroup } from './recipe-revision-groups';
 import { setRecipeComponentQuantity } from './recipe-component-usage';
 import { ConfirmModal } from '../../shared/confirm-modal';
 import { BusyButton } from '../../shared/busy-button';
@@ -119,7 +119,8 @@ export class AdminBakeryRecipes implements OnInit {
   editingRecipe = signal<Partial<BakeryRecipe> | null>(null);
   revisionSource = signal<BakeryRecipe | null>(null);
   revisionSelections = signal<Record<string, string>>({});
-  recipeGroups = computed(() => groupRecipeRevisions(this.filteredRecipes()));
+  protected readonly recipeSearch = signal('');
+  recipeGroups = computed(() => searchRecipeGroups(groupRecipeRevisions(this.filteredRecipes()), this.recipeSearch()));
 
   selectedRevision(group: RecipeRevisionGroup): BakeryRecipe {
     return selectRecipeRevision(group, this.revisionSelections()[group.id]);

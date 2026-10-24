@@ -25,3 +25,15 @@ export function selectRecipeRevision(group: RecipeRevisionGroup, selectedId?: st
     || group.revisions.find(r => r.productId)
     || group.revisions[group.revisions.length - 1];
 }
+
+/** Search whole families so matching a revision keeps every revision selectable. */
+export function searchRecipeGroups(groups: RecipeRevisionGroup[], query: string): RecipeRevisionGroup[] {
+  const terms = query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
+  if (!terms.length) return groups;
+  return groups.filter(group => {
+    const text = [group.name, ...group.revisions.flatMap(recipe =>
+      [recipe.name, recipe.code, recipe.category, recipe.revisionLabel])]
+      .filter(Boolean).join(' ').toLocaleLowerCase();
+    return terms.every(term => text.includes(term));
+  });
+}
