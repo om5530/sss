@@ -25,6 +25,8 @@ const productSchema = new mongoose.Schema(
     // Soft delete (AS-4.5): archived products disappear from the storefront but
     // stay in the database so historical orders keep rendering.
     archived: { type: Boolean, default: false },
+    // Retain references for historical orders/reports after catalogue deletion.
+    deletedAt: { type: Date, default: null },
   },
   { timestamps: true },
 );

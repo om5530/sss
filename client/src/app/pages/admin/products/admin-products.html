@@ -110,6 +110,10 @@
                 <button [appBusy]="busy()" type="button" class="btn btn--ghost btn--sm" style="margin-left: 0.35rem" [disabled]="busy()" (click)="archiveTarget.set(p)">
                   {{ p.archived ? 'Restore' : 'Archive' }}
                 </button>
+                @if (p.archived) {
+                  <button type="button" class="btn btn--ghost btn--danger btn--sm" style="margin-left: 0.35rem"
+                    [disabled]="busy()" (click)="deleteTarget.set(p)" [attr.aria-label]="'Delete ' + p.name">Delete</button>
+                }
               </td>
             </tr>
           } @empty {
@@ -158,5 +162,17 @@
     [busy]="busy()"
     (confirmed)="confirmArchive()"
     (cancelled)="archiveTarget.set(null)"
+  />
+}
+
+@if (deleteTarget(); as target) {
+  <adm-confirm-modal
+    [title]="'Permanently delete “' + target.name + '”?'"
+    message="This removes the archived product from the catalogue. It cannot be restored. Past orders and sales reports stay intact. Any recipe mapping will be removed."
+    confirmLabel="Delete permanently"
+    tone="danger"
+    [busy]="busy()"
+    (confirmed)="confirmDelete()"
+    (cancelled)="!busy() && deleteTarget.set(null)"
   />
 }

@@ -356,7 +356,7 @@ async function uniqueSlug(name) {
 
 const listProductsAdmin = asyncHandler(async (req, res) => {
   const { group, category, q, available, featured, archived } = req.query;
-  const filter = {};
+  const filter = { deletedAt: null };
   // Archived products are hidden unless explicitly requested (AS-4.5).
   if (archived === 'true') filter.archived = true;
   else if (archived !== 'all') filter.archived = { $ne: true };
@@ -375,7 +375,7 @@ const listProductsAdmin = asyncHandler(async (req, res) => {
 
 const getProductAdmin = asyncHandler(async (req, res) => {
   assertObjectId(req.params.id, 'Product');
-  const product = await Product.findById(req.params.id);
+  const product = await Product.findOne({ _id: req.params.id, deletedAt: null });
   if (!product) throw ApiError.notFound('Product not found');
   res.json({ success: true, product: (await decorateProducts([product]))[0] });
 });
@@ -407,7 +407,7 @@ const createProduct = asyncHandler(async (req, res) => {
 
 const updateProduct = asyncHandler(async (req, res) => {
   assertObjectId(req.params.id, 'Product');
-  const product = await Product.findById(req.params.id);
+  const product = await Product.findOne({ _id: req.params.id, deletedAt: null });
   if (!product) throw ApiError.notFound('Product not found');
   const linked = (await require('../services/recipe-product.service').linkedCosts([product._id])).get(String(product._id));
   if (req.body.price !== undefined && linked) {
@@ -470,7 +470,7 @@ const updateProduct = asyncHandler(async (req, res) => {
 const archiveProduct = asyncHandler(async (req, res) => {
   assertObjectId(req.params.id, 'Product');
   const archived = req.body.archived !== false;
-  const product = await Product.findById(req.params.id);
+  const product = await Product.findOne({ _id: req.params.id, deletedAt: null });
   if (!product) throw ApiError.notFound('Product not found');
 
   product.archived = archived;
@@ -489,6 +489,28 @@ const archiveProduct = asyncHandler(async (req, res) => {
   });
 
   res.json({ success: true, product });
+});
+
+const deleteProduct = asyncHandler(async (req, res) => {
+  assertObjectId(req.params.id, 'Product');
+  if (req.body.confirmed !== true) throw ApiError.badRequest('Confirm permanent deletion first');
+  const { transaction } = require('../services/bakery-transaction.service');
+  const Recipe = require('../models/BakeryRecipe');
+  const product = await transaction(async (session) => {
+    const existing = await Product.findOne({ _id: req.params.id, deletedAt: null }).session(session);
+    if (!existing) throw ApiError.notFound('Product not found');
+    if (!existing.archived) throw ApiError.conflict('Archive this product before deleting it');
+    existing.deletedAt = new Date();
+    existing.available = existing.featured = existing.stockSoldOut = false;
+    // Free the public slug for a replacement product, retaining historical identity.
+    existing.slug = `deleted-${existing._id}`;
+    await existing.save({ session });
+    await Recipe.updateMany({ productId: existing._id }, { $set: { productId: null } }, { session });
+    return existing;
+  });
+  audit(req, { action: 'product.delete', entity: 'product', entityId: product._id,
+    summary: `Deleted archived product "${product.name}" from the catalogue` });
+  res.json({ success: true });
 });
 
 /* ============ Customers (AS-6.x) ============ */
@@ -846,6 +868,7 @@ module.exports = {
   createProduct,
   updateProduct,
   archiveProduct,
+  deleteProduct,
   listCustomers,
   getCustomer,
   listPayments,

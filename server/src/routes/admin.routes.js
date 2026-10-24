@@ -55,6 +55,7 @@ router.get('/products/:id', ctrl.getProductAdmin);
 router.post('/products', ctrl.validators.createProduct, validate, ctrl.createProduct);
 router.patch('/products/:id', ctrl.validators.updateProduct, validate, ctrl.updateProduct);
 router.patch('/products/:id/archive', ctrl.archiveProduct);
+router.delete('/products/:id', ctrl.deleteProduct);
 
 router.get('/customers', ctrl.listCustomers);
 router.post('/customers/search', ctrl.listCustomers);

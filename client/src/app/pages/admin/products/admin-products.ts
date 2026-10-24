@@ -31,6 +31,7 @@ export class AdminProducts {
 
   protected readonly products = signal<Product[]>([]);
   protected readonly loading = signal(true);
+  protected readonly deleteTarget = signal<Product | null>(null);
   protected readonly archiveTarget = signal<Product | null>(null);
   protected readonly busy = signal(false);
   protected readonly selectedIds = signal<Set<string>>(new Set());
@@ -218,6 +219,27 @@ export class AdminProducts {
       error: (err) => {
         this.products.update((list) => list.map((p) => (p._id === product._id ? { ...p, [field]: !next } : p)));
         this.toast.error(err.error?.message || 'Could not save the change.');
+      },
+    });
+  }
+
+  protected confirmDelete() {
+    const product = this.deleteTarget();
+    if (!product?.archived || this.busy()) return;
+    clearTimeout(this.searchTimer);
+    this.listRequest?.unsubscribe();
+    this.busy.set(true);
+    this.admin.deleteProduct(product._id).subscribe({
+      next: () => {
+        this.busy.set(false);
+        this.deleteTarget.set(null);
+        this.products.update((list) => list.filter((item) => item._id !== product._id));
+        this.productList.clear();
+        this.toast.success(`"${product.name}" deleted.`);
+      },
+      error: (err) => {
+        this.busy.set(false);
+        this.toast.error(err.error?.message || 'Could not delete the product.');
       },
     });
   }

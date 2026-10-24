@@ -190,6 +190,10 @@ export class AdminService {
     return this.http.post<{ success: boolean; count: number }>(`${this.base}/products/reset-stock`, {});
   }
 
+  deleteProduct(id: string) {
+    return this.http.delete<{ success: boolean }>(`${this.base}/products/${id}`, { body: { confirmed: true } });
+  }
+
   archiveProduct(id: string, archived: boolean) {
     return this.http
       .patch<{ product: Product }>(`${this.base}/products/${id}/archive`, { archived })
