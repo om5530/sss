@@ -17,6 +17,7 @@ import { AdminRequestActivity } from '../../../core/services/admin-request-activ
   imports: [BusyButton, RouterOutlet, RouterLink, RouterLinkActive],
   providers: [AdminProductListState],
   templateUrl: './admin-layout.html',
+  styleUrl: './admin-layout.scss',
 })
 export class AdminLayout {
   private readonly injector = inject(Injector);
@@ -28,6 +29,8 @@ export class AdminLayout {
   protected readonly unreadEnquiries = signal<number | null>(null);
   protected readonly bakeryOpen = signal<boolean>(true);
   protected readonly toolsOpen = signal(false);
+  protected readonly sidebarCollapsed = signal(false);
+  private readonly sidebarStorageKey = 'bc_admin_sidebar_collapsed';
   protected readonly mobileNavOpen = signal(false);
   protected readonly mobileViewport = signal(matchMedia('(max-width: 960px)').matches);
   protected readonly isOffline = signal(!navigator.onLine);
@@ -38,6 +41,9 @@ export class AdminLayout {
   private router = inject(Router);
   private session = inject(AdminSessionService);
   constructor() {
+    try {
+      this.sidebarCollapsed.set(localStorage.getItem(this.sidebarStorageKey) === 'true');
+    } catch { /* Navigation still works when storage is unavailable. */ }
     const destroy = inject(DestroyRef);
     document.documentElement.classList.add('adm-viewport');
     destroy.onDestroy(() => document.documentElement.classList.remove('adm-viewport'));
@@ -93,6 +99,13 @@ export class AdminLayout {
       document.removeEventListener('visibilitychange', onVisibilityChange);
       this.releaseWakeLock();
     });
+  }
+
+  protected toggleSidebar() {
+    this.sidebarCollapsed.update((collapsed) => !collapsed);
+    try {
+      localStorage.setItem(this.sidebarStorageKey, String(this.sidebarCollapsed()));
+    } catch { /* Keep the preference for this visit when storage is unavailable. */ }
   }
 
   protected openMobileNav() {
