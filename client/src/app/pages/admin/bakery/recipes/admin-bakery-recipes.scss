@@ -195,7 +195,7 @@
 
 .card-actions {
   display: grid;
-  grid-template-columns: auto auto 1fr;
+  grid-template-columns: repeat(3, auto) minmax(0, 1fr);
   align-items: center;
   gap: 0.5rem;
 
