@@ -54,3 +54,9 @@
   display: inline-grid; place-items: center;
   width: 44px; min-width: 44px; height: 44px; padding: 0; flex: 0 0 44px;
 }
+
+.orders-table .order-products { font-size: 1.125rem; font-weight: 600; line-height: 1.5; }
+.orders-table td[data-label="Total"] { font-size: 1.25rem; font-weight: 750; font-variant-numeric: tabular-nums; }
+@media (min-width: 901px) {
+  .orders-table td { padding-top: .8rem; padding-bottom: .8rem; }
+}

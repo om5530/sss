@@ -1,4 +1,4 @@
-<div class="adm-page">
+<div class="adm-page products-page">
   <div class="adm-head">
     <div>
       <span class="eyebrow eyebrow--bare">Catalogue</span>
@@ -50,14 +50,19 @@
         <button [appBusy]="busy()" type="button" class="btn btn--ghost btn--sm" [disabled]="busy()" (click)="selectAll(false)">Clear selection</button>
       </div>
     }
-    <div class="adm-table-wrap">
-      <table class="adm-table">
+    <label class="products-select-all">
+      <input type="checkbox" [checked]="allSelected()" [indeterminate]="selectedIds().size > 0 && !allSelected()"
+        [disabled]="busy() || !selectableProducts().length" (change)="selectAll($any($event.target).checked)" />
+      Select all active products
+    </label>
+    <div class="adm-table-wrap products-list" tabindex="0" role="region" aria-label="Product catalogue">
+      <table class="adm-table products-table" role="table" aria-label="Product catalogue">
         <thead>
           <tr>
             <th class="selection-cell">
               <input type="checkbox" aria-label="Select all active products in this list" [checked]="allSelected()" [indeterminate]="selectedIds().size > 0 && !allSelected()" [disabled]="busy() || !selectableProducts().length" (change)="selectAll($any($event.target).checked)" />
             </th>
-            <th></th>
+            <th><span class="sr-only">Photo</span></th>
             <th>Product</th>
             <th>Category</th>
             <th class="num">Price</th>
@@ -65,21 +70,21 @@
             <th>Diet</th>
             <th>Available</th>
             <th>Featured</th>
-            <th></th>
+            <th>Actions</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody role="rowgroup">
           @for (p of products(); track p._id) {
-            <tr [style.opacity]="p.archived ? 0.55 : 1" [class.selected-row]="selectedIds().has(p._id)">
-              <td class="selection-cell">
-                <input type="checkbox" [attr.aria-label]="'Select ' + p.name" [checked]="selectedIds().has(p._id)" [disabled]="busy() || p.archived" (change)="selectProduct(p, $any($event.target).checked)" />
+            <tr role="row" [style.opacity]="p.archived ? 0.8 : 1" [class.selected-row]="selectedIds().has(p._id)">
+              <td role="cell" class="selection-cell" data-label="Select">
+<label class="product-select-label"><input type="checkbox" [attr.aria-label]="'Select ' + p.name" [checked]="selectedIds().has(p._id)" [disabled]="busy() || p.archived" (change)="selectProduct(p, $any($event.target).checked)" /></label>
               </td>
-              <td style="width: 54px">
+              <td role="cell" class="product-image" style="width: 54px">
                 @if (p.image) {
                   <img [src]="p.image" alt="" class="adm-thumb" loading="lazy" />
                 }
               </td>
-              <td>
+              <td role="cell" class="product-name" data-label="Product">
                 <strong>{{ p.name }}</strong>
                 @if (p.archived) {
                   <span class="adm-badge adm-badge--mock" style="margin-left: 0.4rem">archived</span>
@@ -89,23 +94,23 @@
                 }
                 <div class="muted" style="font-size: 0.78rem; text-transform: capitalize">{{ p.group }}</div>
               </td>
-              <td>{{ p.category }}</td>
-              <td class="num">₹{{ p.price | number: '1.0-2' }}</td>
-              <td class="num">{{ p.stockCount === null || p.stockCount === undefined ? 'Not tracked' : p.stockCount }}</td>
-              <td><span class="diet diet--{{ p.dietary }}" [title]="p.dietary"></span></td>
-              <td>
+              <td role="cell" data-label="Category">{{ p.category }}</td>
+              <td role="cell" class="num product-price" data-label="Price">₹{{ p.price | number: '1.0-2' }}</td>
+              <td role="cell" class="num" data-label="Today's stock">{{ p.stockCount === null || p.stockCount === undefined ? 'Not tracked' : p.stockCount }}</td>
+              <td role="cell" data-label="Diet"><span class="diet diet--{{ p.dietary }}" [title]="p.dietary"></span></td>
+              <td role="cell" data-label="Available">
                 <label class="adm-switch" [attr.aria-label]="'Toggle availability for ' + p.name">
                   <input type="checkbox" [checked]="p.available" [disabled]="busy() || p.archived" (change)="toggle(p, 'available')" />
                   <span></span>
                 </label>
               </td>
-              <td>
+              <td role="cell" data-label="Featured">
                 <label class="adm-switch" [attr.aria-label]="'Toggle featured for ' + p.name">
                   <input type="checkbox" [checked]="p.featured" [disabled]="busy() || p.archived" (change)="toggle(p, 'featured')" />
                   <span></span>
                 </label>
               </td>
-              <td class="nowrap" style="text-align: right">
+              <td role="cell" class="nowrap product-actions" data-label="Actions" style="text-align: right">
                 <a [routerLink]="['/admin/products', p._id, 'edit']" class="btn btn--ghost btn--sm">Edit</a>
                 <button [appBusy]="busy()" type="button" class="btn btn--ghost btn--sm" style="margin-left: 0.35rem" [disabled]="busy()" (click)="archiveTarget.set(p)">
                   {{ p.archived ? 'Restore' : 'Archive' }}
@@ -117,7 +122,7 @@
               </td>
             </tr>
           } @empty {
-            <tr><td colspan="10"><div class="adm-empty">No products match. Try clearing the filters.</div></td></tr>
+            <tr><td role="cell" colspan="10"><div class="adm-empty">No products match. Try clearing the filters.</div></td></tr>
           }
         </tbody>
       </table>

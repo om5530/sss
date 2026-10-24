@@ -1329,3 +1329,12 @@ html.adm-viewport, html.adm-viewport body { overflow: hidden; overscroll-behavio
 @media (prefers-reduced-motion: reduce) {
   .adm-loading-spinner, .adm-button-busy::before { animation: none; }
 }
+
+/* Stall tablets: comfortable controls without reducing usable page width. */
+@media (pointer: coarse) and (min-width: 701px) and (max-width: 1366px) {
+  .adm-main .btn { min-height: 48px; font-size: .95rem; }
+  .adm-main .input, .adm-main .select { min-height: 48px; font-size: 1rem; }
+  .adm-side__link, .adm-side__sub-link, .adm-side__dropdown-header { min-height: 48px; font-size: .95rem; }
+  .adm-side__nav { gap: .3rem; }
+  .adm-table th { font-size: .75rem; letter-spacing: .06em; }
+}

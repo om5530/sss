@@ -14,6 +14,7 @@ import { AdminProductListState } from '../shared/admin-product-list-state';
   selector: 'app-admin-products',
   imports: [BusyButton, RouterLink, FormsModule, DecimalPipe, ConfirmModal],
   templateUrl: './admin-products.html',
+  styleUrl: './admin-products.scss',
   styles: `
     .bulk-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-bottom: 1rem; }
     .selection-cell { width: 42px; text-align: center; }

@@ -613,3 +613,32 @@
   .label { display: block; margin-bottom: .3rem; }
   .select { width: 100%; min-width: 0; max-width: 100%; }
 }
+
+/* Readable names and prices at arm's length, including landscape iPads. */
+.recipe-name { font-size: 1.25rem; line-height: 1.35; }
+.recipe-yield, .recipes-sub { font-size: .9rem; }
+.recipe-price strong { display: block; font-size: 1.4rem; line-height: 1.4; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.recipe-price > span, .card-price-editor > label { font-size: .85rem; }
+.card-price-editor__input .input { min-height: 48px; font-size: 1.25rem !important; }
+.recipe-icon-action { min-width: 44px; min-height: 44px; }
+.price-reset { min-height: 44px; padding: .35rem 0; }
+.filter-pill { min-height: 44px; font-size: .875rem; }
+@media (min-width: 961px) and (max-width: 1366px) {
+  .recipe-cards-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+  .recipe-card { padding: 1rem; }
+  .card-header { flex-wrap: wrap; }
+  .card-header > div { flex: 1 1 13rem; }
+  .recipe-markup { font-size: .8rem; }
+}
+@media (max-width: 600px) {
+  .card-header { flex-wrap: wrap; }
+  .card-header > div { flex: 1 1 100%; }
+}
+
+/* Larger typography needs wider cards on desktop as well as on tablets. */
+.recipe-cards-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); }
+.card-header { flex-wrap: wrap; }
+.card-header > div { flex: 1 1 100%; }
+@media (min-width: 961px) and (max-width: 1366px) {
+  .recipe-cards-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
