@@ -68,7 +68,7 @@
     @if (editing) {
       <div class="adm-card no-print">
         <h3>Modify order</h3>
-        <p>Update unit prices and quantities. For paid orders, confirm any extra payment or money returned with the customer separately. Saving corrects the order record; it does not transfer money.</p>
+        <p>Update unit prices, quantities and discount. For paid orders, confirm any extra payment or money returned with the customer separately. Saving corrects the order record; it does not transfer money.</p>
         @for (item of draft; track $index) {
           <div class="field">
             <strong>{{ o.items[$index].name }}</strong>
@@ -78,6 +78,11 @@
             <input class="input" [id]="'qty-' + $index" type="number" min="1" max="10000" step="1" [(ngModel)]="item.quantity" [disabled]="busy() || reviewing" />
           </div>
         }
+        <div class="field">
+          <label class="label" for="edit-order-discount">Discount (₹)</label>
+          <input id="edit-order-discount" class="input" type="number" min="0" [max]="draftSubtotal()" step="0.01" [(ngModel)]="draftDiscount" [disabled]="busy() || reviewing" />
+          <small class="muted">Enter an amount from ₹0 to the subtotal of ₹{{ draftSubtotal() | number:'1.2-2' }}.</small>
+        </div>
         <div class="field">
           <label class="label" for="edit-order-comment">Comment / reason (optional)</label>
           <textarea id="edit-order-comment" class="textarea" [(ngModel)]="draftComment" maxlength="1000" rows="3" [disabled]="busy() || reviewing" placeholder="e.g. Complimentary for a friend, display sample, or reason for discount / zero total"></textarea>
@@ -201,7 +206,7 @@
 
 @if (reviewing && order(); as o) {
   <adm-confirm-modal [title]="'Confirm changes to ' + o.orderNumber + '?'"
-    [message]="'Total changes from ₹' + o.pricing.total.toFixed(2) + ' to ₹' + draftTotal().toFixed(2) + '. Confirm the prices, quantities and comment above. Any additional collection or refund must be handled separately.'"
+    [message]="'Total changes from ₹' + o.pricing.total.toFixed(2) + ' to ₹' + draftTotal().toFixed(2) + '. Discount changes from ₹' + (o.pricing.discount || 0).toFixed(2) + ' to ₹' + draftDiscount.toFixed(2) + '. Confirm the prices, quantities, discount and comment above. Any additional collection or refund must be handled separately.'"
     confirmLabel="Confirm update" [requireReason]="true" reasonLabel="Reason for modification" [busy]="busy()"
     (confirmed)="saveChanges($event)" (cancelled)="!busy() && (reviewing = false)" />
 }

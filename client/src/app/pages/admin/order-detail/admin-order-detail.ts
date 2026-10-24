@@ -38,29 +38,36 @@ export class AdminOrderDetail {
   protected editing = false;
   protected reviewing = false;
   protected draftComment = '';
+  protected draftDiscount = 0;
   protected draft: { price: number; quantity: number }[] = [];
   protected startEdit() {
     const order = this.order();
     if (!order || this.busy() || order.orderStatus === 'cancelled' || order.paymentStatus === 'refunded') return;
     this.draft = order.items.map(i => ({ price: i.price, quantity: i.quantity }));
     this.draftComment = order.comment || '';
+    this.draftDiscount = order.pricing.discount || 0;
     this.editing = true;
   }
   protected validDraft() {
-    return this.draftComment.length <= 1000 && this.draft.every(i => Number.isFinite(i.price) && i.price >= 0 && i.price <= 1000000 && Math.abs(i.price * 100 - Math.round(i.price * 100)) < 0.000001 && Number.isInteger(i.quantity) && i.quantity > 0 && i.quantity <= 10000);
+    return Number.isFinite(this.draftDiscount) && this.draftDiscount >= 0 && this.draftDiscount <= this.draftSubtotal() && Math.abs(this.draftDiscount * 100 - Math.round(this.draftDiscount * 100)) < 0.000001 && this.draftComment.length <= 1000 && this.draft.every(i => Number.isFinite(i.price) && i.price >= 0 && i.price <= 1000000 && Math.abs(i.price * 100 - Math.round(i.price * 100)) < 0.000001 && Number.isInteger(i.quantity) && i.quantity > 0 && i.quantity <= 10000);
+  }
+  protected draftSubtotal() {
+    return Math.round((this.draft.reduce((sum, i) => sum + Math.round((i.price * i.quantity + Number.EPSILON) * 100) / 100, 0) + Number.EPSILON) * 100) / 100;
   }
   protected draftTotal() {
     const p = this.order()!.pricing;
     const round = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
     const sub = round(this.draft.reduce((sum, i) => sum + round(i.price * i.quantity), 0));
-    const discount = p.discount || 0;
-    return round(sub - discount + round(p.subtotal > discount ? (sub - discount) * p.tax / (p.subtotal - discount) : 0) + (p.deliveryFee || 0));
+    const discount = this.draftDiscount;
+    const oldTaxable = p.subtotal - (p.discount || 0);
+    const taxRate = p.taxRate ?? (oldTaxable > 0 ? p.tax / oldTaxable : 0);
+    return round(sub - discount + round((sub - discount) * taxRate) + (p.deliveryFee || 0));
   }
   protected saveChanges(reason: string) {
     const o = this.order();
     if (!o?.updatedAt || this.busy() || !this.validDraft()) return;
     this.busy.set(true);
-    this.admin.modifyOrder(o._id, { items: this.draft, expectedUpdatedAt: o.updatedAt, confirmed: true, reason, comment: this.draftComment.trim() }).subscribe({
+    this.admin.modifyOrder(o._id, { items: this.draft, discount: this.draftDiscount, expectedUpdatedAt: o.updatedAt, confirmed: true, reason, comment: this.draftComment.trim() }).subscribe({
       next: updated => { this.applyOrder(updated); this.busy.set(false); this.editing = false; this.reviewing = false; this.load(true); this.toast.success('Order updated.'); },
       error: err => { this.busy.set(false); this.reviewing = false; this.toast.error(err.error?.message || 'Could not modify order.'); },
     });

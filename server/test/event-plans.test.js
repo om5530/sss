@@ -499,6 +499,31 @@ test('paid orders require confirmation to modify prices and quantities, with sto
   assert.equal((await Order.findById(order._id)).items[0].quantity, 3);
 });
 
+test('discount edits recalculate paid receipts and event totals without changing stock or saved costs', async () => {
+  const f = await fixture(); await plan(f); const order = await sale(f, 2);
+  const path = `/admin/orders/${order._id}`;
+  const saved = await Order.findById(order._id).select('+recipeCostSnapshot').lean();
+  const stock = (await Product.findById(f.product._id)).stockCount;
+  const payload = { confirmed: true, expectedUpdatedAt: order.updatedAt, reason: 'Correct discount', items: order.items.map(i => ({ price: i.price, quantity: i.quantity })) };
+  for (const discount of [-1, 0.001, order.pricing.subtotal + 1, null]) {
+    assert.equal((await api('PATCH', path, { ...payload, discount })).status, 400);
+  }
+  const free = await api('PATCH', path, { ...payload, discount: order.pricing.subtotal });
+  assert.equal(free.status, 200, JSON.stringify(free)); assert.equal(free.order.pricing.total, 0);
+  const restored = await api('PATCH', path, { ...payload, expectedUpdatedAt: free.order.updatedAt, discount: 0 });
+  assert.equal(restored.status, 200, JSON.stringify(restored));
+  assert.equal(restored.order.pricing.total, order.pricing.total);
+  assert.equal((await Product.findById(f.product._id)).stockCount, stock);
+  assert.deepEqual((await Order.findById(order._id).select('+recipeCostSnapshot').lean()).recipeCostSnapshot, saved.recipeCostSnapshot);
+  assert.equal((await require('../src/models/Payment').findOne({ order: order._id })).amount, restored.order.pricing.total);
+  assert.equal((await report(f)).events[0].revenue, restored.order.pricing.total);
+  // Existing taxable orders retain their original effective tax rate after discount edits.
+  await Order.updateOne({ _id: order._id }, { $unset: { 'pricing.taxRate': 1 }, $set: { 'pricing.subtotal': 100, 'pricing.discount': 20, 'pricing.tax': 8, 'pricing.total': 88 } });
+  const taxable = await Order.findById(order._id);
+  const taxed = await api('PATCH', path, { ...payload, expectedUpdatedAt: taxable.updatedAt.toISOString(), items: [{ price: 50, quantity: 2 }], discount: 50 });
+  assert.equal(taxed.status, 200, JSON.stringify(taxed)); assert.equal(taxed.order.pricing.tax, 5); assert.equal(taxed.order.pricing.total, 55);
+});
+
 test('completed paid orders can be cancelled with a reason and still require a refund', async () => {
   const f = await fixture(); await plan(f);
   const order = await sale(f, 2);

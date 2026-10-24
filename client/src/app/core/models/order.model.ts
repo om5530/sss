@@ -24,6 +24,7 @@ export interface OrderPricing {
   discount?: number;
   couponCode?: string;
   tax: number;
+  taxRate?: number;
   deliveryFee: number;
   total: number;
   currency: string;

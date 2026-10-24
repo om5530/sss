@@ -38,12 +38,16 @@ const modify = asyncHandler(async (req, res) => {
         item.lineTotal = round(change.price * change.quantity);
       }
       const subtotal = round(order.items.reduce((sum, i) => sum + i.lineTotal, 0));
-      const discount = order.pricing.discount || 0;
-      if (discount > subtotal) throw ApiError.badRequest('The new subtotal cannot be below the existing discount');
-      const oldTaxable = before.pricing.subtotal - discount;
-      const tax = round(oldTaxable > 0 ? (subtotal - discount) * before.pricing.tax / oldTaxable : 0);
+      const discount = req.body.discount ?? (order.pricing.discount || 0);
+      if (discount > subtotal) throw ApiError.badRequest('Discount cannot exceed the subtotal');
+      const oldTaxable = before.pricing.subtotal - (before.pricing.discount || 0);
+      const taxRate = before.pricing.taxRate ?? (oldTaxable > 0 ? before.pricing.tax / oldTaxable : 0);
+      const tax = round((subtotal - discount) * taxRate);
       order.pricing.subtotal = subtotal;
+      order.pricing.discount = discount;
+      if (discount !== (before.pricing.discount || 0)) order.pricing.couponCode = undefined;
       order.pricing.tax = tax;
+      order.pricing.taxRate = taxRate;
       order.pricing.total = round(subtotal - discount + tax + (order.pricing.deliveryFee || 0));
       if (req.body.comment !== undefined) order.comment = req.body.comment;
       order.statusHistory.push({ status: order.orderStatus, note: `Order modified by staff: ₹${before.pricing.total} → ₹${order.pricing.total}. ${req.body.reason}`, at: new Date() });
@@ -56,6 +60,7 @@ const modify = asyncHandler(async (req, res) => {
   res.json({ success: true, order });
 });
 module.exports = { modify, validators: [
+  body('discount').optional().isFloat({ min: 0, max: 1000000000000 }).custom(v => Number.isFinite(Number(v)) && Math.abs(Number(v) * 100 - Math.round(Number(v) * 100)) < 0.000001).toFloat(),
   body('comment').optional().isString().bail().trim().isLength({ max: 1000 }),
   body('confirmed').equals('true'), body('expectedUpdatedAt').isISO8601(),
   body('reason').isString().bail().trim().isLength({ min: 1, max: 500 }),
