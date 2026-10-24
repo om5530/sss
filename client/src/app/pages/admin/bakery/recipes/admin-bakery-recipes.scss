@@ -103,6 +103,9 @@
 }
 
 .recipe-yield {
+  display: block;
+  margin-top: 0.25rem;
+  line-height: 1.5;
   color: var(--muted);
   font-size: 0.76rem;
 }
@@ -603,4 +606,10 @@
   .actions-foot .btn { white-space: normal; }
   .actions-foot .btn:last-child { grid-column: 1 / -1; }
   .label-with-help { max-width: 100%; }
+}
+
+.revision-picker {
+  min-width: 0;
+  .label { display: block; margin-bottom: .3rem; }
+  .select { width: 100%; min-width: 0; max-width: 100%; }
 }

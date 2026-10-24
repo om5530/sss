@@ -1,3 +1,4 @@
+import { groupRecipeRevisions, selectRecipeRevision, type RecipeRevisionGroup } from './recipe-revision-groups';
 import { setRecipeComponentQuantity } from './recipe-component-usage';
 import { BusyButton } from '../../shared/busy-button';
 import { Component, computed, inject, signal, OnInit, DestroyRef } from '@angular/core';
@@ -115,6 +116,16 @@ export class AdminBakeryRecipes implements OnInit {
   saveError = signal('');
   editingRecipe = signal<Partial<BakeryRecipe> | null>(null);
   revisionSource = signal<BakeryRecipe | null>(null);
+  revisionSelections = signal<Record<string, string>>({});
+  recipeGroups = computed(() => groupRecipeRevisions(this.filteredRecipes()));
+
+  selectedRevision(group: RecipeRevisionGroup): BakeryRecipe {
+    return selectRecipeRevision(group, this.revisionSelections()[group.id]);
+  }
+
+  selectRevision(group: RecipeRevisionGroup, id: string) {
+    this.revisionSelections.update(selected => ({ ...selected, [group.id]: id }));
+  }
 
   selectedCategory = signal<string>('All');
   recipeView = signal<'main' | 'sub'>('main');
@@ -452,6 +463,9 @@ export class AdminBakeryRecipes implements OnInit {
       request.subscribe({
         next: (res) => {
           this.saving.set(false);
+          if (source) this.revisionSelections.update(selected => ({
+            ...selected, [res.recipe.revisionFamilyId || res.recipe._id]: res.recipe._id,
+          }));
           this.toast.success(source ? 'Revision created. Choose it in Product mapping when ready.' : 'Recipe created');
           this.revisionSource.set(null);
           this.editingRecipe.set(null);

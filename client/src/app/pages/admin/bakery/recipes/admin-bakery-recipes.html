@@ -50,7 +50,8 @@
   <!-- Recipe Cards Grid -->
   @if (!editingRecipe()) {
     <div class="recipe-cards-grid">
-      @for (r of filteredRecipes(); track r._id) {
+      @for (group of recipeGroups(); track group.id) {
+        @let r = selectedRevision(group);
         <div class="recipe-card">
           <div class="card-header">
             <div>
@@ -58,7 +59,7 @@
               @if (r.isSubRecipe) {
                 <span class="sub-recipe-badge">Sub-recipe</span>
               }
-              <h3 class="recipe-name">{{ r.name }}</h3>
+              <h3 class="recipe-name">{{ group.name }}</h3>
               <small class="recipe-yield">Revision {{ r.revisionNumber || 1 }}{{ r.revisionLabel ? ' · ' + r.revisionLabel : '' }}{{ r.productId ? ' · Mapped to product' : '' }}</small>
               <small class="recipe-yield">1 batch makes {{ r.piecesPerBatch }} pieces · {{ r.yieldQuantity }} {{ r.yieldUom }}</small>
             </div>
@@ -67,6 +68,18 @@
               <span class="recipe-markup__tooltip" aria-hidden="true">The percentage added to cost: (selling price − cost) ÷ cost × 100. Updates after saving the selling price. Markup is unavailable when cost is zero.</span>
             </span>
           </div>
+          @if (group.revisions.length > 1) {
+            <div class="revision-picker">
+              <label class="label" [for]="'revision-' + group.id">Revisions ({{ group.revisions.length }})</label>
+              <select class="select" [id]="'revision-' + group.id" [attr.aria-label]="'View revision of ' + group.name"
+                [ngModel]="r._id" (ngModelChange)="selectRevision(group, $event)" [disabled]="!!savingPriceId()">
+                @for (revision of group.revisions; track revision._id) {
+                  <option [value]="revision._id">Revision {{ revision.revisionNumber || 1 }}{{ revision.revisionLabel ? ' · ' + revision.revisionLabel : '' }} · {{ revision.piecesPerBatch }} pcs{{ revision.productId ? ' · Mapped to product' : '' }}</option>
+                }
+              </select>
+              <small class="recipe-yield">To change the product’s linked revision, use <a routerLink="/admin/bakery/product-mapping">Product Mapping</a>.</small>
+            </div>
+          }
           @if (r.costingError) {
             <p role="alert">{{ r.costingError }}</p>
           }
@@ -114,7 +127,7 @@
             </div>
           </div>
 
-          <button type="button" class="btn btn--outline btn--sm" [disabled]="!!savingPriceId()" (click)="createRevision(r)" [attr.aria-label]="'Create revision of ' + r.name">New revision</button>
+          <button type="button" class="btn btn--outline btn--sm" [disabled]="!!savingPriceId()" (click)="createRevision(r)" [attr.aria-label]="'Create revision of ' + group.name">New revision</button>
 
           <!-- Actions -->
           <div class="card-actions">
