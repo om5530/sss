@@ -1,7 +1,7 @@
 import { QuantityCaret } from '../shared/quantity-caret';
 import { BusyButton } from '../shared/busy-button';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -13,7 +13,7 @@ import { downloadCsv } from '../shared/admin-ui';
 import { ConfirmModal } from '../shared/confirm-modal';
 import { AdminProductListState } from '../shared/admin-product-list-state';
 
-@Component({ selector: 'app-admin-events', imports: [QuantityCaret, BusyButton, RouterLink, FormsModule, DatePipe, DecimalPipe, ConfirmModal],
+@Component({ selector: 'app-admin-events', imports: [QuantityCaret, BusyButton, RouterLink, FormsModule, DatePipe, ConfirmModal],
   templateUrl: './admin-events.html', styleUrl: './admin-events.scss' })
 export class AdminEvents {
   private admin = inject(AdminService);
@@ -26,6 +26,10 @@ export class AdminEvents {
   private editorVersion = 0;
   private loadedEventName = '';
   private readonly eventStorageKey = 'bc_admin_events_event';
+  protected readonly figuresVisible = signal(false);
+  protected toggleFigures() { this.figuresVisible.update(visible => !visible); }
+  protected money(value: number | null) { return this.figuresVisible() ? this.rupees(value) : '••••'; }
+  protected count(value: number | null) { return this.figuresVisible() ? (value === null ? 'Not set' : String(value)) : '••••'; }
   protected readonly report = signal<EventSalesReport | null>(null);
   protected readonly names = signal<string[]>([]);
   protected readonly loading = signal(true);
@@ -45,6 +49,9 @@ export class AdminEvents {
   private editingSummary: EventSummary | undefined;
 
   constructor() {
+    const hideOnLeave = () => { if (document.hidden) this.figuresVisible.set(false); };
+    document.addEventListener('visibilitychange', hideOnLeave);
+    this.destroyRef.onDestroy(() => document.removeEventListener('visibilitychange', hideOnLeave));
     let firstVisit = true;
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const restoreSelection = firstVisit && !params.has('eventName');
@@ -90,10 +97,6 @@ export class AdminEvents {
   }
   protected sum(field: 'revenue' | 'units' | 'paidOrders') {
     return this.report()?.events.reduce((total, event) => total + event[field], 0) || 0;
-  }
-  protected netTotal() {
-    const events = this.report()?.events || [];
-    return !events.length || events.some((e) => e.netProfit === null) ? null : events.reduce((n, e) => n + e.netProfit!, 0);
   }
   protected begin(event?: EventSummary) {
     if (this.saving()) return;
@@ -181,7 +184,7 @@ export class AdminEvents {
   protected confirmationMessage() {
     const pending = this.confirmation(); if (!pending) return '';
     return pending.action === 'close'
-      ? `Save the final report for ${pending.event.eventName} with net profit ${this.rupees(pending.event.netProfit)}? Reopen the event whenever you need to correct stock, expenses or orders.`
+      ? `Save the final report for ${pending.event.eventName} with net profit ${this.money(pending.event.netProfit)}? Reopen the event whenever you need to correct stock, expenses or orders.`
       : `Reopen ${pending.event.eventName} to correct its stock, expenses or orders? Its report will use the updated figures until you close it again.`;
   }
   protected lifecycle() {
