@@ -10,7 +10,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req).pipe(
     catchError((err: HttpErrorResponse) => {
       if (err.status === 0) {
-        toast.error('Cannot reach the server. Is the API running on :4000?');
+        toast.error('Connection interrupted. Check your internet connection and try again.');
       } else if (err.status >= 500) {
         toast.error(err.error?.message || 'Something went wrong on our end. Please try again.');
       }

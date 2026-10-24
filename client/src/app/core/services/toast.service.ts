@@ -14,6 +14,9 @@ export class ToastService {
   private seq = 0;
 
   show(message: string, type: ToastType = 'info', durationMs = 3500) {
+    // Several parallel requests can fail together during one connection outage.
+    // Keep one alert visible without extending its lifetime on every failure.
+    if (this.toasts().some((toast) => toast.type === type && toast.message === message)) return;
     const id = ++this.seq;
     this.toasts.update((list) => [...list, { id, message, type }]);
     setTimeout(() => this.dismiss(id), durationMs);
