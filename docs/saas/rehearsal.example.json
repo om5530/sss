@@ -1,0 +1,12 @@
+{
+ "schemaVersion": 1,
+ "mode": "local-rehearsal",
+ "databaseUri": "mongodb://127.0.0.1:27017/saas_rehearsal",
+ "publicOrigin": "http://localhost:4200",
+ "apiOrigin": "http://127.0.0.1:4000",
+ "dataSource": "synthetic",
+ "deployTarget": "none",
+ "billingMode": "disabled",
+ "ownerMailDelivery": "local-preview",
+ "customerMailDelivery": "local-preview"
+}

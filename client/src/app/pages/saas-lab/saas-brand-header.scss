@@ -1,0 +1,8 @@
+@use './saas-brand-palette' as brand;
+:host { display: block; }
+.brand-header { @include brand.palette; display: flex; align-items: center; gap: clamp(1rem, 3vw, 2rem); border: 1px solid var(--brand-border); border-radius: 20px; padding: clamp(1rem, 3vw, 2.5rem); overflow-wrap: anywhere; }
+.brand-mark { display: grid; place-items: center; flex: 0 0 auto; width: clamp(64px, 12vw, 104px); aspect-ratio: 1; border: 1px solid var(--brand-border); border-radius: 50%; color: var(--brand-accent); background: var(--brand-surface); font: 700 clamp(1.2rem, 3vw, 2rem) Georgia, serif; }
+h1, h3 { margin: 0; font: 700 clamp(1.6rem, 4vw, 3rem)/1.15 Georgia, serif; } p { margin: .75rem 0 0; max-width: 65ch; line-height: 1.6; white-space: pre-line; } .tagline { font-weight: 600; }
+@media (max-width: 480px) { .brand-header { align-items: flex-start; flex-direction: column; } }
+
+.brand-logo { flex: 0 0 auto; width: clamp(64px, 12vw, 104px); height: clamp(64px, 12vw, 104px); object-fit: contain; border-radius: 12px; }

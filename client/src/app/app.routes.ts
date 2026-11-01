@@ -1,8 +1,15 @@
+import { saasAccountGuard } from './core/guards/saas-account.guard';
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { adminGuard } from './core/guards/admin.guard';
+import { environment } from '../environments/environment';
 
-export const routes: Routes = [
+const saasRoutes: Routes = [
+  ...((!environment.production || environment.saasPreview) ? [{ path: 'saas-account', loadComponent: () => import('./pages/saas-lab/saas-account').then(m => m.SaasAccount), title: 'Workspace account — Test workspace' }] : []),
+  ...((!environment.production || environment.saasPreview) ? [{ path: 'saas-lab', canActivate: [saasAccountGuard], loadComponent: () => import('./pages/saas-lab/saas-lab').then(m => m.SaasLab), title: 'Bakery workspace — Test workspace' }] : []),
+  ...((!environment.production || environment.saasPreview) ? [{ path: 'saas-menu/:slug', redirectTo: 'b/:slug', pathMatch: 'full' as const }, { path: 'b/:slug', loadComponent: () => import('./pages/saas-lab/saas-menu').then(m => m.SaasMenu), title: 'Bakery menu — Test preview' }] : []),
+];
+const legacyRoutes: Routes = [
   { path: '', loadComponent: () => import('./pages/home/home').then((m) => m.Home), title: 'The Golden Batch — Artisan Bakery & Café', data: { description: 'Small-batch brownies, cookies, cakes, wood-fired pizza and barista coffee in Dahisar East, Mumbai. Order for dine-in, takeaway or delivery.' } },
   { path: 'menu', loadComponent: () => import('./pages/menu/menu').then((m) => m.Menu), title: 'Menu — The Golden Batch', data: { description: 'The full bakery & café menu — brownies, cookies, cakes, croissants, wood-fired pizza and coffee, baked fresh daily.' } },
   { path: 'product/:slug', loadComponent: () => import('./pages/product-detail/product-detail').then((m) => m.ProductDetail), title: 'Product — The Golden Batch' },
@@ -23,3 +30,5 @@ export const routes: Routes = [
   { path: 'contact', loadComponent: () => import('./pages/contact/contact').then((m) => m.Contact), title: 'Contact — The Golden Batch', data: { description: 'Questions, custom cakes or catering — visit us in Dahisar East, call, or send a message. A human reads every one.' } },
   { path: '**', loadComponent: () => import('./pages/not-found/not-found').then((m) => m.NotFound), title: 'Not found — The Golden Batch' },
 ];
+
+export const routes: Routes = environment.saasPreview ? [...saasRoutes, { path: '', redirectTo: 'saas-account', pathMatch: 'full' }, { path: '**', redirectTo: 'saas-account' }] : [...saasRoutes, ...legacyRoutes];

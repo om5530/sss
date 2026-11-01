@@ -35,6 +35,15 @@ app.use(cookieParser());
 app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), paymentController.webhook);
 app.post('/api/payments/razorpay-webhook', express.raw({ type: 'application/json' }), paymentController.razorpayWebhook);
 
+// Lazy guard before raw parsing/model registration: test billing never touches
+// the legacy payment handlers or initializes SaaS collections on production.
+app.post('/api/saas/billing/razorpay/webhook', (req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  const { foundationAvailable, foundationDatabaseAllowed } = require('./config/saas-foundation');
+  if (!foundationAvailable() || !foundationDatabaseAllowed(require('mongoose').connection) || !require('./config/saas-local-routing').localAuthority(req.get('host'))) return next(require('./utils/ApiError').notFound('Route not found'));
+  next();
+}, express.raw({ type: 'application/json', limit: '128kb' }), (req, res, next) => require('./controllers/saas-billing.controller').webhook(req, res, next));
+
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 

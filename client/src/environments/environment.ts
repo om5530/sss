@@ -1,4 +1,5 @@
 export const environment = {
+  saasPreview: false,
   production: false,
   // Dev server proxies /api -> http://localhost:4000 (see proxy.conf.json).
   apiUrl: '/api',

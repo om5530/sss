@@ -1,0 +1,6 @@
+@mixin palette {
+  --brand-bg: #fff9ed; --brand-surface: #fffdf8; --brand-text: #392819; --brand-accent: #704a2b; --brand-border: #d8c5a5;
+  &[data-theme='rose'] { --brand-bg: #fff5f6; --brand-surface: #fffafb; --brand-text: #49252f; --brand-accent: #8b354f; --brand-border: #e6bdc9; }
+  &[data-theme='sage'] { --brand-bg: #f2f7ef; --brand-surface: #fcfef9; --brand-text: #243b2b; --brand-accent: #3e6147; --brand-border: #bbcfb6; }
+  color: var(--brand-text); background: var(--brand-bg);
+}

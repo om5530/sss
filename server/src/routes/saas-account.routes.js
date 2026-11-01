@@ -1,0 +1,16 @@
+const express = require('express');
+const rateLimit = require('express-rate-limit');
+const { intent } = require('../saas/account-access');
+const security = require('../controllers/saas-account-security.controller');
+const ctrl = require('../controllers/saas-account.controller');
+const router = express.Router();
+router.use((req, res, next) => { try { if (!['GET', 'HEAD'].includes(req.method)) intent(req, 'X-Saas-Account'); next(); } catch (error) { next(error); } });
+const authLimit = rateLimit({ windowMs: 60000, limit: 10, standardHeaders: true, legacyHeaders: false, message: { success: false, message: 'Too many workspace sign-in attempts. Try again shortly.' } });
+const mailLimit = rateLimit({ windowMs: 15 * 60000, limit: 5, standardHeaders: true, legacyHeaders: false, message: { success: false, message: 'Too many workspace-mail requests. Try again later.' } });
+const proofLimit = rateLimit({ windowMs: 60000, limit: 10, standardHeaders: true, legacyHeaders: false, message: { success: false, message: 'Too many workspace token attempts. Try again later.' } });
+router.post('/password-reset/request', mailLimit, security.requestReset);
+router.post('/password-reset/confirm', proofLimit, security.confirmReset);
+router.post('/email-verification/confirm', proofLimit, security.confirmVerification);
+router.post('/register', authLimit, ctrl.register); router.post('/login', authLimit, ctrl.login); router.post('/logout', ctrl.logout);
+router.use(ctrl.authenticateAccount); router.post('/email-verification/request', mailLimit, security.requestVerification); router.get('/me', ctrl.me); router.get('/sessions', ctrl.sessions); router.post('/password/change', authLimit, ctrl.changePassword);
+module.exports = router;

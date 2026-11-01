@@ -1,0 +1,28 @@
+<div class="section-heading"><h2>Menu profile & settings</h2><button type="button" class="secondary" (click)="load()" [disabled]="busy() || loading()">Reload</button></div>
+<p class="muted">This enables a menu preview on your local development server. Contact details below will be visible in that preview.</p>
+@if (error()) { <p class="feedback error" role="alert">{{ error() }}</p> } @if (notice()) { <p class="feedback" role="status">{{ notice() }}</p> }
+@if (current()?.published) { <p><a [routerLink]="['/b', slug]" target="_blank" rel="noopener">Open local menu preview ↗</a></p> }
+<button type="button" class="secondary" (click)="showLink()" [disabled]="busy() || loading() || !current()">Show canonical local menu link</button>
+@if (menuLink(); as link) { <p class="muted">Local link · a draft menu stays unavailable until enabled.</p><p style="overflow-wrap:anywhere"><a [href]="link" target="_blank" rel="noopener">{{ link }}</a></p><button type="button" class="secondary" (click)="copyLink()" [disabled]="busy() || loading()">Copy local link</button> }
+<form class="editor" (ngSubmit)="prepare()" #settingsForm="ngForm"><fieldset [disabled]="busy() || loading() || !current()">
+  <label class="check"><input type="checkbox" name="published" [(ngModel)]="form.published">Enable local menu preview</label>
+  <label class="check"><input type="checkbox" name="acceptCustomerOrders" [(ngModel)]="form.acceptCustomerOrders">Accept local pickup orders (payment due at collection)</label>
+  <label for="pickup-reservation-minutes">Unpaid pickup reservation (minutes)</label><input id="pickup-reservation-minutes" name="pickupReservationMinutes" type="number" min="5" max="1440" step="1" [(ngModel)]="form.pickupReservationMinutes" required>
+  <div class="form-grid"><div><label for="store-brand-theme">Menu colour theme</label><select id="store-brand-theme" name="brandTheme" [(ngModel)]="form.brandTheme" required><option value="gold">Warm gold</option><option value="rose">Soft rose</option><option value="sage">Fresh sage</option></select></div><div><label for="store-brand-mark">Text brand mark · up to 4 letters or digits</label><input id="store-brand-mark" name="brandMark" [(ngModel)]="form.brandMark" maxlength="4" pattern="[A-Za-z0-9]*" placeholder="GB"><p class="muted">Leave blank to use your bakery’s initials.</p></div></div>
+  <p class="muted">Unsaved brand preview · saving still requires review.</p><app-saas-brand-header [bakeryName]="bakeryName || slug" [theme]="form.brandTheme" [mark]="form.brandMark" [tagline]="form.tagline" [description]="form.description" />
+  <label for="store-tagline">Tagline</label><input id="store-tagline" name="tagline" [(ngModel)]="form.tagline" maxlength="200">
+  <label for="store-description">Description</label><textarea id="store-description" name="description" [(ngModel)]="form.description" maxlength="2000" rows="3"></textarea>
+  <div class="form-grid"><div><label for="store-phone">Business contact phone</label><input id="store-phone" name="phone" [(ngModel)]="form.contactPhone" maxlength="30" inputmode="tel"></div><div><label for="store-email">Business contact email</label><input id="store-email" name="email" [(ngModel)]="form.contactEmail" maxlength="254" type="email"></div></div>
+  <label for="store-address">Address / service area</label><textarea id="store-address" name="address" [(ngModel)]="form.address" maxlength="500" rows="2"></textarea>
+  <label for="store-hours">Opening hours</label><input id="store-hours" name="hours" [(ngModel)]="form.openingHours" maxlength="200">
+  <label class="check"><input type="checkbox" name="showUnavailable" [(ngModel)]="form.showUnavailable">Show unavailable products with a label</label>
+</fieldset><button type="submit" [disabled]="busy() || loading() || !current() || settingsForm.invalid">Review settings</button></form>
+@if (review(); as draft) { <dialog #settingsDialog class="confirmation" aria-labelledby="settings-title" (cancel)="cancel($event)"><h2 id="settings-title">Save menu settings?</h2><app-saas-brand-header [bakeryName]="bakeryName || slug" [theme]="draft.brandTheme" [mark]="draft.brandMark" [tagline]="draft.tagline" [description]="draft.description" /><p>{{ draft.published ? 'The profile and contact details will be visible in this bakery’s local menu preview.' : 'The local menu preview will be unavailable.' }}</p>@if (draft.published && draft.acceptCustomerOrders) { <p>Pickup ordering will be enabled. Customers can reserve available stock for {{ draft.pickupReservationMinutes }} minutes and pay at collection.</p> }@if (error()) { <p class="feedback error" role="alert">{{ error() }}</p> }<div class="actions"><button type="button" (click)="confirm()" [disabled]="busy()">Confirm settings</button><button type="button" class="secondary" (click)="cancel()" [disabled]="busy()" autofocus>Back</button></div></dialog> }
+
+<app-saas-usage [bakeryId]="bakeryId" />
+
+<app-saas-subscription [bakeryId]="bakeryId" />
+
+<app-saas-billing [bakeryId]="bakeryId" />
+
+<app-saas-media [bakeryId]="bakeryId" [targetId]="bakeryId" kind="logo" [name]="bakeryName || slug" />

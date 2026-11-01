@@ -1,0 +1,4 @@
+export interface SaasBillingPlan { planId: 'starter' | 'growth'; amountPaise: number; currency: 'INR'; period: 'monthly'; cycles: 12; }
+export interface SaasBillingInput { planId: 'starter' | 'growth'; expectedAmountPaise: number; idempotencyKey: string; }
+export interface SaasBillingCheckout { _id: string; planId: 'starter' | 'growth'; amountPaise: number; cycles: 12; phase: 'creating' | 'ready'; version: number; providerSubscriptionId: string | null; providerStatus: string; paidThrough: string | null; cancelState: 'none' | 'pending' | 'uncertain' | 'confirmed'; hostedUrl: string | null; synchronizedAt: string | null; }
+export interface SaasBillingInvoice { _id: string; providerInvoiceId: string; status: string; amountPaise: number; paidPaise: number; duePaise: number; billingStart: string | null; billingEnd: string | null; hostedUrl: string | null; }

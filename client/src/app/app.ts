@@ -1,3 +1,4 @@
+import { localMenuPreview } from './core/utils/saas-menu-link';
 import { Component, afterNextRender, inject, signal } from '@angular/core';
 import { NavigationEnd, NavigationError, Router, RouterOutlet } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -9,6 +10,7 @@ import { AnalyticsService } from './core/services/analytics.service';
 import { MotionService } from './core/services/motion.service';
 import { SeoService } from './core/services/seo.service';
 import { AdminThemeService } from './core/services/admin-theme.service';
+import { environment } from '../environments/environment';
 
 @Component({
   selector: 'app-root',
@@ -26,11 +28,13 @@ export class App {
   /** The admin console ships its own chrome — hide the storefront's.
    *  Seeded from the URL so a hard load of /admin never flashes the navbar. */
   protected readonly adminArea = signal(location.pathname.startsWith('/admin'));
+  protected readonly staging = environment.saasPreview;
+  protected readonly menuPreview = signal(environment.saasPreview || localMenuPreview(location.pathname, environment.production));
 
   constructor() {
     // Smooth scrolling (Lenis + GSAP) boots after first paint; it degrades to
     // native scrolling for reduced-motion users inside the service itself.
-    afterNextRender(() => void this.motion.start());
+    afterNextRender(() => { if (!environment.saasPreview) void this.motion.start(); });
     this.seo.start();
     this.analytics.start();
 
@@ -39,6 +43,7 @@ export class App {
         window.dispatchEvent(new Event('app-startup-ready'));
         const admin = /^\/admin(?:\/|[?#]|$)/.test(e.urlAfterRedirects);
         this.adminArea.set(admin);
+        this.menuPreview.set(environment.saasPreview || localMenuPreview(e.urlAfterRedirects, environment.production));
         this.theme.setAdminArea(admin);
         const manifest = document.querySelector<HTMLLinkElement>('#pwa-manifest');
         if (manifest) manifest.href = admin ? '/admin-manifest.webmanifest' : '/manifest.webmanifest';

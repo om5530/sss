@@ -1,6 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
+  "git": {
+    "deploymentEnabled": {
+      "saas/foundation": false
+    }
+  },
   "regions": ["bom1"],
   "installCommand": "npm run install:all",
   "buildCommand": "npm run build:client",

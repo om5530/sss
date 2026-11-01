@@ -1,0 +1,63 @@
+<div class="section-heading"><h2>Recipes & materials</h2><button type="button" class="secondary" (click)="refresh()" [disabled]="busy() || loading()">Refresh</button></div>
+@if (error()) { <p role="alert" class="feedback error">{{ error() }}</p> }
+@if (notice()) { <p role="status" class="feedback">{{ notice() }}</p> }
+@if (loading()) { <p role="status">Loading…</p> }
+<details class="editor">
+  <summary>Materials & pack pricing · {{ materials().length }} loaded</summary>
+  <div class="product-list">
+    @for (material of materials(); track material._id) {
+      <article class="product"><div><h3>{{ material.name }}</h3><p>{{ material.packQuantity }} {{ material.packUom }} · {{ material.purchasePricePaise / 100 | currency:'INR' }}</p></div><button type="button" class="secondary" (click)="editMaterial(material)" [disabled]="busy() || loading()">Edit price / pack</button></article>
+    }
+    @if (materialCursor()) { <button type="button" class="secondary" (click)="more('materials')" [disabled]="busy() || loading()">Load more materials</button> }
+  </div>
+  <form (ngSubmit)="saveMaterial()" #materialFormElement="ngForm">
+    <h3>{{ materialTarget() ? 'Edit material' : 'Add material' }}</h3>
+    <fieldset [disabled]="busy() || loading()"><div class="form-grid">
+      <div><label for="material-name">Name</label><input id="material-name" name="materialName" [(ngModel)]="materialForm.name" maxlength="120" required></div>
+      <div><label for="material-type">Type</label><select id="material-type" name="materialType" [(ngModel)]="materialForm.type"><option value="ingredient">Ingredient</option><option value="packaging">Packaging</option><option value="resource">Resource</option><option value="labour">Labour</option></select></div>
+      <div><label for="material-quantity">Pack quantity</label><input id="material-quantity" name="packQuantity" [(ngModel)]="materialForm.packQuantity" inputmode="decimal" required placeholder="1000"></div>
+      <div><label for="material-unit">Pack unit</label><select id="material-unit" name="packUom" [(ngModel)]="materialForm.packUom">@for (unit of units; track unit) { <option [value]="unit">{{ unit }}</option> }</select></div>
+      <div><label for="material-price">Pack price (₹)</label><input id="material-price" name="packPrice" [(ngModel)]="materialForm.price" inputmode="decimal" required></div>
+    </div></fieldset>
+    <div class="actions"><button type="submit" [disabled]="busy() || loading() || materialFormElement.invalid">Save material</button>@if (materialTarget()) { <button type="button" class="secondary" (click)="editMaterial(null)" [disabled]="busy()">Cancel edit</button> }</div>
+  </form>
+</details>
+<div class="section-heading"><div><label for="recipe-family">Recipe family</label><select id="recipe-family" [(ngModel)]="familyId" (ngModelChange)="loadFamily()" [disabled]="busy() || loading()"><option value="">Select recipe</option>@for (recipe of recipes(); track recipe._id) { <option [value]="recipe._id">{{ recipe.name }} · {{ recipe.latestRevisionNumber }} revisions</option> }</select></div><button type="button" (click)="begin('new')" [disabled]="busy() || loading()">New recipe</button></div>
+@if (recipeCursor()) { <button type="button" class="secondary" (click)="more('recipes')" [disabled]="busy() || loading()">Load more recipes</button> }
+@if (detail(); as family) {
+  <div class="editor">
+    <h3>{{ family.recipe.name }}</h3><label for="recipe-revision">Saved revision</label>
+    <select id="recipe-revision" [ngModel]="selectedRevision()?._id" (ngModelChange)="selectRevision($event)" [disabled]="busy() || loading()">@for (revision of family.revisions; track revision._id) { <option [value]="revision._id">Revision {{ revision.revisionNumber }} · {{ revision.yieldPieces }} pcs{{ revision.label ? ' · ' + revision.label : '' }}</option> }</select>
+    @if (family.nextBefore) { <button type="button" class="secondary" (click)="loadFamily(true)" [disabled]="busy() || loading()">Load older revisions</button> }
+    @if (selectedRevision(); as revision) {
+      <p>1 batch makes {{ revision.yieldPieces }} pieces</p><p><strong>Batch cost: {{ rupees(revision.batchCostPaise) | currency:'INR' }}</strong> · Cost per piece: {{ rupees(revision.unitCostPaise) | currency:'INR' }}</p>
+      @for (line of revision.ingredients; track $index) { <p class="muted">{{ line.name }} · {{ line.quantity }} {{ line.uom }} · {{ rupees(line.costPaise) | currency:'INR' }}</p> }
+      <button type="button" class="secondary" (click)="begin('revision')" [disabled]="busy() || loading()">↻ New revision</button>
+    }
+  </div>
+}
+@if (editing()) {
+  <form class="editor" (ngSubmit)="saveRecipe()" #recipeFormElement="ngForm">
+    <h3>{{ editing() === 'new' ? 'New recipe' : 'New revision' }}</h3><p class="muted">This version uses the current material prices shown above. Saved revisions keep their original costs.</p>
+    <fieldset [disabled]="busy() || loading()"><div class="form-grid">
+      @if (editing() === 'new') { <div><label for="recipe-name">Name</label><input id="recipe-name" name="recipeName" [(ngModel)]="form.name" maxlength="120" required></div><div><label for="recipe-category">Category</label><input id="recipe-category" name="recipeCategory" [(ngModel)]="form.category" maxlength="100" required></div> }
+      <div><label for="recipe-yield">Pieces per batch</label><input id="recipe-yield" type="number" name="yieldPieces" [(ngModel)]="form.yieldPieces" min="1" max="1000000" step="1" required></div>
+      <div><label for="revision-label">Revision label</label><input id="revision-label" name="revisionLabel" [(ngModel)]="form.label" maxlength="120"></div>
+      <div><label for="recipe-overhead">Extra cost per batch (₹)</label><input id="recipe-overhead" name="overhead" [(ngModel)]="form.overhead" inputmode="decimal" required></div>
+    </div>
+    @for (line of form.ingredients; track line; let i = $index) {
+      <div class="editor"><label [for]="'ingredient-' + i">Material {{ i + 1 }}</label><select [id]="'ingredient-' + i" [name]="'material' + i" [(ngModel)]="line.materialId" (ngModelChange)="materialChosen(i)" required><option value="">Choose material</option>@for (material of materials(); track material._id) { <option [value]="material._id">{{ material.name }}</option> }</select>
+        <div class="form-grid"><div><label [for]="'quantity-' + i">Quantity</label><input [id]="'quantity-' + i" [name]="'quantity' + i" [(ngModel)]="line.quantity" inputmode="decimal" required></div><div><label [for]="'unit-' + i">Unit</label><select [id]="'unit-' + i" [name]="'unit' + i" [(ngModel)]="line.uom">@for (unit of units; track unit) { <option [value]="unit">{{ unit }}</option> }</select></div></div>
+        <button type="button" class="secondary" (click)="form.ingredients.splice(i, 1)" [disabled]="form.ingredients.length === 1">Remove line</button>
+      </div>
+    }
+    <button type="button" class="secondary" (click)="addLine()" [disabled]="form.ingredients.length >= 100">Add material line</button>
+    <label for="recipe-notes">Notes</label><textarea id="recipe-notes" name="notes" [(ngModel)]="form.notes" maxlength="2000" rows="2"></textarea></fieldset>
+    <div class="actions"><button type="submit" [disabled]="busy() || loading() || recipeFormElement.invalid">Save revision</button><button type="button" class="secondary" (click)="editing.set(null)" [disabled]="busy()">Cancel</button></div>
+  </form>
+}
+<section class="editor"><h3>Product mapping</h3><p>Choose one product and one saved revision above, then apply. A product has one linked revision at a time.</p>
+  <label for="mapping-product">Product</label><select id="mapping-product" [(ngModel)]="mappingProductId" [disabled]="busy() || loading()"><option value="">Choose product</option>@for (product of products(); track product._id) { <option [value]="product._id">{{ product.name }} · {{ product.recipeRevisionId ? 'Recipe linked' : 'No recipe linked' }}</option> }</select>
+  @if (productCursor()) { <button type="button" class="secondary" (click)="more('products')" [disabled]="busy() || loading()">Load more products</button> }
+  <div class="actions"><button type="button" (click)="mapProduct()" [disabled]="busy() || loading() || !mappingProductId || !selectedRevision()">Link selected revision</button><button type="button" class="secondary" (click)="mapProduct(true)" [disabled]="busy() || loading() || !mappingProductId">Remove mapping</button></div>
+</section>

@@ -9,6 +9,7 @@ node_modules/
 dist/
 /client/dist/
 /client/.angular/
+/client/.unit-test-output-*/
 
 # Deploy
 .vercel/

@@ -1,0 +1,101 @@
+process.env.NODE_ENV = 'test';
+process.env.SAAS_LEGACY_WORKSPACE_AUTH = 'true';
+const { test, before, after } = require('node:test');
+const assert = require('node:assert/strict');
+const { randomUUID } = require('node:crypto');
+const mongoose = require('mongoose');
+const { MongoMemoryReplSet } = require('mongodb-memory-server');
+const User = require('../src/models/User');
+const Membership = require('../src/models/BakeryMembership');
+const Product = require('../src/models/SaasProduct');
+const Material = require('../src/models/SaasMaterial');
+const Recipe = require('../src/models/SaasRecipe');
+const Revision = require('../src/models/SaasRecipeRevision');
+const Event = require('../src/models/SaasEvent');
+const Order = require('../src/models/SaasOrder');
+const Audit = require('../src/models/SaasAuditLog');
+const { LIMITS } = require('../src/saas/usage-limits');
+const { signToken } = require('../src/services/token.service');
+let database, server, base, token, staffToken, otherToken, a, b, product;
+const oldFlag = process.env.SAAS_FOUNDATION_ENABLED;
+const path = (bakery, suffix) => `/saas/bakeries/${bakery._id}/${suffix}`;
+async function api(method, uri, body, credentials = token) {
+  const response = await fetch(base + uri, { method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${credentials}` }, body: body === undefined ? undefined : JSON.stringify(body) });
+  return { status: response.status, ...await response.json() };
+}
+const productBody = slug => ({ name: 'Synthetic cake', slug, category: 'Cakes', pricePaise: 10000, stockCount: 20 });
+const saleBody = extra => ({ items: [{ productId: product._id, quantity: 1, expectedUnitPricePaise: 10000 }], paymentStatus: 'paid', paymentMethod: 'cash', idempotencyKey: randomUUID(), ...extra });
+before(async () => {
+  database = await MongoMemoryReplSet.create({ replSet: { count: 1, args: ['--nounixsocket'] } });
+  await mongoose.connect(database.getUri('saas_usage_test'));
+  const [owner, employee, stranger] = await User.create([{ name: 'Usage owner' }, { name: 'Usage staff' }, { name: 'Other usage owner' }]);
+  token = signToken(owner); staffToken = signToken(employee); otherToken = signToken(stranger);
+  process.env.SAAS_FOUNDATION_ENABLED = 'true'; server = require('../src/app').listen(0); base = `http://127.0.0.1:${server.address().port}/api`;
+  a = (await api('POST', '/saas/bakeries', { name: 'Usage A', slug: 'usage-a' })).bakery;
+  b = (await api('POST', '/saas/bakeries', { name: 'Usage B', slug: 'usage-b' }, otherToken)).bakery;
+  await Membership.create({ bakeryId: a._id, userId: employee._id, role: 'staff' });
+  product = (await api('POST', path(a, 'products'), productBody('base'))).product;
+});
+after(async () => {
+  if (oldFlag === undefined) delete process.env.SAAS_FOUNDATION_ENABLED; else process.env.SAAS_FOUNDATION_ENABLED = oldFlag;
+  if (server) await new Promise(resolve => server.close(resolve)); await mongoose.disconnect(); if (database) await database.stop();
+});
+test('usage is an owner-only tenant-scoped snapshot with server-owned development limits', async () => {
+  const result = await api('GET', path(a, 'usage')); assert.equal(result.status, 200); assert.equal(result.policy, 'development');
+  assert.deepEqual(result.usage.products, { used: 1, limit: LIMITS.products }); assert.equal(result.revisionsPerRecipeLimit, LIMITS.revisionsPerRecipe);
+  assert.equal((await api('GET', path(b, 'usage'), undefined, otherToken)).usage.products.used, 0);
+  assert.equal((await api('GET', path(a, 'usage'), undefined, staffToken)).status, 403);
+  assert.equal((await api('GET', path(a, 'usage'), undefined, otherToken)).status, 404);
+  assert.equal((await api('GET', path(a, 'usage') + '?bakeryId=' + b._id)).status, 400);
+  assert.equal((await api('POST', path(a, 'products'), { ...productBody('override'), limit: 1000000 })).status, 400);
+});
+test('concurrent product creation cannot exceed the limit and archived products still count', async () => {
+  await Product.insertMany(Array.from({ length: LIMITS.products - 2 }, (_, i) => ({ bakeryId: a._id, ...productBody(`filler-${i}`), archived: true })));
+  const results = await Promise.all(['last-a', 'last-b'].map(slug => api('POST', path(a, 'products'), productBody(slug))));
+  assert.deepEqual(results.map(row => row.status).sort(), [201, 409]);
+  const rejected = results.find(row => row.status === 409); assert.equal(rejected.details.code, 'SAAS_LIMIT_REACHED'); assert.equal(rejected.details.resource, 'products');
+  assert.equal(await Product.countDocuments({ bakeryId: a._id }), LIMITS.products);
+  assert.equal((await api('PATCH', path(a, `products/${product._id}`), { expectedVersion: 1, name: 'Editable at capacity' })).status, 200);
+  assert.equal((await api('POST', path(b, 'products'), productBody('other'), otherToken)).status, 201);
+  assert.equal(await Audit.countDocuments({ bakeryId: a._id, action: 'product.create' }), 2);
+});
+test('revision ceilings apply per family, preserving history and allowing another family', async () => {
+  const material = (await api('POST', path(a, 'materials'), { name: 'Demo ingredient', packQuantity: '1', packUom: 'piece', purchasePricePaise: 1000 })).material;
+  const body = { name: 'Revision limit', category: 'Cakes', yieldPieces: 1, ingredients: [{ materialId: material._id, expectedVersion: 1, quantity: '1', uom: 'piece' }] };
+  const created = await api('POST', path(a, 'recipes'), body); assert.equal(created.status, 201); const recipe = created.recipe;
+  const template = await Revision.findById(created.revision._id).lean();
+  await Revision.collection.insertMany(Array.from({ length: LIMITS.revisionsPerRecipe - 1 }, (_, i) => ({ ...template, _id: new mongoose.Types.ObjectId(), revisionNumber: i + 2 })));
+  await Recipe.updateOne({ _id: recipe._id }, { $set: { latestRevisionNumber: LIMITS.revisionsPerRecipe } });
+  const { name, category, ...input } = body;
+  const blocked = await api('POST', path(a, `recipes/${recipe._id}/revisions`), { ...input, expectedVersion: 1 });
+  assert.equal(blocked.status, 409, JSON.stringify(blocked)); assert.equal(blocked.details.resource, 'revisionsPerRecipe');
+  assert.equal((await Recipe.findById(recipe._id)).version, 1); assert.equal((await api('POST', path(a, 'recipes'), { ...body, name: 'Another family' })).status, 201);
+});
+test('material, family and event capacity rejects new records but leaves updates and closure available', async () => {
+  const materialCount = await Material.countDocuments({ bakeryId: a._id });
+  await Material.insertMany(Array.from({ length: LIMITS.materials - materialCount }, () => ({ bakeryId: a._id, name: 'Filler material', packQuantity: '1', packUom: 'piece', purchasePricePaise: 1000, active: false })));
+  assert.equal((await api('POST', path(a, 'materials'), { name: 'Blocked', packQuantity: '1', packUom: 'piece', purchasePricePaise: 1000 })).details.resource, 'materials');
+  const material = await Material.findOne({ bakeryId: a._id, active: true });
+  assert.equal((await api('PATCH', path(a, `materials/${material._id}`), { expectedVersion: 1, name: 'Updated at capacity' })).status, 200);
+  const families = await Recipe.countDocuments({ bakeryId: a._id });
+  await Recipe.insertMany(Array.from({ length: LIMITS.recipes - families }, () => ({ bakeryId: a._id, name: 'Filler family', category: 'Cakes', archived: true })));
+  const blocked = await api('POST', path(a, 'recipes'), { name: 'Blocked family', category: 'Cakes', yieldPieces: 1, ingredients: [{ materialId: String(material._id), expectedVersion: 2, quantity: '1', uom: 'piece' }] });
+  assert.equal(blocked.details.resource, 'recipes');
+  const event = (await api('POST', path(a, 'events'), { name: 'Last closable event', key: 'closable' })).event;
+  await Event.insertMany(Array.from({ length: LIMITS.events - 1 }, (_, i) => ({ bakeryId: a._id, name: 'Closed event', key: `closed-${i}`, status: 'closed' })));
+  assert.equal((await api('POST', path(a, 'events'), { name: 'Blocked event', key: 'blocked' })).details.resource, 'events');
+  assert.equal((await api('POST', path(a, `events/${event._id}/close`), { expectedVersion: 1, confirmed: true })).status, 200);
+});
+test('order ceiling preserves stock and numbering while replay and settlement remain available', async () => {
+  const request = saleBody(), first = await api('POST', path(a, 'orders'), request); assert.equal(first.status, 201);
+  const unpaid = await api('POST', path(a, 'orders'), saleBody({ paymentStatus: 'unpaid', paymentMethod: null })); assert.equal(unpaid.status, 201);
+  await Order.collection.insertMany(Array.from({ length: LIMITS.orders - 2 }, (_, i) => ({ bakeryId: new mongoose.Types.ObjectId(a._id), sequence: i + 3, idempotencyKey: `synthetic-filler-${i}`, totalPaise: 0, paymentStatus: 'paid', receivedPaise: 0 })));
+  const before = await Product.findById(product._id).lean();
+  const result = await api('POST', path(a, 'orders'), saleBody(), staffToken); assert.equal(result.status, 409); assert.equal(result.details.code, 'SALE_REJECTED');
+  assert.match(result.message, /limit/); assert.equal((await Product.findById(product._id)).stockCount, before.stockCount);
+  assert.equal((await api('POST', path(a, 'orders'), request)).replayed, true);
+  assert.equal((await api('POST', path(a, `orders/${unpaid.order._id}/settle`), { expectedVersion: 1, paymentMethod: 'upi', confirmed: true }, staffToken)).status, 200);
+  assert.equal(await Order.countDocuments({ bakeryId: a._id }), LIMITS.orders);
+  assert.equal((await api('GET', path(b, 'usage'), undefined, otherToken)).usage.orders.used, 0);
+  assert.equal(await mongoose.connection.collection('orders').countDocuments(), 0);
+});

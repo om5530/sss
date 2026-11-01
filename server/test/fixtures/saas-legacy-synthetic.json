@@ -1,0 +1,131 @@
+{
+  "formatVersion": 1,
+  "collections": {
+    "AdminSession": [],
+    "AuditLog": [],
+    "BakeryMaterial": [],
+    "BakeryMigration": [],
+    "BakeryMovement": [],
+    "BakeryPrice": [],
+    "BakeryProduction": [],
+    "BakeryPurchase": [],
+    "BakeryPurchaseFormat": [],
+    "BakeryReceipt": [],
+    "BakeryRecipe": [
+      {
+        "_id": "000000000000000000000004",
+        "name": "Demo Biscoff recipe",
+        "productId": "000000000000000000000003",
+        "piecesPerBatch": 8,
+        "version": 1,
+        "components": [],
+        "totalBatchCost": "480.0000",
+        "costPerUnit": "60.0000"
+      }
+    ],
+    "BakeryRevision": [
+      {
+        "_id": "000000000000000000000007",
+        "recipeId": "000000000000000000000004",
+        "version": 1,
+        "recipe": {
+          "piecesPerBatch": 8,
+          "totalBatchCost": "480.0000",
+          "notes": "Synthetic retained snapshot"
+        }
+      }
+    ],
+    "BakerySheet": [],
+    "BakerySupplier": [],
+    "BakeryWaste": [],
+    "CakeRequest": [],
+    "Category": [
+      {
+        "_id": "000000000000000000000002",
+        "group": "bakery",
+        "name": "Cakes",
+        "nameKey": "cakes"
+      }
+    ],
+    "ContactMessage": [],
+    "Counter": [
+      {
+        "_id": "order-number",
+        "seq": 1
+      }
+    ],
+    "Coupon": [],
+    "EventPlan": [],
+    "Order": [
+      {
+        "_id": "000000000000000000000005",
+        "orderNumber": "DEMO-0001",
+        "source": "event",
+        "eventName": "Synthetic event",
+        "user": null,
+        "createdBy": "000000000000000000000001",
+        "items": [
+          {
+            "product": "000000000000000000000003",
+            "name": "Demo Biscoff Cheesecake",
+            "price": 199,
+            "quantity": 2,
+            "lineTotal": 398
+          }
+        ],
+        "pricing": {
+          "subtotal": 398,
+          "discount": 398,
+          "tax": 0,
+          "total": 0
+        },
+        "paymentStatus": "paid",
+        "recipeCostSnapshot": [
+          {
+            "product": "000000000000000000000003",
+            "recipeId": "000000000000000000000004",
+            "recipeVersion": 1,
+            "unitCost": "60.0000"
+          }
+        ]
+      }
+    ],
+    "Otp": [],
+    "Payment": [
+      {
+        "_id": "000000000000000000000006",
+        "order": "000000000000000000000005",
+        "amount": 0,
+        "provider": "cash",
+        "status": "succeeded",
+        "currency": "inr"
+      }
+    ],
+    "Product": [
+      {
+        "_id": "000000000000000000000003",
+        "name": "Demo Biscoff Cheesecake",
+        "slug": "demo-biscoff",
+        "group": "bakery",
+        "category": "Cakes",
+        "categoryId": "000000000000000000000002",
+        "price": 199,
+        "stockCount": 8
+      }
+    ],
+    "Review": [],
+    "StoreSettings": [
+      {
+        "_id": "store",
+        "currency": "inr"
+      }
+    ],
+    "User": [
+      {
+        "_id": "000000000000000000000001",
+        "name": "Synthetic demo owner",
+        "role": "admin"
+      }
+    ]
+  }
+}

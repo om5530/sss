@@ -1,0 +1,21 @@
+import '@angular/compiler';
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {Injector,runInInjectionContext} from '@angular/core';
+import {of,Subject} from 'rxjs';
+import {SaasService} from '../src/app/core/services/saas.service';
+import {SaasSettings} from '../src/app/pages/saas-lab/saas-settings';
+import {localMenuPath,localMenuPreview,validLocalMenuLink,validStagingMenuLink} from '../src/app/core/utils/saas-menu-link';
+async function setup(t:any,overrides:any={}){const injector=Injector.create({providers:[{provide:SaasService,useValue:{storefrontSettings:()=>of({version:0,published:false,brandTheme:'gold',brandMark:''}),storefrontLink:()=>of({url:'http://localhost:4200/b/bakery-a',scope:'local-preview'}),...overrides}}]});const page=runInInjectionContext(injector,()=>new SaasSettings()) as any;page.bakeryId='a';page.slug='bakery-a';await page.load();t.after(()=>{page.ngOnDestroy();injector.destroy();});return page;}
+test('canonical and old menu paths use tenant chrome only in development',()=>{assert.equal(localMenuPath('bakery-a'),'/b/bakery-a');for(const p of ['/b/bakery-a','/saas-menu/bakery-a']){assert.equal(localMenuPreview(p,false),true);assert.equal(localMenuPreview(p,true),false);}for(const p of ['/bakery','/b','/menu','/admin','/bikes/a'])assert.equal(localMenuPreview(p,false),false);});
+test('menu links reject external origins, credentials, other bakeries and secret URL fields',()=>{assert.equal(validLocalMenuLink('http://localhost:4200/b/bakery-a','bakery-a'),'http://localhost:4200/b/bakery-a');for(const url of ['javascript:alert(1)','https://production.test/b/bakery-a','http://localhost/b/bakery-b','http://user:pass@localhost/b/bakery-a','http://localhost/b/bakery-a?token=x','http://localhost/b/bakery-a#x','http://localhost:0/b/bakery-a'])assert.equal(validLocalMenuLink(url,'bakery-a'),null);});
+test('a late canonical link response cannot replace another bakery settings',async t=>{const slow=new Subject<any>(),page=await setup(t,{storefrontLink:()=>slow});const pending=page.showLink();page.bakeryId='b';page.slug='bakery-b';await page.load();slow.next({url:'http://localhost:4200/b/bakery-a',scope:'local-preview'});await pending;assert.equal(page.menuLink(),null);assert.equal(page.error(),'');});
+test('local link generation never publishes a draft and rejects an invalid server URL',async t=>{const page=await setup(t);await page.showLink();assert.equal(page.menuLink(),'http://localhost:4200/b/bakery-a');assert.equal(page.current().published,false);const invalid=await setup(t,{storefrontLink:()=>of({url:'https://attacker.test/b/bakery-a',scope:'local-preview'})});await invalid.showLink();assert.equal(invalid.menuLink(),null);assert.match(invalid.error(),/Could not/);});
+test('copying is explicit and clipboard errors preserve a selectable link',async t=>{const descriptor=Object.getOwnPropertyDescriptor(globalThis,'navigator'),copied:string[]=[];Object.defineProperty(globalThis,'navigator',{configurable:true,value:{clipboard:{writeText:async(value:string)=>{copied.push(value);}}}});t.after(()=>{if(descriptor)Object.defineProperty(globalThis,'navigator',descriptor);else delete (globalThis as any).navigator;});const page=await setup(t);await page.showLink();assert.equal(copied.length,0);await page.copyLink();assert.deepEqual(copied,['http://localhost:4200/b/bakery-a']);(navigator.clipboard as any).writeText=async()=>{throw new Error('denied');};await page.copyLink();assert.match(page.error(),/Select and copy/);assert.equal(page.current().published,false);});
+
+test('staging menu links stay on the current HTTPS test deployment and exact bakery path',()=>{
+ const origin='https://golden-batch-saas-test.vercel.app';
+ assert.equal(validStagingMenuLink(origin+'/b/bakery-a','bakery-a',origin),origin+'/b/bakery-a');
+ for(const value of ['https://evil.vercel.app/b/bakery-a',origin+'/b/bakery-b',origin+'/b/bakery-a?token=x',origin+'/b/bakery-a#x','http://golden-batch-saas-test.vercel.app/b/bakery-a','https://user:pass@golden-batch-saas-test.vercel.app/b/bakery-a'])assert.equal(validStagingMenuLink(value,'bakery-a',origin),null);
+ assert.equal(validStagingMenuLink('https://evil.test/b/bakery-a','bakery-a','https://evil.test'),null);
+});

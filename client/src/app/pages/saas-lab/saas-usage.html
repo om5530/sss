@@ -1,0 +1,17 @@
+<section class="editor" aria-labelledby="usage-heading">
+  <div class="section-heading"><h2 id="usage-heading">Workspace capacity</h2>
+    @if (report() || loading()) { <button type="button" class="secondary" (click)="hide()">Hide usage</button> }
+    @else { <button type="button" class="secondary" (click)="load()">Show usage</button> }
+  </div>
+  <p class="muted">These are local workspace limits; a configured plan preview may set lower limits. Archived products, inactive materials and closed events still count. Capacity limits allow existing records to be updated. Restricted plans pause general changes while existing order handling, payments and access revocation remain available.</p>
+  @if (loading()) { <p role="status">Loading usage…</p> }
+  @if (error()) { <p role="alert" class="feedback error">{{ error() }}</p> }
+  @if (report(); as snapshot) {
+    @for (resource of resources; track resource.key) {
+      <p><strong>{{ resource.label }}</strong>: {{ snapshot.usage[resource.key].used }} / {{ snapshot.usage[resource.key].limit }}</p>
+      <progress [value]="snapshot.usage[resource.key].used" [max]="snapshot.usage[resource.key].limit" [attr.aria-label]="resource.label"></progress>
+    }
+    <p>Up to {{ snapshot.revisionsPerRecipeLimit }} revisions per recipe family. This is a snapshot; refresh to see newer changes.</p>
+    <button type="button" class="secondary" (click)="load()">Refresh usage</button>
+  }
+</section>

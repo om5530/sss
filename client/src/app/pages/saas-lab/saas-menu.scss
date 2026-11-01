@@ -1,0 +1,12 @@
+@use './saas-brand-palette' as brand;
+:host { display: block; }
+.store-menu { @include brand.palette; --text: var(--brand-text); --surface: var(--brand-surface); min-height: 100dvh; }
+.workspace { box-sizing: border-box; }
+.panel, footer.editor { border-color: var(--brand-border); }
+button { background: var(--brand-accent); color: #fff; border-color: var(--brand-accent); }
+button.secondary { background: transparent; color: var(--brand-text); }
+button:focus-visible { outline-color: var(--brand-accent); }
+.product { border-color: var(--brand-border); }.product strong { color: var(--brand-accent); }
+app-saas-brand-header { margin-bottom: 1.5rem; } footer p { white-space: pre-line; overflow-wrap: anywhere; }
+
+.product-photo { display: block; width: min(100%, 280px); height: auto; max-height: 220px; object-fit: contain; border-radius: 12px; margin-bottom: 1rem; }

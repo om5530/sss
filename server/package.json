@@ -1,7 +1,7 @@
 {
   "name": "bakery-cafe-server",
   "version": "1.0.0",
-  "description": "Backend API for the Bakery & Café Online Ordering Platform (MEAN stack)",
+  "description": "Backend API for the Bakery & Caf\u00e9 Online Ordering Platform (MEAN stack)",
   "main": "src/server.js",
   "type": "commonjs",
   "scripts": {
@@ -10,7 +10,16 @@
     "test": "node --test \"test/**/*.test.js\"",
     "seed": "node src/utils/seed.js",
     "bakery:migrate": "node src/utils/migrateBakery.js",
-    "make-admin": "node src/utils/make-admin.js"
+    "make-admin": "node src/utils/make-admin.js",
+    "saas:billing-worker": "node src/utils/saas-billing-worker.js",
+    "saas:mail-preview": "node src/utils/saas-customer-mail-preview.js",
+    "saas:subscription": "node src/utils/saas-subscription.js",
+    "saas:plan": "node src/utils/plan-saas-migration.js",
+    "test:saas": "node --test test/saas-foundation.test.js test/saas-local-routing.test.js test/saas-rehearsal.test.js test/saas-backup-rehearsal.test.js test/saas-media.test.js test/saas-account.test.js test/saas-account-security.test.js test/saas-migration-manifest.test.js test/saas-product-import.test.js test/saas-recipe-cost.test.js test/saas-customer-session.test.js test/saas-customer.test.js test/saas-customer-security.test.js test/saas-reservations.test.js test/saas-pickup.test.js test/saas-subscription.test.js test/saas-billing.test.js test/saas-waste.test.js test/saas-inventory.test.js test/saas-production.test.js test/saas-sales.test.js test/saas-order-adjustment.test.js test/saas-usage.test.js test/saas-team.test.js",
+    "saas:owner-mail-preview": "node src/utils/saas-account-mail-preview.js",
+    "saas:rehearsal-preflight": "node src/utils/saas-rehearsal-preflight.js",
+    "test:rehearsal": "node --test test/saas-rehearsal.test.js",
+    "test:backup-rehearsal": "node --test test/saas-backup-rehearsal.test.js"
   },
   "keywords": [
     "bakery",
@@ -38,6 +47,7 @@
     "morgan": "^1.10.0",
     "multer": "^2.2.0",
     "razorpay": "^2.9.6",
+    "sharp": "0.35.5",
     "stripe": "^17.5.0"
   },
   "devDependencies": {

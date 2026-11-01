@@ -1,0 +1,12 @@
+<section class="editor" aria-labelledby="stock-history-heading">
+  <div class="section-heading"><h2 id="stock-history-heading">Stock history · {{ name }}</h2><button type="button" class="secondary" (click)="load()" [disabled]="loading()">Refresh history</button></div>
+  <p class="muted">Records opening counts, manual stock edits, tracking changes, completed production, sales and finished-product wastage. Earlier activity is not reconstructed. Material inventory has its own history. Stock returns are not recorded here yet.</p>
+  @if (error()) { <p class="feedback error" role="alert">{{ error() }}</p> }
+  @for (entry of entries(); track entry._id) {
+    <p><strong>{{ entry.kind }}</strong> · @if (entry.kind === 'opening') { Opening count: {{ entry.after }} } @else { {{ entry.before === null ? 'Untracked' : entry.before }} → {{ entry.after === null ? 'Untracked' : entry.after }} }
+      @if (entry.delta !== null) { · Change: {{ entry.delta > 0 ? '+' : '' }}{{ entry.delta }} }
+      · {{ entry.createdAt }}</p>
+  } @empty { @if (!loading()) { <p>No stock history recorded.</p> } }
+  @if (loading()) { <p role="status">Loading history…</p> }
+  @if (cursor()) { <button type="button" class="secondary" (click)="load(true)" [disabled]="loading()">More history</button> }
+</section>

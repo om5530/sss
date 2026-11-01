@@ -17,6 +17,8 @@ const contactRoutes = require('./contact.routes');
 const cakeRoutes = require('./cake.routes');
 const adminRoutes = require('./admin.routes');
 const bakeryRoutes = require('./bakery.routes');
+const { foundationAvailable, foundationDatabaseAllowed } = require('../config/saas-foundation');
+const ApiError = require('../utils/ApiError');
 
 const router = express.Router();
 
@@ -41,6 +43,15 @@ router.get('/shop', asyncHandler(async (req, res) => {
 // Everything below requires a live database connection.
 router.use(dbReady);
 router.use('/auth', authRoutes);
+// Do not register SaaS models while disabled: Mongoose model registration can
+// otherwise create collections/indexes when the existing database connects.
+router.use('/saas', (req, res, next) => {
+  if (!foundationAvailable() || !foundationDatabaseAllowed(mongoose.connection) || !require('../config/saas-local-routing').localAuthority(req.get('host'))) {
+    res.set('Cache-Control', 'no-store');
+    return next(ApiError.notFound('Route not found'));
+  }
+  return require('./saas-foundation.routes')(req, res, next);
+});
 router.use('/products', productRoutes);
 router.use('/cart', cartRoutes);
 router.use('/orders', orderRoutes);

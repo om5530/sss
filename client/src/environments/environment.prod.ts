@@ -1,4 +1,5 @@
 export const environment = {
+  saasPreview: false,
   production: true,
   // '/api' works when the client and API share an origin behind a reverse
   // proxy. If they're hosted separately, set the absolute API URL here

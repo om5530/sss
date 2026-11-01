@@ -1,0 +1,94 @@
+<main class="workspace">
+  <header>
+    <p class="eyebrow">Development workspace</p>
+    <h1>Your bakeries</h1><p><a routerLink="/saas-account">Workspace account & security</a></p>
+    <p>Choose a bakery to manage its own catalogue.</p>
+    <p class="sandbox">Use demo data in this workspace. Your existing store catalogue is separate.</p>
+  </header>
+  @if (error()) { <p class="feedback error" role="alert">{{ error() }}</p> }
+  @if (notice()) { <p class="feedback" role="status">{{ notice() }}</p> }
+  <div class="workspace-grid">
+    <aside>
+      <section class="panel">
+        <h2>Switch bakery</h2>
+        <label for="bakery-select">Bakery</label>
+        <select id="bakery-select" [ngModel]="selected()?._id || ''" (ngModelChange)="selectBakery($event)" [disabled]="busy() || unavailable()">
+          <option value="">Select a bakery</option>
+          @for (bakery of bakeries(); track bakery._id) { <option [value]="bakery._id">{{ bakery.name }} · {{ bakery.role }}</option> }
+        </select>
+        @if (selected(); as bakery) { <p class="muted">{{ bakery.slug }} · {{ bakery.role }}</p> }
+        @if (!bakeries().length && !loading() && !unavailable()) { <p>No bakeries yet. Create your first demo bakery below.</p> }
+        @if (unavailable()) { <button type="button" (click)="loadBakeries()" [disabled]="loading()">Retry connection</button> }
+      </section>
+      <form class="panel" (ngSubmit)="reviewBakery()" #bakeryFormElement="ngForm">
+        <h2>Create a bakery</h2>
+        <label for="bakery-name">Bakery name</label>
+        <input id="bakery-name" name="bakeryName" [(ngModel)]="bakeryForm.name" required maxlength="120" [disabled]="busy() || unavailable()">
+        <label for="bakery-slug">Unique bakery slug</label>
+        <input id="bakery-slug" name="bakerySlug" [(ngModel)]="bakeryForm.slug" required minlength="3" maxlength="60" pattern="[a-z0-9]+(-[a-z0-9]+)*" [disabled]="busy() || unavailable()" placeholder="my-demo-bakery">
+        <button type="submit" [disabled]="busy() || loading() || unavailable() || bakeryFormElement.invalid">Review bakery creation</button>
+      </form>
+      <form class="panel" (ngSubmit)="inspectInvite()"><h2>Join a bakery</h2><label for="staff-invite">Staff invite code</label><input id="staff-invite" name="staffInvite" type="password" [(ngModel)]="inviteToken" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="64" [disabled]="busy() || loading()"><button type="submit" [disabled]="busy() || loading() || !inviteToken">Review invitation</button></form>
+    </aside>
+    <section class="panel catalogue" [attr.aria-busy]="loading()">
+      @if (selected(); as bakery) {
+        <nav class="actions" aria-label="Bakery workspace"><button type="button" class="secondary" (click)="tab.set('products'); loadProducts()" [disabled]="busy() || loading()" [attr.aria-pressed]="tab() === 'products'">Products</button>@if (owner()) { <button type="button" class="secondary" (click)="tab.set('inventory')" [disabled]="busy() || loading()" [attr.aria-pressed]="tab() === 'inventory'">Inventory</button><button type="button" class="secondary" (click)="tab.set('production')" [disabled]="busy() || loading()" [attr.aria-pressed]="tab() === 'production'">Production</button><button type="button" class="secondary" (click)="tab.set('recipes')" [disabled]="busy() || loading()" [attr.aria-pressed]="tab() === 'recipes'">Recipes & materials</button> }<button type="button" class="secondary" (click)="tab.set('sales')" [disabled]="busy() || loading()" [attr.aria-pressed]="tab() === 'sales'">Counter & events</button>@if (owner()) { <button type="button" class="secondary" (click)="tab.set('settings')" [disabled]="busy() || loading()" [attr.aria-pressed]="tab() === 'settings'">Menu settings</button><button type="button" class="secondary" (click)="tab.set('team')" [disabled]="busy() || loading()" [attr.aria-pressed]="tab() === 'team'">Team</button> }</nav>
+        @if (tab() === 'inventory' && owner()) { <app-saas-inventory [bakeryId]="bakery._id" /> } @else if (tab() === 'production' && owner()) { <app-saas-production [bakeryId]="bakery._id" /> } @else if (tab() === 'recipes' && owner()) { <app-saas-recipes [bakeryId]="bakery._id" /> } @else if (tab() === 'sales') { <app-saas-sales [bakeryId]="bakery._id" [role]="bakery.role" /> } @else if (tab() === 'settings' && owner()) { <app-saas-settings [bakeryName]="bakery.name" [bakeryId]="bakery._id" [slug]="bakery.slug" /> } @else if (tab() === 'team' && owner()) { <app-saas-team [bakeryId]="bakery._id" /> } @else {
+        <div class="section-heading"><div><p class="eyebrow">{{ bakery.name }}</p><h2>Products</h2></div>
+          @if (owner()) { <button type="button" (click)="edit('new')" [disabled]="busy() || loading()">Add product</button> }
+        </div>
+        @if (!owner()) { <p class="muted">You have staff access. Product changes are managed by the bakery owner.</p> }
+        <form class="filters" (ngSubmit)="loadProducts()">
+          <div><label for="product-search">Search products</label><input id="product-search" name="search" [(ngModel)]="search" maxlength="100" [disabled]="busy() || loading()"></div>
+          <div><label for="archive-filter">Show</label><select id="archive-filter" name="archiveFilter" [(ngModel)]="archived" [disabled]="busy() || loading()"><option value="active">Active</option><option value="archived">Archived</option><option value="all">All products</option></select></div>
+          <button type="submit" [disabled]="busy() || loading()">Apply</button>
+        </form>
+        @if (editor()) {
+          <form class="editor" (ngSubmit)="saveProduct()" #productFormElement="ngForm">
+            <h3>{{ editor() === 'new' ? 'Add product' : 'Edit product' }}</h3>
+            <fieldset [disabled]="busy()">
+              <div class="form-grid">
+                <div><label for="product-name">Name</label><input id="product-name" name="productName" [(ngModel)]="form.name" required maxlength="120"></div>
+                <div><label for="product-slug">Slug</label><input id="product-slug" name="productSlug" [(ngModel)]="form.slug" required maxlength="120" pattern="[a-z0-9]+(-[a-z0-9]+)*"></div>
+                <div><label for="product-category">Category</label><input id="product-category" name="category" [(ngModel)]="form.category" required maxlength="100"></div>
+                <div><label for="product-price">Price (₹)</label><input id="product-price" name="price" [(ngModel)]="form.price" inputmode="decimal" required placeholder="199.00"></div>
+                <div><label for="product-stock">Stock · blank means untracked</label><input id="product-stock" name="stock" [(ngModel)]="form.stock" inputmode="numeric" placeholder="Untracked"></div>
+                @if (editor() !== 'new') { <label class="check"><input type="checkbox" name="stockCountConfirmed" [(ngModel)]="form.stockCountConfirmed">Confirm a fresh count of available stock</label> }
+                <label class="check"><input type="checkbox" name="available" [(ngModel)]="form.available">Available</label>
+              </div>
+              <label for="product-description">Description</label><textarea id="product-description" name="description" [(ngModel)]="form.description" maxlength="2000" rows="2"></textarea>
+            </fieldset>
+            <div class="actions"><button type="submit" [disabled]="busy() || productFormElement.invalid">{{ busy() ? 'Saving…' : 'Save product' }}</button><button type="button" class="secondary" (click)="editor.set(null)" [disabled]="busy()">Cancel</button></div>
+          </form>
+        }
+        <div class="product-list">
+          @for (product of products(); track product._id) {
+            <article class="product">
+              <div><h3>{{ product.name }}</h3><p class="muted">{{ product.category }} · {{ product.archived ? 'Archived' : product.stockCount === 0 ? 'Sold out' : product.available ? 'Available' : 'Unavailable' }}</p><p>{{ product.stockCount === null ? 'Stock not tracked' : product.stockCount + ' in stock' }}</p></div>
+              <strong>{{ product.pricePaise / 100 | currency:'INR':'symbol':'1.2-2' }}</strong>
+              @if (owner()) { <div class="actions"><button type="button" class="secondary" (click)="mediaTarget.set(mediaTarget()?._id === product._id ? null : product)" [disabled]="busy() || loading()">Product photo</button><button type="button" class="secondary" (click)="stockTarget.set(product)" [disabled]="busy() || loading()">Stock history</button><button type="button" class="secondary" (click)="edit(product)" [disabled]="busy() || loading()">Edit</button><button type="button" class="secondary" (click)="archiveTarget.set(product)" [disabled]="busy() || loading()">{{ product.archived ? 'Restore' : 'Archive' }}</button></div> }
+              @if (owner() && mediaTarget()?._id === product._id) { <app-saas-media [bakeryId]="bakery._id" [targetId]="product._id" [name]="product.name" /> }
+              @if (owner() && stockTarget()?._id === product._id) {
+                <div class="actions"><button type="button" class="secondary" (click)="stockTarget.set(null)">Close stock history</button></div>
+                <app-saas-stock-history [bakeryId]="bakery._id" [productId]="product._id" [name]="product.name" />
+              }
+            </article>
+          } @empty { @if (!loading()) { <p class="empty">No products match this view.</p> } }
+        </div>
+        @if (nextCursor()) { <button type="button" class="secondary more" (click)="loadProducts(true)" [disabled]="busy() || loading()">Load more</button> }
+        }
+      } @else { <div class="empty"><h2>Select a bakery</h2><p>Its products will appear here.</p></div> }
+      @if (loading()) { <p role="status">Loading…</p> }
+    </section>
+  </div>
+  @if (archiveTarget(); as product) {
+    <dialog #archiveDialog class="confirmation" aria-labelledby="archive-title" (cancel)="cancelArchive($event)">
+      <h2 id="archive-title">{{ product.archived ? 'Restore' : 'Archive' }} {{ product.name }}?</h2><p>This changes the product in {{ selected()?.name }}.</p>
+      @if (error()) { <p class="feedback error" role="alert">{{ error() }}</p> }
+      <div class="actions"><button type="button" (click)="confirmArchive()" [disabled]="busy()">Confirm</button><button type="button" class="secondary" (click)="archiveTarget.set(null)" [disabled]="busy()" autofocus>Cancel</button></div>
+    </dialog>
+  }
+  @if (invitePreview(); as preview) { <dialog #joinDialog class="confirmation" aria-labelledby="join-title" (cancel)="cancelJoin($event)"><h2 id="join-title">{{ preview.alreadyMember ? 'Open' : 'Join' }} {{ preview.bakery.name }}?</h2><p>{{ preview.alreadyMember ? 'You already have access to this bakery.' : 'This invitation grants staff access to this bakery. It does not grant owner access.' }}</p>@if (error()) { <p class="feedback error" role="alert">{{ error() }}</p> }<div class="actions"><button type="button" (click)="acceptInvite()" [disabled]="busy()">{{ preview.alreadyMember ? 'Open workspace' : 'Accept staff invitation' }}</button><button type="button" class="secondary" (click)="cancelJoin()" [disabled]="busy()" autofocus>Back</button></div></dialog> }
+</main>
+
+@if (bakeryReview(); as draft) { <dialog #bakeryDialog class="confirmation" aria-labelledby="create-bakery-title" (cancel)="cancelBakery($event)"><h2 id="create-bakery-title">Create bakery?</h2><p>{{ draft.name }} · {{ draft.slug }}</p><p>This creates a separate local workspace owned by your account. Up to five local workspaces per account; archived or suspended workspaces still count.</p>@if (error()) { <p role="alert" class="feedback error">{{ error() }}</p> }<div class="actions"><button type="button" (click)="createBakery()" [disabled]="busy()">Confirm bakery creation</button><button type="button" class="secondary" (click)="cancelBakery()" [disabled]="busy()" autofocus>Back</button></div></dialog> }

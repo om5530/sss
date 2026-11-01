@@ -3,7 +3,7 @@
   "version": 1,
   "cli": {
     "packageManager": "npm",
-    "analytics": "f415c821-5abf-48bc-88a4-132b98329fef"
+    "analytics": false
   },
   "newProjectRoot": "projects",
   "projects": {
@@ -83,6 +83,49 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "saas-staging": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.saas-staging.ts"
+                }
+              ],
+              "optimization": {
+                "scripts": true,
+                "styles": true,
+                "fonts": false
+              },
+              "outputHashing": "all",
+              "sourceMap": false,
+              "serviceWorker": false,
+              "assets": [
+                {
+                  "glob": "favicon.ico",
+                  "input": "public"
+                },
+                {
+                  "glob": "golden-batch-icon-192-v3.png",
+                  "input": "public/icons",
+                  "output": "icons"
+                }
+              ],
+              "index": {
+                "input": "src/index.saas-staging.html",
+                "output": "index.html"
+              },
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "700kB",
+                  "maximumError": "1.4MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "32kB",
+                  "maximumError": "64kB"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
