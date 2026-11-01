@@ -44,7 +44,7 @@ export class App {
         const admin = /^\/admin(?:\/|[?#]|$)/.test(e.urlAfterRedirects);
         this.adminArea.set(admin);
         this.menuPreview.set(environment.saasPreview || localMenuPreview(e.urlAfterRedirects, environment.production));
-        this.theme.setAdminArea(admin);
+        this.theme.setAdminArea(admin || /^\/(?:workspace|account|saas-lab|saas-account)(?:[/?#]|$)/.test(e.urlAfterRedirects));
         const manifest = document.querySelector<HTMLLinkElement>('#pwa-manifest');
         if (manifest) manifest.href = admin ? '/admin-manifest.webmanifest' : '/manifest.webmanifest';
         const title = document.querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-title"]');

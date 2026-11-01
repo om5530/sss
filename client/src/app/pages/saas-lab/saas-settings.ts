@@ -16,6 +16,7 @@ const defaults = (): SaasStorefrontFields => ({ brandTheme: 'gold', brandMark: '
 
 @Component({ selector: 'app-saas-settings', imports: [SaasMedia, SaasBrandHeader, FormsModule, RouterLink, SaasUsage, SaasSubscription, SaasBilling], templateUrl: './saas-settings.html', styleUrl: './saas-lab.scss' })
 export class SaasSettings implements OnChanges, OnDestroy, AfterViewChecked {
+  protected readonly staging = environment.saasPreview;
   @Input({ required: true }) bakeryId!: string;
   @Input({ required: true }) slug!: string;
   @Input() bakeryName = '';

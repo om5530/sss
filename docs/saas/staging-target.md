@@ -28,7 +28,9 @@ Required variables are configured on the test project only:
 - `SAAS_STAGING_MONGODB_URI` (sensitive, generated test credentials)
 - `SAAS_LEGACY_WORKSPACE_AUTH=false`
 
-The client uses the `saas-staging` build profile, same-origin `/api`, SaaS-only routing, a visible test banner, no service worker and no Google/Firebase login configuration. Legacy login/admin/payment APIs are absent from the staging runtime. Real email delivery, online provider payments and durable image storage are not enabled; these controls may be unavailable in this preview. Local image files cannot be persisted in a serverless function.
+The client uses the `saas-staging` build profile, same-origin `/api`, SaaS-only routing, no service worker and no Google/Firebase login configuration. The user requested the production appearance for testing: the workspace reuses the production operations sidebar, responsive drawer and light/dark themes, with branded account screens and customer menu cards. Developer headings and the global test banner are removed. Canonical entry points are `/account` and `/workspace`; older SaaS links redirect. This appearance does not change the isolated runtime or database boundary.
+
+Legacy login/admin/payment APIs are absent from the staging runtime. Real email delivery, online provider payments and durable image storage are not enabled. Unsupported image upload, local recovery-preview and test-billing tools are hidden in the hosted UI. Local image files cannot be persisted in a serverless function.
 
 ## Reproduce the deployment source
 

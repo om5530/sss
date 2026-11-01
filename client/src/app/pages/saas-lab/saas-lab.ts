@@ -1,4 +1,6 @@
 import { SaasMedia } from './saas-media';
+import { environment } from '../../../environments/environment';
+import { AdminThemeService } from '../../core/services/admin-theme.service';
 import { RouterLink } from '@angular/router';
 import { AfterViewChecked, Component, DestroyRef, ElementRef, ViewChild, computed, inject, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
@@ -21,9 +23,35 @@ import { SaasInvitePreview } from '../../core/models/saas-team.model';
   selector: 'app-saas-lab',
   imports: [SaasMedia, FormsModule, CurrencyPipe, RouterLink, SaasRecipes, SaasSales, SaasSettings, SaasTeam, SaasStockHistory, SaasProduction, SaasInventory],
   templateUrl: './saas-lab.html',
-  styleUrl: './saas-lab.scss',
+  styleUrls: ['./saas-lab.scss', '../admin/layout/admin-layout.scss', './saas-shell.scss'],
 })
 export class SaasLab implements AfterViewChecked {
+  protected readonly staging = environment.saasPreview;
+  protected readonly theme = inject(AdminThemeService, { optional: true });
+  protected readonly mobileNavOpen = signal(false);
+  protected readonly sidebarCollapsed = signal(false);
+  protected readonly bakeryOpen = signal(true);
+  protected readonly managing = signal(false);
+  protected readonly mobileViewport = signal(false);
+  protected navigate(tab: 'products' | 'recipes' | 'sales' | 'settings' | 'team' | 'production' | 'inventory') {
+    this.tab.set(tab); this.managing.set(false); this.closeMenu();
+    if (tab === 'products') void this.loadProducts();
+  }
+  protected openMenu() { this.bakeryOpen.set(false); this.mobileNavOpen.set(true); setTimeout(() => document.getElementById('workspace-menu-close')?.focus()); }
+  protected closeMenu() { this.mobileNavOpen.set(false); document.getElementById('workspace-menu-toggle')?.focus(); }
+  protected menuKeydown(event: KeyboardEvent) {
+    if (!this.mobileViewport() || !this.mobileNavOpen()) return;
+    if (event.key === 'Escape') { event.preventDefault(); this.closeMenu(); }
+    if (event.key !== 'Tab') return;
+    const controls = Array.from(document.querySelectorAll<HTMLElement>('#workspace-menu a[href], #workspace-menu button, #workspace-menu select')).filter(el => !el.hasAttribute('disabled') && el.getClientRects().length);
+    const first = controls[0], last = controls[controls.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+  }
+  protected toggleSidebar() {
+    this.sidebarCollapsed.update(value => !value);
+    try { localStorage.setItem('gb_saas_sidebar_collapsed', String(this.sidebarCollapsed())); } catch {}
+  }
   @ViewChild('bakeryDialog') private bakeryDialog?: ElementRef<HTMLDialogElement>;
   protected readonly bakeryReview = signal<{ name: string; slug: string } | null>(null);
   @ViewChild('archiveDialog') private archiveDialog?: ElementRef<HTMLDialogElement>;
@@ -55,6 +83,15 @@ export class SaasLab implements AfterViewChecked {
   protected form = { name: '', slug: '', category: '', price: '', stock: '', description: '', available: true, stockCountConfirmed: false };
 
   constructor() {
+    // Browser-only layout setup; component logic also runs in the API/unit harness.
+    if (typeof document !== 'undefined' && typeof matchMedia !== 'undefined') {
+      document.documentElement.classList.add('adm-viewport');
+      try { this.sidebarCollapsed.set(localStorage.getItem('gb_saas_sidebar_collapsed') === 'true'); } catch {}
+      const query = matchMedia('(max-width: 960px)');
+      const resize = () => { this.mobileViewport.set(query.matches); if (!query.matches) this.mobileNavOpen.set(false); };
+      resize(); query.addEventListener('change', resize);
+      inject(DestroyRef).onDestroy(() => { query.removeEventListener('change', resize); document.documentElement.classList.remove('adm-viewport'); });
+    }
     inject(DestroyRef).onDestroy(() => { this.alive = false; this.generation++; this.inviteToken = ''; this.reviewedInviteToken = ''; this.invitePreview.set(null); });
     void this.loadBakeries();
   }
@@ -112,6 +149,10 @@ export class SaasLab implements AfterViewChecked {
       const bakeries = await firstValueFrom(this.api.bakeries());
       if (!this.alive) return;
       this.bakeries.set(bakeries);
+      if (bakeries.length === 1) {
+        this.loading.set(false);
+        await this.selectBakery(bakeries[0]._id);
+      }
     } catch (error) {
       if (!this.alive) return;
       this.error.set(this.message(error));
@@ -124,7 +165,7 @@ export class SaasLab implements AfterViewChecked {
     this.cancelJoin(); this.inviteToken = '';
     const generation = ++this.generation;
     this.selected.set(null); this.mediaTarget.set(null); this.stockTarget.set(null); this.products.set([]); this.nextCursor.set(null);
-    this.tab.set('products');
+    this.tab.set('sales'); this.managing.set(false); this.mobileNavOpen.set(false);
     this.editor.set(null); this.archiveTarget.set(null); this.search = ''; this.archived = 'active';
     this.error.set(''); this.notice.set('');
     if (!id) { this.loading.set(false); return; }

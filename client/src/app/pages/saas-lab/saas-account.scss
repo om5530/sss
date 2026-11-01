@@ -1,0 +1,28 @@
+:host { min-height: 100dvh; background: var(--cream); --text: var(--ink); }
+.account-page { min-height: 100dvh; display: grid; grid-template-columns: minmax(320px, .9fr) minmax(0, 1.1fr); }
+.account-brand { padding: clamp(2rem, 5vw, 5rem); background: radial-gradient(ellipse at 0 90%, #61401d66, transparent 65%), var(--night); color: var(--d-text); display: flex; flex-direction: column; justify-content: space-between; gap: 4rem; }
+.account-logo { display: flex; align-items: center; gap: 1rem; color: var(--d-text); font-family: var(--font-display); font-size: 1.2rem; }
+.account-logo img { border-radius: 10px; }
+.account-logo small { display: block; font-family: var(--font-body); color: var(--gold); font-size: .6rem; letter-spacing: .22em; margin-top: .35rem; }
+.account-brand .eyebrow { color: var(--gold); }
+.account-brand h1 { font-family: var(--font-display); font-size: clamp(2.6rem, 4.5vw, 4.8rem); line-height: 1.1; color: var(--d-text); margin: 1.5rem 0; }
+.account-brand p { color: var(--d-muted); line-height: 1.8; }
+.brand-foot { font-size: .75rem; }
+.account-content { display: grid; align-items: center; padding: 3rem clamp(1.25rem, 4vw, 5rem); background: var(--cream); }
+.account-card { width: 100%; max-width: 520px; margin: auto; }
+.account-card header { margin-bottom: 1.5rem; }
+.account-card h2 { font-size: 2rem; margin: .6rem 0; }
+.account-card .panel { border: 0; padding: 0; background: transparent; }
+.account-card .actions { gap: .5rem; margin-bottom: 1rem; }
+.account-card form > button { width: 100%; margin-top: 1rem; }
+.account-card label { margin-top: 1rem; }
+.account-card input { min-height: 48px; }
+.account-card form + p { font-size: .8rem; line-height: 1.7; color: var(--muted); margin-top: 1.5rem; }
+.recovery-details { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--line); font-size: .82rem; }
+@media (max-width: 760px) {
+  .account-page { grid-template-columns: 1fr; }
+  .account-brand { padding: 1.25rem 1.5rem; gap: 0; }
+  .account-brand > div, .brand-foot { display: none; }
+  .account-logo img { width: 44px; height: 44px; }
+  .account-content { padding: 2rem 1.25rem 3rem; }
+}

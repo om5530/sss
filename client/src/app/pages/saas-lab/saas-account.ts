@@ -1,3 +1,4 @@
+import { environment } from '../../../environments/environment';
 import { SaasAccountRecovery } from './saas-account-recovery';
 import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -6,8 +7,9 @@ import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { SaasAccountService } from '../../core/services/saas-account.service';
-@Component({ selector: 'app-saas-account', imports: [FormsModule, RouterLink, DatePipe, SaasAccountRecovery], templateUrl: './saas-account.html', styleUrl: './saas-lab.scss' })
+@Component({ selector: 'app-saas-account', imports: [FormsModule, RouterLink, DatePipe, SaasAccountRecovery], templateUrl: './saas-account.html', styleUrls: ['./saas-lab.scss', './saas-account.scss'] })
 export class SaasAccount implements OnDestroy {
+ protected readonly staging = environment.saasPreview;
  protected readonly api = inject(SaasAccountService); private readonly router = inject(Router); private generation = 0;
  protected readonly recoveryBusy = signal(false); protected readonly busy = signal(false); protected readonly loading = signal(false); protected readonly error = signal(''); protected readonly notice = signal('');
  protected readonly review = signal<'register' | 'password' | null>(null); protected readonly sessions = signal<{ _id: string; createdAt: string; expiresAt: string; current: boolean }[]>([]);

@@ -1,21 +1,21 @@
-:host { display: block; color: var(--text, #32251b); }
+:host { display: block; color: var(--text, var(--ink)); }
 .workspace { max-width: 1280px; margin: auto; padding: 2rem 1.25rem 4rem; }
 h1 { font-size: clamp(2rem, 4vw, 3rem); margin: .25rem 0; }
 h2 { font-size: 1.35rem; margin: 0 0 1rem; } h3 { font-size: 1.1rem; margin: 0; }
 .eyebrow { text-transform: uppercase; letter-spacing: .12em; font-size: .75rem; font-weight: 700; margin: 0 0 .35rem; }
-.sandbox, .muted { opacity: .75; font-size: .9rem; }
+.sandbox, .muted { color: var(--muted); font-size: .85rem; }
 .workspace-grid { display: grid; grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); gap: 1.25rem; margin-top: 1.5rem; }
-.panel { border: 1px solid var(--brand-border, #b99e744d); border-radius: 16px; background: var(--surface, #fffbf3); padding: 1.25rem; }
+.panel { border: 1px solid var(--brand-border, var(--line)); border-radius: 12px; background: var(--surface, var(--white)); padding: 1.25rem; }
 aside { display: flex; flex-direction: column; gap: 1.25rem; }
 label { display: block; font-size: .85rem; font-weight: 600; margin: .7rem 0 .35rem; }
-input, select, textarea { display: block; width: 100%; box-sizing: border-box; padding: .7rem; border: 1px solid #aa927580; border-radius: 8px; background: transparent; color: inherit; font: inherit; min-height: 44px; }
-button { cursor: pointer; min-height: 44px; padding: .65rem 1rem; border: 1px solid var(--brand-accent, #806044); border-radius: 8px; background: var(--brand-accent, #704a2b); color: #fff8ee; font: inherit; font-weight: 600; }
-button:disabled { opacity: .5; cursor: default; } button.secondary { background: transparent; color: inherit; border-color: #aa927580; }
+input, select, textarea { display: block; width: 100%; box-sizing: border-box; padding: .65rem .75rem; border: 1px solid var(--line); border-radius: 8px; background: var(--white); color: inherit; font: inherit; font-size: .85rem; min-height: 44px; }
+button { cursor: pointer; min-height: 44px; padding: .6rem .9rem; border: 1px solid var(--brand-accent, var(--line)); border-radius: 8px; background: var(--brand-accent, var(--button-bg, var(--choco))); color: var(--button-ink, #fff8ee); font: inherit; font-size: .82rem; font-weight: 600; }
+button:disabled { opacity: .5; cursor: default; } button.secondary { background: transparent; color: inherit; border-color: var(--line); }
 button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #b38242; outline-offset: 3px; }
 form.panel button { margin-top: 1rem; } .section-heading, .actions { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
 .section-heading { justify-content: space-between; } .section-heading h2 { margin: 0; }
 .filters { display: grid; grid-template-columns: minmax(0, 1fr) 160px auto; gap: .6rem; align-items: end; margin: 1rem 0; }
-.editor { padding: 1rem; border: 1px solid var(--brand-border, #b99e7470); border-radius: 12px; margin: 1rem 0; }
+.editor { padding: 1rem; border: 1px solid var(--brand-border, var(--line)); border-radius: 12px; margin: 1rem 0; background: var(--surface, var(--white)); }
 fieldset { border: 0; padding: 0; margin: 0 0 1rem; min-width: 0; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .25rem .8rem; }
 .check { display: flex; align-items: center; gap: .6rem; } .check input { width: 20px; min-height: 20px; }
@@ -23,6 +23,11 @@ fieldset { border: 0; padding: 0; margin: 0 0 1rem; min-width: 0; }
 .product h3 { overflow-wrap: anywhere; } .product p { margin: .35rem 0 0; font-size: .9rem; }
 .product strong { font-size: 1.3rem; } .product app-saas-stock-history, .product .actions { grid-column: 1 / -1; }
 .feedback { padding: .8rem 1rem; background: #5d9e7130; border-radius: 8px; } .error { background: #c4624230; }
+.section-heading { padding-bottom: 1rem; border-bottom: 1px solid var(--line); margin-bottom: 1rem; }
+h1 { font-family: var(--font-display); font-size: clamp(1.8rem, 3vw, 2.4rem); }
+h2 { font-family: var(--font-display); }
+summary { cursor: pointer; font-weight: 600; min-height: 32px; }
+select option { background: var(--white); color: var(--ink); }
 .empty { padding: 2rem .5rem; text-align: center; opacity: .75; } .more { width: 100%; }
 .confirmation { max-height: calc(100dvh - 3rem); overflow-y: auto; box-sizing: border-box; width: min(calc(100% - 2rem), 480px); border: 1px solid var(--brand-border, #b99e7470); border-radius: 16px; padding: 1.5rem; background: var(--cream, #fffbf3); color: inherit; }
 .confirmation::backdrop { background: #0009; }

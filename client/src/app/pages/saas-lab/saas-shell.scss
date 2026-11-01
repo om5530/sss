@@ -1,0 +1,25 @@
+:host { --text: var(--ink); --brand-border: var(--line); --brand-accent: var(--button-bg, var(--choco)); }
+.operations-content { max-width: 1440px; padding: 1.2rem clamp(16px, 2vw, 28px) 3rem; }
+.page-heading { margin-bottom: 1.5rem; }
+.setup-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.adm-side button { background: transparent; border: 0; border-radius: 8px; font-family: var(--font-body); text-align: left; }
+.adm-side .adm-side__link { color: var(--d-muted); font-size: .82rem; font-weight: 600; padding: .5rem .55rem; width: 100%; }
+.adm-side .adm-side__sub-link { color: var(--d-muted); font-size: .8rem; width: 100%; padding: .5rem .7rem; }
+.adm-side :is(.adm-side__link, .adm-side__sub-link).active { color: var(--gold-bright); background: #f2c5801a; }
+.adm-side button:hover { color: var(--d-text); background: #f7ecdc0f; }
+.adm-side .adm-side__dropdown-header { color: var(--d-muted); font-size: .78rem; padding: .5rem .55rem; }
+.adm-side__brand img { width: 48px; }
+.bakery-switch { padding: .5rem .5rem 1rem; }
+.bakery-switch label { color: var(--d-muted); font-size: .65rem; text-transform: uppercase; letter-spacing: .12em; }
+.bakery-switch select { background: var(--night-3); color: var(--d-text); border-color: var(--d-line); padding: .5rem; font-size: .8rem; }
+.bakery-switch small { display: block; color: var(--gold); font-size: .7rem; margin-top: .4rem; }
+.mobile-bakery { display: none; }
+.catalogue { min-width: 0; }
+.adm-sidebar-toolbar button { background: transparent; color: var(--ink); border-color: var(--line); }
+@media (max-width: 960px) {
+  .adm-side { flex-direction: row; gap: .5rem; }
+  .mobile-bakery { display: block; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--d-text); font-size: .85rem; }
+  .adm-side .adm-menu-toggle { border: 1px solid var(--d-line); color: var(--d-text); text-align: center; }
+  .adm-side .adm-side__link, .adm-side .adm-side__sub-link { min-height: 44px; }
+}
+@media (max-width: 640px) { .setup-grid { grid-template-columns: 1fr; } }

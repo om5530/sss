@@ -5,9 +5,10 @@ import { adminGuard } from './core/guards/admin.guard';
 import { environment } from '../environments/environment';
 
 const saasRoutes: Routes = [
-  ...((!environment.production || environment.saasPreview) ? [{ path: 'saas-account', loadComponent: () => import('./pages/saas-lab/saas-account').then(m => m.SaasAccount), title: 'Workspace account — Test workspace' }] : []),
-  ...((!environment.production || environment.saasPreview) ? [{ path: 'saas-lab', canActivate: [saasAccountGuard], loadComponent: () => import('./pages/saas-lab/saas-lab').then(m => m.SaasLab), title: 'Bakery workspace — Test workspace' }] : []),
-  ...((!environment.production || environment.saasPreview) ? [{ path: 'saas-menu/:slug', redirectTo: 'b/:slug', pathMatch: 'full' as const }, { path: 'b/:slug', loadComponent: () => import('./pages/saas-lab/saas-menu').then(m => m.SaasMenu), title: 'Bakery menu — Test preview' }] : []),
+  ...((!environment.production || environment.saasPreview) ? [{ path: 'saas-account', redirectTo: 'account', pathMatch: 'full' as const }, { path: 'saas-lab', redirectTo: 'workspace', pathMatch: 'full' as const }] : []),
+  ...((!environment.production || environment.saasPreview) ? [{ path: 'account', loadComponent: () => import('./pages/saas-lab/saas-account').then(m => m.SaasAccount), title: 'Workspace account — The Golden Batch' }] : []),
+  ...((!environment.production || environment.saasPreview) ? [{ path: 'workspace', canActivate: [saasAccountGuard], loadComponent: () => import('./pages/saas-lab/saas-lab').then(m => m.SaasLab), title: 'Bakery workspace — The Golden Batch' }] : []),
+  ...((!environment.production || environment.saasPreview) ? [{ path: 'saas-menu/:slug', redirectTo: 'b/:slug', pathMatch: 'full' as const }, { path: 'b/:slug', loadComponent: () => import('./pages/saas-lab/saas-menu').then(m => m.SaasMenu), title: 'Bakery menu — The Golden Batch' }] : []),
 ];
 const legacyRoutes: Routes = [
   { path: '', loadComponent: () => import('./pages/home/home').then((m) => m.Home), title: 'The Golden Batch — Artisan Bakery & Café', data: { description: 'Small-batch brownies, cookies, cakes, wood-fired pizza and barista coffee in Dahisar East, Mumbai. Order for dine-in, takeaway or delivery.' } },
@@ -31,4 +32,4 @@ const legacyRoutes: Routes = [
   { path: '**', loadComponent: () => import('./pages/not-found/not-found').then((m) => m.NotFound), title: 'Not found — The Golden Batch' },
 ];
 
-export const routes: Routes = environment.saasPreview ? [...saasRoutes, { path: '', redirectTo: 'saas-account', pathMatch: 'full' }, { path: '**', redirectTo: 'saas-account' }] : [...saasRoutes, ...legacyRoutes];
+export const routes: Routes = environment.saasPreview ? [...saasRoutes, { path: '', redirectTo: 'account', pathMatch: 'full' }, { path: '**', redirectTo: 'account' }] : [...saasRoutes, ...legacyRoutes];

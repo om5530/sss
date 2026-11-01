@@ -3,7 +3,7 @@
     @if (report() || loading()) { <button type="button" class="secondary" (click)="hide()">Hide usage</button> }
     @else { <button type="button" class="secondary" (click)="load()">Show usage</button> }
   </div>
-  <p class="muted">These are local workspace limits; a configured plan preview may set lower limits. Archived products, inactive materials and closed events still count. Capacity limits allow existing records to be updated. Restricted plans pause general changes while existing order handling, payments and access revocation remain available.</p>
+  <p class="muted">Usage limits depend on your workspace plan. Archived products, inactive materials and closed events still count. Capacity limits allow existing records to be updated. Restricted plans pause general changes while existing order handling, payments and access revocation remain available.</p>
   @if (loading()) { <p role="status">Loading usage…</p> }
   @if (error()) { <p role="alert" class="feedback error">{{ error() }}</p> }
   @if (report(); as snapshot) {
